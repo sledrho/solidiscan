@@ -21,7 +21,7 @@ $graphic  = $printable # $white
 
 -- Char Sets for Specific Number combinations
 @string         = \" ($graphic # \")* \"
-@decimalnum    = $digit+
+@decimalnum     = $digit+
 @hexadecimal    = $hexit+
 @exponent       = [eE] [\-\+] @decimalnum
 
@@ -52,8 +52,14 @@ tokens :-
     "true"                                 { \s -> TTrue }
     "false"                                { \s -> TFalse }
     --$byte                                { \s -> TByte (read s) }
+    "{"                                    { \s -> TLCurl }
+    "}"                                    { \s -> TRCurl }
+    "["                                    { \s -> TLBrack }
+    "]"                                    { \s -> TRBrack }
     "."                                    { \s -> TPeriod }
     "="                                    { \s -> TEquals}
+    "+"                                    { \s -> TPlus }
+    "-"                                    { \s -> TSub }
     $alpha[$alpha $digit \_ \']*           { \s -> TIdent s }                       -- The lexical token for an identifier 
     @string                                { \s -> TStringLiteral (init (tail s)) } -- Lexical token for a string, (init(tail s)) removes leading and trailing "
     "("                                    { \s -> TLeftParen }
@@ -74,14 +80,20 @@ data Token =
         | TBooleanLiteral
         | TTrue
         | TFalse
+        | TLCurl
+        | TRCurl
+        | TLBrack
+        | TRBrack
         | TBytes
         | TLeftParen
         | TRightParen
         | TPeriod
         | TEquals
+        | TPlus 
+        | TSub
         deriving (Eq, Show)
 
-main = do
-  s <- getContents
-  print (alexScanTokens s)
-}
+-- test case for the Lexical analysis
+s = "1 + 1 tester 1234 - 2000 ({test})"
+main = print (alexScanTokens s)
+} 
