@@ -25,9 +25,14 @@ $graphic  = $printable # $white
 @int = int (8 | 16 | 24 | 32 | 40 | 48 | 56 | 64 | 72 | 80 | 88 | 96 | 104 | 112 | 120 
               | 128 | 136 | 144 | 152 | 160 | 168 | 176 | 184 | 192 | 200 | 208 | 216 
               | 224 | 232 | 240 | 248 | 256 )?
+
+-- List of reserved words used by Solidity
 @reservedid = abstract| case| catch| default| final| in| inline| match| null| of|
               relocatable| static| switch| try| type| typeof                       -- reserved keywords within the Solidity language
 
+-- The initial tokens used by the lexer, followed by Haskell code segments
+-- Each token has type String -> Token 
+-- Token being a custom type by Alex, all tokens MUST have the same type.
 tokens :-
 
     $white+                                ;
