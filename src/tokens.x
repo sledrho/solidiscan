@@ -2,7 +2,10 @@
 module Main (main) where
 }
 
+-- Using the basic wrapper at the moment, may change to utilise nomadic parsers.
 %wrapper "basic"
+
+-- The following are un-working lexemes
 --$byte = (s ([1-9]|[1-2][0-9]|[3][0-2])? )?  -- bytes
 --$uint = u $int                                     -- integers
 --$decimalnum = [0-9]+([eE][0-9]+)?                  -- decimal numbers
@@ -38,7 +41,8 @@ tokens :-
     $white+                                ;
 <0> @decimalnum
     | 0[xX] @hexadecimal                   { \s -> TDec (read s) }
-
+-- At the moment this currently doesnt seem to work with large Decimal numbers
+-- Unsure why at this current moment.
 <0> @decimalnum \. @decimalnum @exponent?
     | @decimalnum @exponent                { \s -> TExp (read s) }
     @reservedid                            { \s -> TReservedOp }
