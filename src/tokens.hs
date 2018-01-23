@@ -15,7 +15,12 @@ import Data.Array.Base (unsafeAt)
 #else
 import Array
 #endif
-{-# LINE 1 "templates/wrappers.hs" #-}
+{-# LINE 1 "templates\wrappers.hs" #-}
+{-# LINE 1 "templates\\wrappers.hs" #-}
+{-# LINE 1 "<built-in>" #-}
+{-# LINE 1 "<command-line>" #-}
+{-# LINE 9 "<command-line>" #-}
+{-# LINE 1 "G:\\GitHub\\haskell-platform\\build\\ghc-bindist\\local\\lib/include\\ghcversion.h" #-}
 
 
 
@@ -31,6 +36,8 @@ import Array
 
 
 
+{-# LINE 9 "<command-line>" #-}
+{-# LINE 1 "C:\\Users\\randy\\AppData\\Local\\Temp\\ghc6364_0\\ghc_2.h" #-}
 
 
 
@@ -187,14 +194,8 @@ import Array
 
 
 
-
-
-
-
-
-
-
-
+{-# LINE 9 "<command-line>" #-}
+{-# LINE 1 "templates\\wrappers.hs" #-}
 -- -----------------------------------------------------------------------------
 -- Alex wrapper code.
 --
@@ -207,7 +208,7 @@ import Array
 
 
 import Data.Word (Word8)
-
+{-# LINE 28 "templates\\wrappers.hs" #-}
 
 import Data.Char (ord)
 import qualified Data.Bits
@@ -240,13 +241,13 @@ type Byte = Word8
 -- -----------------------------------------------------------------------------
 -- The input type
 
+{-# LINE 79 "templates\\wrappers.hs" #-}
 
+{-# LINE 102 "templates\\wrappers.hs" #-}
 
+{-# LINE 120 "templates\\wrappers.hs" #-}
 
-
-
-
-
+{-# LINE 138 "templates\\wrappers.hs" #-}
 
 -- -----------------------------------------------------------------------------
 -- Token positions
@@ -258,18 +259,18 @@ type Byte = Word8
 -- `move_pos' calculates the new position after traversing a given character,
 -- assuming the usual eight character tab stops.
 
-
+{-# LINE 161 "templates\\wrappers.hs" #-}
 
 -- -----------------------------------------------------------------------------
 -- Default monad
 
-
+{-# LINE 272 "templates\\wrappers.hs" #-}
 
 
 -- -----------------------------------------------------------------------------
 -- Monad (with ByteString input)
 
-
+{-# LINE 375 "templates\\wrappers.hs" #-}
 
 
 -- -----------------------------------------------------------------------------
@@ -302,9 +303,9 @@ alexGetByte (_,[],(c:s)) = case utf8Encode c of
 -- -----------------------------------------------------------------------------
 -- Basic wrapper, ByteString version
 
+{-# LINE 422 "templates\\wrappers.hs" #-}
 
-
-
+{-# LINE 438 "templates\\wrappers.hs" #-}
 
 
 -- -----------------------------------------------------------------------------
@@ -312,20 +313,19 @@ alexGetByte (_,[],(c:s)) = case utf8Encode c of
 
 -- Adds text positions to the basic model.
 
-
+{-# LINE 455 "templates\\wrappers.hs" #-}
 
 
 -- -----------------------------------------------------------------------------
 -- Posn wrapper, ByteString version
 
-
+{-# LINE 471 "templates\\wrappers.hs" #-}
 
 
 -- -----------------------------------------------------------------------------
 -- GScan wrapper
 
 -- For compatibility with previous versions of Alex, and because we can.
-
 
 alex_tab_size :: Int
 alex_tab_size = 8
@@ -398,7 +398,12 @@ alex_action_17 =  \s -> TIdent s
 alex_action_18 =  \s -> TStringLiteral (init (tail s)) 
 alex_action_19 =  \s -> TLeftParen 
 alex_action_20 =  \s -> TRightParen 
-{-# LINE 1 "templates/GenericTemplate.hs" #-}
+{-# LINE 1 "templates\GenericTemplate.hs" #-}
+{-# LINE 1 "templates\\GenericTemplate.hs" #-}
+{-# LINE 1 "<built-in>" #-}
+{-# LINE 1 "<command-line>" #-}
+{-# LINE 8 "<command-line>" #-}
+{-# LINE 1 "G:\\GitHub\\haskell-platform\\build\\ghc-bindist\\local\\lib/include\\ghcversion.h" #-}
 
 
 
@@ -414,6 +419,8 @@ alex_action_20 =  \s -> TRightParen
 
 
 
+{-# LINE 8 "<command-line>" #-}
+{-# LINE 1 "C:\\Users\\randy\\AppData\\Local\\Temp\\ghc1976_0\\ghc_2.h" #-}
 
 
 
@@ -570,14 +577,8 @@ alex_action_20 =  \s -> TRightParen
 
 
 
-
-
-
-
-
-
-
-
+{-# LINE 8 "<command-line>" #-}
+{-# LINE 1 "templates\\GenericTemplate.hs" #-}
 -- -----------------------------------------------------------------------------
 -- ALEX TEMPLATE
 --
@@ -587,19 +588,19 @@ alex_action_20 =  \s -> TRightParen
 -- -----------------------------------------------------------------------------
 -- INTERNALS and main scanner engine
 
+{-# LINE 21 "templates\\GenericTemplate.hs" #-}
 
+{-# LINE 51 "templates\\GenericTemplate.hs" #-}
 
-
-
-
+{-# LINE 72 "templates\\GenericTemplate.hs" #-}
 alexIndexInt16OffAddr arr off = arr ! off
 
 
-
+{-# LINE 93 "templates\\GenericTemplate.hs" #-}
 alexIndexInt32OffAddr arr off = arr ! off
 
 
-
+{-# LINE 105 "templates\\GenericTemplate.hs" #-}
 quickIndex arr i = arr ! i
 
 
@@ -731,4 +732,3 @@ alexRightContext (sc) user _ _ input =
         -- TODO: there's no need to find the longest
         -- match when checking the right context, just
         -- the first match will do.
-
