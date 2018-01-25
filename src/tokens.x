@@ -53,14 +53,22 @@ tokens :-
     "!"                                    { \s -> TNegate }
     "&&"                                   { \s -> TAnd }
     "||"                                   { \s -> TOr }
-    "=="                                   { \s -> TEquality }
     "!="                                   { \s -> TInEqual }
+    "<"                                    { \s -> TLThan }
+    ">"                                    { \s -> TGThan }
+    "<="                                   { \s -> TLTEq }
+    ">="                                   { \s -> TGTEq }
+    "=="                                   { \s -> TEquality }
     "{"                                    { \s -> TLCurl }
     "}"                                    { \s -> TRCurl }
     "["                                    { \s -> TLBrack }
     "]"                                    { \s -> TRBrack }
     "."                                    { \s -> TPeriod }
     "="                                    { \s -> TEquals}
+    "*"                                    { \s -> TMult }
+    "/"                                    { \s -> TDiv }
+    "**"                                   { \s -> TExpSym }
+    "%"                                    { \s -> TModul }
     "+"                                    { \s -> TPlus }
     "-"                                    { \s -> TSub }
     $alpha[$alpha $digit \_ \']*           { \s -> TIdent s }                       -- The lexical token for an identifier 
@@ -68,6 +76,8 @@ tokens :-
     "("                                    { \s -> TLeftParen }
     ")"                                    { \s -> TRightParen }
     --$byte                                { \s -> TByte (read s) }
+
+
 {
 
 -- The token type
@@ -86,8 +96,12 @@ data Token =
         | TNegate
         | TAnd
         | TOr
-        | TEquality
         | TInEqual
+        | TLThan
+        | TGThan
+        | TLTEq
+        | TGTEq 
+        | TEquality
         | TLCurl
         | TRCurl
         | TLBrack
@@ -97,6 +111,10 @@ data Token =
         | TRightParen
         | TPeriod
         | TEquals
+        | TMult
+        | TDiv
+        | TExpSym
+        | TModul
         | TPlus 
         | TSub
         deriving (Eq, Show)
@@ -105,19 +123,27 @@ data Token =
 s = "1 + 1 tester 1234 - 2000 ({test})"
 d = "== || != !"
 
+-- read function to read input from the repl
 read_ :: IO String
 read_ = putStr ">"
     >> getLine
+
+-- eval takes the input from the REPL and evaluates
+-- it using the 'alexScanTokens function, takes String
+-- and returns a list of tokens
 eval_ :: String -> [Token]
 eval_ input = alexScanTokens input
 
--- IO Block for testing
+-- The main function for the Repl
 main :: IO ()
 main = do
+    -- Takes the input from the read function
     input <- read_
-    unless (input == ":quit")
+    -- unless it is :q or :quit
+    unless (input == ":q" || input == ":quit")
+    -- then prints the result of the evaluation function passing read as the input
+    -- then recursively calls main
         $ print (eval_ input) >> main
-    --s <- getLine
-    --print (alexScanTokens s)
-    --print (alexScanTokens d)
-} 
+    -- alexScanTokens s
+    
+}
