@@ -1,10 +1,10 @@
 {
 module Main (main) where
+import Control.Monad
 }
 
--- Using the basic wrapper at the moment, may change to utilise nomadic parsers.
+-- Attempting to make a Monadic lexer
 %wrapper "basic"
-
 -- The following are un-working lexemes
 --$byte = (s ([1-9]|[1-2][0-9]|[3][0-2])? )?  -- bytes
 --$uint = u $int                                     -- integers
@@ -16,7 +16,7 @@ module Main (main) where
 -- For basic Digit/Alpha numeric characters
 $digit = 0-9                                       -- digits
 $alpha = [a-zA-Z]                                  -- alphabetic characters
-$hexit = [0-9 A-F a-f]
+$hexit = [0-9A-Fa-f]
 $graphic  = $printable # $white
 
 -- Char Sets for Specific Number combinations
@@ -40,18 +40,21 @@ tokens :-
 
     $white+                                ;
 <0> @decimalnum
-    | 0[xX] @hexadecimal                   { \s -> TDec (read s) }
--- At the moment this currently doesnt seem to work with large Decimal numbers
--- Unsure why at this current moment.
+    | 0[xX] @hexadecimal+                  { \s -> TDec (read s) }
+-- Because of the way Int's are bound, they will overflow and wrap around - Limitations of Haskell Int datatype.
 <0> @decimalnum \. @decimalnum @exponent?
     | @decimalnum @exponent                { \s -> TExp (read s) }
     @reservedid                            { \s -> TReservedOp }
     @int                                   { \s -> TIntLit (read s) }
     $digit+                                { \s -> TInt (read s) }
-    "boolean"                              { \s -> TBooleanLiteral }
+    "boolean"                              { \s -> TBooleanLit }
     "true"                                 { \s -> TTrue }
     "false"                                { \s -> TFalse }
-    --$byte                                { \s -> TByte (read s) }
+    "!"                                    { \s -> TNegate }
+    "&&"                                   { \s -> TAnd }
+    "||"                                   { \s -> TOr }
+    "=="                                   { \s -> TEquality }
+    "!="                                   { \s -> TInEqual }
     "{"                                    { \s -> TLCurl }
     "}"                                    { \s -> TRCurl }
     "["                                    { \s -> TLBrack }
@@ -64,7 +67,7 @@ tokens :-
     @string                                { \s -> TStringLiteral (init (tail s)) } -- Lexical token for a string, (init(tail s)) removes leading and trailing "
     "("                                    { \s -> TLeftParen }
     ")"                                    { \s -> TRightParen }
-
+    --$byte                                { \s -> TByte (read s) }
 {
 
 -- The token type
@@ -77,9 +80,14 @@ data Token =
         | TInt Int
         | TDec Int
         | TStringLiteral String
-        | TBooleanLiteral
+        | TBooleanLit
         | TTrue
         | TFalse
+        | TNegate
+        | TAnd
+        | TOr
+        | TEquality
+        | TInEqual
         | TLCurl
         | TRCurl
         | TLBrack
@@ -95,5 +103,21 @@ data Token =
 
 -- test case for the Lexical analysis
 s = "1 + 1 tester 1234 - 2000 ({test})"
-main = print (alexScanTokens s)
+d = "== || != !"
+
+read_ :: IO String
+read_ = putStr ">"
+    >> getLine
+eval_ :: String -> [Token]
+eval_ input = alexScanTokens input
+
+-- IO Block for testing
+main :: IO ()
+main = do
+    input <- read_
+    unless (input == ":quit")
+        $ print (eval_ input) >> main
+    --s <- getLine
+    --print (alexScanTokens s)
+    --print (alexScanTokens d)
 } 
