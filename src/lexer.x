@@ -46,47 +46,49 @@ tokens :-
     | 0[xX] @hexadecimal+                  { \s -> TDec (read s) }
 -- Because of the way Int's are bound, they will overflow and wrap around - Limitations of Haskell Int datatype.
 <0> @decimalnum \. @decimalnum @exponent?
-    | @decimalnum @exponent                { \s -> TExp (read s) }
-    @reservedid                            { \s -> TReservedOp }
-    @int                                   { \s -> TIntLit (read s) }
-    $digit+                                { \s -> TInt (read s) }
-    "pragma"                               { \s -> TPragma }
-    "import"                               { \s -> TImport }
-    "contract"                             { \s -> TContract }
-    "public"                               { \s -> TPublic }
-    "boolean"                              { \s -> TBooleanLit }
-    "true"                                 { \s -> TTrue }
-    "false"                                { \s -> TFalse }
-    "!"                                    { \s -> TNegate }
-    "&&"                                   { \s -> TAnd }
-    "||"                                   { \s -> TOr }
-    "!="                                   { \s -> TInEqual }
-    "<"                                    { \s -> TLThan }
-    ">"                                    { \s -> TGThan }
-    "<="                                   { \s -> TLTEq }
-    ">="                                   { \s -> TGTEq }
-    "=="                                   { \s -> TEquality }
-    "{"                                    { \s -> TLCurl }
-    "}"                                    { \s -> TRCurl }
-    "["                                    { \s -> TLBrack }
-    "]"                                    { \s -> TRBrack }
-    "."                                    { \s -> TPeriod }
-    "="                                    { \s -> TEquals}
-    "*"                                    { \s -> TMult }
-    "/"                                    { \s -> TDiv }
-    "**"                                   { \s -> TExpSym }
-    "%"                                    { \s -> TModul }
-    "+"                                    { \s -> TOp (head s) }
-    "-"                                    { \s -> TSub }
-    ";"                                    { \s -> TSemiCol }
-    $alpha[$alpha $digit \_ \']*           { \s -> TIdent s }                       -- The lexical token for an identifier 
-    @string                                { \s -> TStringLiteral (init (tail s)) } -- Lexical token for a string, (init(tail s)) removes leading and trailing "
-    "("                                    { \s -> TLeftParen }
-    ")"                                    { \s -> TRightParen }
-    --$byte                                { \s -> TByte (read s) }
+    | @decimalnum @exponent                { \p s -> TExp p (read s) }
+    @reservedid                            { \p s -> TReservedOp p }
+    @int                                   { \p s -> TIntLit p (read s) }
+    $digit+                                { \p s -> TInt p (read s) }
+    "pragma"                               { \p s -> TPragma p }
+    "import"                               { \p s -> TImport p }
+    "contract"                             { \p s -> TContract p }
+    "public"                               { \p s -> TPublic p }
+    "boolean"                              { \p s -> TBooleanLit p }
+    "true"                                 { \p s -> TTrue p }
+    "false"                                { \p s -> TFalse p }
+    "!"                                    { \p s -> TNegate p }
+    "&&"                                   { \p s -> TAnd p }
+    "||"                                   { \p s -> TOr p }
+    "!="                                   { \p s -> TInEqual p }
+    "<"                                    { \p s -> TLThan p }
+    ">"                                    { \p s -> TGThan p }
+    "<="                                   { \p s -> TLTEq p }
+    ">="                                   { \p s -> TGTEq p }
+    "=="                                   { \p s -> TEquality p }
+    "{"                                    { \p s -> TLCurl p }
+    "}"                                    { \p s -> TRCurl p }
+    "["                                    { \p s -> TLBrack p }
+    "]"                                    { \p s -> TRBrack p }
+    "."                                    { \p s -> TPeriod p }
+    "="                                    { \p s -> TEquals p }
+    "*"                                    { \p s -> TMult p }
+    "/"                                    { \p s -> TDiv p }
+    "**"                                   { \p s -> TExpSym p }
+    "%"                                    { \p s -> TModul p }
+    "+"                                    { \p s -> TOp p (head s) }
+    "-"                                    { \p s -> TSub p }
+    ";"                                    { \p s -> TSemiCol p }
+    $alpha[$alpha $digit \_ \']*           { \p s -> TIdent p s }                       -- The lexical token for an identifier 
+    @string                                { \p s -> TStringLiteral p (init (tail s)) } -- Lexical token for a string, (init(tail s)) removes leading and trailing "
+    "("                                    { \p s -> TLeftParen p }
+    ")"                                    { \p s -> TRightParen p }
+    --$byte                                { \p s -> TByte p (read s) }
 
 
 {
+-- Each token has type: AlexPosn -> String -> Token
+
 
 -- The token type
 data Token = 
@@ -131,6 +133,23 @@ data Token =
         | TSub
         | TSemiCol
         deriving (Eq, Show)
+
+-- In order to get position information a new alexScanTokens must be created
+
+-- First a getLineNum function is created to get the current getLine
+getLineNum :: AlexPosn -> Int
+getLIneNum (AlexPn offset lineNum colNum) = lineNum
+
+getColumnNum :: AlexPosn -> Int
+getColumnNum (AlexPn offset lineNum colNum) = colNum
+
+alexScanTokens2 str = go (alexStartPos,'\n',str)
+    where go inp@(pos,_,str) =
+        case alexScan inp 0 of
+               AlexEOF -> []
+               AlexError _ -> error ("Lexical error on Line " ++ show (getLineNum(pos)) ++ "and column " ++ show (getColumnNum(pos)))
+               AlexSkip inp' len    -> go inp'
+               AlexToken inp' len act -> act pos (take len str) : go inp'
 
 -- test case for the Lexical analysis
 s = "1 + 1 tester 1234 - 2000 ({test})"
