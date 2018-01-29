@@ -3,7 +3,6 @@
 {-# LINE 1 "lexer.x" #-}
 
 module Lexer where
-import Control.Monad
 
 #if __GLASGOW_HASKELL__ >= 603
 #include "ghcconfig.h"
@@ -38,7 +37,7 @@ import Array
 
 
 {-# LINE 9 "<command-line>" #-}
-{-# LINE 1 "C:\\Users\\randy\\AppData\\Local\\Temp\\ghc6364_0\\ghc_2.h" #-}
+{-# LINE 1 "C:\\Users\\randy\\AppData\\Local\\Temp\\ghc5204_0\\ghc_2.h" #-}
 
 
 
@@ -242,7 +241,25 @@ type Byte = Word8
 -- -----------------------------------------------------------------------------
 -- The input type
 
-{-# LINE 79 "templates\\wrappers.hs" #-}
+
+type AlexInput = (AlexPosn,     -- current position,
+                  Char,         -- previous char
+                  [Byte],       -- pending bytes on current char
+                  String)       -- current input string
+
+ignorePendingBytes :: AlexInput -> AlexInput
+ignorePendingBytes (p,c,_ps,s) = (p,c,[],s)
+
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar (_p,c,_bs,_s) = c
+
+alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
+alexGetByte (p,c,(b:bs),s) = Just (b,(p,c,bs,s))
+alexGetByte (_,_,[],[]) = Nothing
+alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c
+                                  (b:bs) = utf8Encode c
+                              in p' `seq`  Just (b, (p', c, bs, s))
+
 
 {-# LINE 102 "templates\\wrappers.hs" #-}
 
@@ -260,7 +277,18 @@ type Byte = Word8
 -- `move_pos' calculates the new position after traversing a given character,
 -- assuming the usual eight character tab stops.
 
-{-# LINE 161 "templates\\wrappers.hs" #-}
+
+data AlexPosn = AlexPn !Int !Int !Int
+        deriving (Eq,Show)
+
+alexStartPos :: AlexPosn
+alexStartPos = AlexPn 0 1 1
+
+alexMove :: AlexPosn -> Char -> AlexPosn
+alexMove (AlexPn a l c) '\t' = AlexPn (a+1)  l     (((c+alex_tab_size-1) `div` alex_tab_size)*alex_tab_size+1)
+alexMove (AlexPn a l _) '\n' = AlexPn (a+1) (l+1)   1
+alexMove (AlexPn a l c) _    = AlexPn (a+1)  l     (c+1)
+
 
 -- -----------------------------------------------------------------------------
 -- Default monad
@@ -277,28 +305,7 @@ type Byte = Word8
 -- -----------------------------------------------------------------------------
 -- Basic wrapper
 
-
-type AlexInput = (Char,[Byte],String)
-
-alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (c,_,_) = c
-
--- alexScanTokens :: String -> [token]
-alexScanTokens str = go ('\n',[],str)
-  where go inp@(_,_bs,s) =
-          case alexScan inp 0 of
-                AlexEOF -> []
-                AlexError _ -> error "lexical error"
-                AlexSkip  inp' _ln     -> go inp'
-                AlexToken inp' len act -> act (take len s) : go inp'
-
-alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
-alexGetByte (c,(b:bs),s) = Just (b,(c,bs,s))
-alexGetByte (_,[],[])    = Nothing
-alexGetByte (_,[],(c:s)) = case utf8Encode c of
-                             (b:bs) -> Just (b, (c, bs, s))
-                             [] -> Nothing
-
+{-# LINE 402 "templates\\wrappers.hs" #-}
 
 
 -- -----------------------------------------------------------------------------
@@ -314,7 +321,16 @@ alexGetByte (_,[],(c:s)) = case utf8Encode c of
 
 -- Adds text positions to the basic model.
 
-{-# LINE 455 "templates\\wrappers.hs" #-}
+
+--alexScanTokens :: String -> [token]
+alexScanTokens str = go (alexStartPos,'\n',[],str)
+  where go inp@(pos,_,_,str) =
+          case alexScan inp 0 of
+                AlexEOF -> []
+                AlexError ((AlexPn _ line column),_,_,_) -> error $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+                AlexSkip  inp' _ln     -> go inp'
+                AlexToken inp' len act -> act pos (take len str) : go inp'
+
 
 
 -- -----------------------------------------------------------------------------
@@ -346,93 +362,152 @@ alex_accept = listArray (0::Int,144) [AlexAccNone,AlexAccNone,AlexAccNone,AlexAc
 
 alex_actions = array (0::Int,127) [(126,alex_action_1),(125,alex_action_1),(124,alex_action_1),(123,alex_action_2),(122,alex_action_2),(121,alex_action_3),(120,alex_action_3),(119,alex_action_3),(118,alex_action_4),(117,alex_action_4),(116,alex_action_4),(115,alex_action_6),(114,alex_action_7),(113,alex_action_8),(112,alex_action_9),(111,alex_action_10),(110,alex_action_11),(109,alex_action_12),(108,alex_action_13),(107,alex_action_14),(106,alex_action_15),(105,alex_action_16),(104,alex_action_17),(103,alex_action_18),(102,alex_action_19),(101,alex_action_20),(100,alex_action_21),(99,alex_action_22),(98,alex_action_23),(97,alex_action_24),(96,alex_action_25),(95,alex_action_26),(94,alex_action_27),(93,alex_action_28),(92,alex_action_29),(91,alex_action_30),(90,alex_action_31),(89,alex_action_32),(88,alex_action_33),(87,alex_action_34),(86,alex_action_35),(85,alex_action_35),(84,alex_action_35),(83,alex_action_35),(82,alex_action_35),(81,alex_action_35),(80,alex_action_35),(79,alex_action_35),(78,alex_action_35),(77,alex_action_35),(76,alex_action_35),(75,alex_action_35),(74,alex_action_35),(73,alex_action_35),(72,alex_action_35),(71,alex_action_35),(70,alex_action_35),(69,alex_action_35),(68,alex_action_35),(67,alex_action_35),(66,alex_action_35),(65,alex_action_35),(64,alex_action_35),(63,alex_action_35),(62,alex_action_35),(61,alex_action_35),(60,alex_action_35),(59,alex_action_35),(58,alex_action_35),(57,alex_action_35),(56,alex_action_35),(55,alex_action_35),(54,alex_action_35),(53,alex_action_35),(52,alex_action_35),(51,alex_action_35),(50,alex_action_35),(49,alex_action_35),(48,alex_action_35),(47,alex_action_35),(46,alex_action_35),(45,alex_action_35),(44,alex_action_35),(43,alex_action_35),(42,alex_action_35),(41,alex_action_35),(40,alex_action_35),(39,alex_action_35),(38,alex_action_35),(37,alex_action_35),(36,alex_action_35),(35,alex_action_35),(34,alex_action_35),(33,alex_action_35),(32,alex_action_35),(31,alex_action_35),(30,alex_action_35),(29,alex_action_35),(28,alex_action_35),(27,alex_action_35),(26,alex_action_35),(25,alex_action_35),(24,alex_action_35),(23,alex_action_35),(22,alex_action_35),(21,alex_action_35),(20,alex_action_35),(19,alex_action_35),(18,alex_action_35),(17,alex_action_35),(16,alex_action_35),(15,alex_action_35),(14,alex_action_35),(13,alex_action_35),(12,alex_action_35),(11,alex_action_35),(10,alex_action_35),(9,alex_action_35),(8,alex_action_35),(7,alex_action_35),(6,alex_action_35),(5,alex_action_35),(4,alex_action_35),(3,alex_action_35),(2,alex_action_36),(1,alex_action_37),(0,alex_action_38)]
 
-{-# LINE 89 "lexer.x" #-}
+{-# LINE 88 "lexer.x" #-}
 
 
+-- Each token has type: AlexPosn -> String -> Token
 -- The token type
 data Token = 
-        TIdent String
-        | TReservedOp
-        | THexNum
-        | TExp Float
-        | TIntLit Int
-        | TInt Int
-        | TDec Int
-        | TStringLiteral String
-        | TPragma
-        | TImport
-        | TContract
-        | TPublic
-        | TBooleanLit
-        | TTrue
-        | TFalse
-        | TNegate
-        | TAnd
-        | TOr
-        | TInEqual
-        | TLThan
-        | TGThan
-        | TLTEq
-        | TGTEq 
-        | TEquality
-        | TLCurl
-        | TRCurl
-        | TLBrack
-        | TRBrack
-        | TBytes
-        | TLeftParen
-        | TRightParen
-        | TPeriod
-        | TEquals
-        | TMult
-        | TDiv
-        | TExpSym
-        | TModul
-        | TOp Char
-        | TSub
-        | TSemiCol
+        TIdent AlexPosn String
+        | TReservedOp AlexPosn
+        | THexNum AlexPosn
+        | TExp AlexPosn Int
+        | TIntLit AlexPosn Int
+        | TInt AlexPosn Int
+        | TDec AlexPosn Int
+        | TStringLiteral AlexPosn String
+        | TPragma AlexPosn
+        | TImport AlexPosn
+        | TContract AlexPosn
+        | TPublic AlexPosn
+        | TBooleanLit AlexPosn
+        | TTrue AlexPosn
+        | TFalse AlexPosn
+        | TNegate AlexPosn
+        | TAnd AlexPosn
+        | TOr AlexPosn
+        | TInEqual AlexPosn
+        | TLThan AlexPosn
+        | TGThan AlexPosn
+        | TLTEq AlexPosn
+        | TGTEq  AlexPosn
+        | TEquality AlexPosn
+        | TLCurl AlexPosn
+        | TRCurl AlexPosn
+        | TLBrack AlexPosn
+        | TRBrack AlexPosn
+        | TBytes AlexPosn
+        | TLeftParen AlexPosn
+        | TRightParen AlexPosn
+        | TPeriod AlexPosn
+        | TEquals AlexPosn
+        | TMult AlexPosn
+        | TDiv AlexPosn
+        | TExpSym AlexPosn
+        | TModul AlexPosn
+        | TOp AlexPosn Char
+        | TSub AlexPosn
+        | TSemiCol AlexPosn
         deriving (Eq, Show)
 
+tokenPosn (TIdent p id) = p
+tokenPosn (TReservedOp p) = p 
+tokenPosn (THexNum p) = p
+tokenPosn (TExp p f) = p 
+tokenPosn (TIntLit p i) = p 
+tokenPosn (TInt p i) = p 
+tokenPosn (TDec p i) = p 
+tokenPosn (TStringLiteral p str) = p 
+tokenPosn (TPragma p) = p 
+tokenPosn (TImport p) = p 
+tokenPosn (TContract p) = p 
+tokenPosn (TPublic p) = p 
+tokenPosn (TBooleanLit p) = p 
+tokenPosn (TTrue p) = p 
+tokenPosn (TFalse p) = p 
+tokenPosn (TNegate p) = p 
+tokenPosn (TAnd p) = p 
+tokenPosn (TOr p) = p 
+tokenPosn (TInEqual p) = p 
+tokenPosn (TLThan p) = p 
+tokenPosn (TGThan p) = p 
+tokenPosn (TLTEq p) = p 
+tokenPosn (TGTEq p) = p 
+tokenPosn (TEquality p) = p 
+tokenPosn (TLCurl p) = p  
+tokenPosn (TRCurl p) = p  
+tokenPosn (TLBrack p) = p  
+tokenPosn (TRBrack p) = p  
+tokenPosn (TBytes p) = p  
+tokenPosn (TLeftParen p) = p  
+tokenPosn (TRightParen p) = p  
+tokenPosn (TPeriod p) = p  
+tokenPosn (TEquals p) = p  
+tokenPosn (TMult p) = p  
+tokenPosn (TDiv p) = p
+tokenPosn (TExpSym p) = p  
+tokenPosn (TModul p) = p  
+tokenPosn (TOp p c) = p  
+tokenPosn (TSub p) = p  
+tokenPosn (TSemiCol p) = p  
+  
+
+-- In order to get position information a new alexScanTokens must be created
+
+-- First a getLineNum function is created to get the current getLine
+getLineNum :: AlexPosn -> Int
+getLineNum (AlexPn offset lineNum colNum) = lineNum
+
+getColumnNum :: AlexPosn -> Int
+getColumnNum (AlexPn offset lineNum colNum) = colNum
+
+alexScanTokens2 str = go (alexStartPos,'\n',[],str)
+  where go inp@(pos,_,_,str) =
+          case alexScan inp 0 of
+                AlexEOF -> []
+                AlexError ((AlexPn _ line column),_,_,_) -> error $ "lexical error at line " ++ (show line) ++ " and column " ++ (show column)
+                AlexSkip  inp' len     -> go inp'
+                AlexToken inp' len act -> act pos (take len str) : go inp'
 
 
-alex_action_1 =  \s -> TDec (read s) 
-alex_action_2 =  \s -> TExp (read s) 
-alex_action_3 =  \s -> TReservedOp 
-alex_action_4 =  \s -> TIntLit (read s) 
-alex_action_5 =  \s -> TInt (read s) 
-alex_action_6 =  \s -> TPragma 
-alex_action_7 =  \s -> TImport 
-alex_action_8 =  \s -> TContract 
-alex_action_9 =  \s -> TPublic 
-alex_action_10 =  \s -> TBooleanLit 
-alex_action_11 =  \s -> TTrue 
-alex_action_12 =  \s -> TFalse 
-alex_action_13 =  \s -> TNegate 
-alex_action_14 =  \s -> TAnd 
-alex_action_15 =  \s -> TOr 
-alex_action_16 =  \s -> TInEqual 
-alex_action_17 =  \s -> TLThan 
-alex_action_18 =  \s -> TGThan 
-alex_action_19 =  \s -> TLTEq 
-alex_action_20 =  \s -> TGTEq 
-alex_action_21 =  \s -> TEquality 
-alex_action_22 =  \s -> TLCurl 
-alex_action_23 =  \s -> TRCurl 
-alex_action_24 =  \s -> TLBrack 
-alex_action_25 =  \s -> TRBrack 
-alex_action_26 =  \s -> TPeriod 
-alex_action_27 =  \s -> TEquals
-alex_action_28 =  \s -> TMult 
-alex_action_29 =  \s -> TDiv 
-alex_action_30 =  \s -> TExpSym 
-alex_action_31 =  \s -> TModul 
-alex_action_32 =  \s -> TOp (head s) 
-alex_action_33 =  \s -> TSub 
-alex_action_34 =  \s -> TSemiCol 
-alex_action_35 =  \s -> TIdent s 
-alex_action_36 =  \s -> TStringLiteral (init (tail s)) 
-alex_action_37 =  \s -> TLeftParen 
-alex_action_38 =  \s -> TRightParen 
+alex_action_1 =  \p s -> TDec p (read s) 
+alex_action_2 =  \p s -> TExp p (read s) 
+alex_action_3 =  \p s -> TReservedOp p 
+alex_action_4 =  \p s -> TIntLit p (read s) 
+alex_action_5 =  \p s -> TInt p (read s) 
+alex_action_6 =  \p s -> TPragma p 
+alex_action_7 =  \p s -> TImport p 
+alex_action_8 =  \p s -> TContract p 
+alex_action_9 =  \p s -> TPublic p 
+alex_action_10 =  \p s -> TBooleanLit p 
+alex_action_11 =  \p s -> TTrue p 
+alex_action_12 =  \p s -> TFalse p 
+alex_action_13 =  \p s -> TNegate p 
+alex_action_14 =  \p s -> TAnd p 
+alex_action_15 =  \p s -> TOr p 
+alex_action_16 =  \p s -> TInEqual p 
+alex_action_17 =  \p s -> TLThan p 
+alex_action_18 =  \p s -> TGThan p 
+alex_action_19 =  \p s -> TLTEq p 
+alex_action_20 =  \p s -> TGTEq p 
+alex_action_21 =  \p s -> TEquality p 
+alex_action_22 =  \p s -> TLCurl p 
+alex_action_23 =  \p s -> TRCurl p 
+alex_action_24 =  \p s -> TLBrack p 
+alex_action_25 =  \p s -> TRBrack p 
+alex_action_26 =  \p s -> TPeriod p 
+alex_action_27 =  \p s -> TEquals p 
+alex_action_28 =  \p s -> TMult p 
+alex_action_29 =  \p s -> TDiv p 
+alex_action_30 =  \p s -> TExpSym p 
+alex_action_31 =  \p s -> TModul p 
+alex_action_32 =  \p s -> TOp p (head s) 
+alex_action_33 =  \p s -> TSub p 
+alex_action_34 =  \p s -> TSemiCol p 
+alex_action_35 =  \p s -> TIdent p s 
+alex_action_36 =  \p s -> TStringLiteral p (init (tail s)) 
+alex_action_37 =  \p s -> TLeftParen p 
+alex_action_38 =  \p s -> TRightParen p 
 {-# LINE 1 "templates\GenericTemplate.hs" #-}
 {-# LINE 1 "templates\\GenericTemplate.hs" #-}
 {-# LINE 1 "<built-in>" #-}

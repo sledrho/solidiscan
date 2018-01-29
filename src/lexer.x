@@ -1,10 +1,10 @@
 {
 module Lexer where
-import Control.Monad
 }
 
 -- Attempting to make a Monadic lexer
-%wrapper "basic"
+%wrapper "posn"
+
 -- The following are un-working lexemes
 --$byte = (s ([1-9]|[1-2][0-9]|[3][0-2])? )?  -- bytes
 --$uint = u $int                                     -- integers
@@ -43,7 +43,7 @@ tokens :-
 
     $white+                                ;
 <0> @decimalnum
-    | 0[xX] @hexadecimal+                  { \s -> TDec (read s) }
+    | 0[xX] @hexadecimal+                  { \p s -> TDec p (read s) }
 -- Because of the way Int's are bound, they will overflow and wrap around - Limitations of Haskell Int datatype.
 <0> @decimalnum \. @decimalnum @exponent?
     | @decimalnum @exponent                { \p s -> TExp p (read s) }
@@ -85,97 +85,110 @@ tokens :-
     ")"                                    { \p s -> TRightParen p }
     --$byte                                { \p s -> TByte p (read s) }
 
-
 {
+
 -- Each token has type: AlexPosn -> String -> Token
-
-
 -- The token type
 data Token = 
-        TIdent String
-        | TReservedOp
-        | THexNum
-        | TExp Float
-        | TIntLit Int
-        | TInt Int
-        | TDec Int
-        | TStringLiteral String
-        | TPragma
-        | TImport
-        | TContract
-        | TPublic
-        | TBooleanLit
-        | TTrue
-        | TFalse
-        | TNegate
-        | TAnd
-        | TOr
-        | TInEqual
-        | TLThan
-        | TGThan
-        | TLTEq
-        | TGTEq 
-        | TEquality
-        | TLCurl
-        | TRCurl
-        | TLBrack
-        | TRBrack
-        | TBytes
-        | TLeftParen
-        | TRightParen
-        | TPeriod
-        | TEquals
-        | TMult
-        | TDiv
-        | TExpSym
-        | TModul
-        | TOp Char
-        | TSub
-        | TSemiCol
+        TIdent AlexPosn String
+        | TReservedOp AlexPosn
+        | THexNum AlexPosn
+        | TExp AlexPosn Int
+        | TIntLit AlexPosn Int
+        | TInt AlexPosn Int
+        | TDec AlexPosn Int
+        | TStringLiteral AlexPosn String
+        | TPragma AlexPosn
+        | TImport AlexPosn
+        | TContract AlexPosn
+        | TPublic AlexPosn
+        | TBooleanLit AlexPosn
+        | TTrue AlexPosn
+        | TFalse AlexPosn
+        | TNegate AlexPosn
+        | TAnd AlexPosn
+        | TOr AlexPosn
+        | TInEqual AlexPosn
+        | TLThan AlexPosn
+        | TGThan AlexPosn
+        | TLTEq AlexPosn
+        | TGTEq  AlexPosn
+        | TEquality AlexPosn
+        | TLCurl AlexPosn
+        | TRCurl AlexPosn
+        | TLBrack AlexPosn
+        | TRBrack AlexPosn
+        | TBytes AlexPosn
+        | TLeftParen AlexPosn
+        | TRightParen AlexPosn
+        | TPeriod AlexPosn
+        | TEquals AlexPosn
+        | TMult AlexPosn
+        | TDiv AlexPosn
+        | TExpSym AlexPosn
+        | TModul AlexPosn
+        | TOp AlexPosn Char
+        | TSub AlexPosn
+        | TSemiCol AlexPosn
         deriving (Eq, Show)
+
+tokenPosn (TIdent p id) = p
+tokenPosn (TReservedOp p) = p 
+tokenPosn (THexNum p) = p
+tokenPosn (TExp p f) = p 
+tokenPosn (TIntLit p i) = p 
+tokenPosn (TInt p i) = p 
+tokenPosn (TDec p i) = p 
+tokenPosn (TStringLiteral p str) = p 
+tokenPosn (TPragma p) = p 
+tokenPosn (TImport p) = p 
+tokenPosn (TContract p) = p 
+tokenPosn (TPublic p) = p 
+tokenPosn (TBooleanLit p) = p 
+tokenPosn (TTrue p) = p 
+tokenPosn (TFalse p) = p 
+tokenPosn (TNegate p) = p 
+tokenPosn (TAnd p) = p 
+tokenPosn (TOr p) = p 
+tokenPosn (TInEqual p) = p 
+tokenPosn (TLThan p) = p 
+tokenPosn (TGThan p) = p 
+tokenPosn (TLTEq p) = p 
+tokenPosn (TGTEq p) = p 
+tokenPosn (TEquality p) = p 
+tokenPosn (TLCurl p) = p  
+tokenPosn (TRCurl p) = p  
+tokenPosn (TLBrack p) = p  
+tokenPosn (TRBrack p) = p  
+tokenPosn (TBytes p) = p  
+tokenPosn (TLeftParen p) = p  
+tokenPosn (TRightParen p) = p  
+tokenPosn (TPeriod p) = p  
+tokenPosn (TEquals p) = p  
+tokenPosn (TMult p) = p  
+tokenPosn (TDiv p) = p
+tokenPosn (TExpSym p) = p  
+tokenPosn (TModul p) = p  
+tokenPosn (TOp p c) = p  
+tokenPosn (TSub p) = p  
+tokenPosn (TSemiCol p) = p  
+  
 
 -- In order to get position information a new alexScanTokens must be created
 
 -- First a getLineNum function is created to get the current getLine
 getLineNum :: AlexPosn -> Int
-getLIneNum (AlexPn offset lineNum colNum) = lineNum
+getLineNum (AlexPn offset lineNum colNum) = lineNum
 
 getColumnNum :: AlexPosn -> Int
 getColumnNum (AlexPn offset lineNum colNum) = colNum
 
-alexScanTokens2 str = go (alexStartPos,'\n',str)
-    where go inp@(pos,_,str) =
-        case alexScan inp 0 of
-               AlexEOF -> []
-               AlexError _ -> error ("Lexical error on Line " ++ show (getLineNum(pos)) ++ "and column " ++ show (getColumnNum(pos)))
-               AlexSkip inp' len    -> go inp'
-               AlexToken inp' len act -> act pos (take len str) : go inp'
+alexScanTokens2 str = go (alexStartPos,'\n',[],str)
+  where go inp@(pos,_,_,str) =
+          case alexScan inp 0 of
+                AlexEOF -> []
+                AlexError ((AlexPn _ line column),_,_,_) -> error $ "lexical error at line " ++ (show line) ++ " and column " ++ (show column)
+                AlexSkip  inp' len     -> go inp'
+                AlexToken inp' len act -> act pos (take len str) : go inp'
 
--- test case for the Lexical analysis
-s = "1 + 1 tester 1234 - 2000 ({test})"
-d = "== || != !"
-
--- read function to read input from the repl
-read_ :: IO String
-read_ = putStr ">"
-    >> getLine
-
--- eval takes the input from the REPL and evaluates
--- it using the 'alexScanTokens function, takes String
--- and returns a list of tokens
-eval_ :: String -> [Token]
-eval_ input = alexScanTokens input
-
--- The main function for the Repl
-main :: IO ()
-main = do
-    -- Takes the input from the read function
-    input <- read_
-    -- unless it is :q or :quit
-    unless (input == ":q" || input == ":quit")
-    -- then prints the result of the evaluation function passing read as the input
-    -- then recursively calls main
-        $ print (eval_ input) >> main
-    -- alexScanTokens s
-    
 }
