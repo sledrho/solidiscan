@@ -6,6 +6,6 @@ s = "pragma solidity"
 main :: IO ()
 main = do 
   inStr <- getContents
-  let parseTree = solidiscan (alexScanTokens inStr)  
+  let parseTree = solidiscan (alexScanTokens2 inStr)  
   putStrLn ("parseTree: " ++ show(parseTree))
   print "done"

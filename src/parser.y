@@ -8,42 +8,42 @@ import Lexer
 %error { parseError }
 
 %token
-    "reservedid"                           { TReservedOp}
-    "decimalnum"                           { TDec $$ }
-    "exponent"                             { TExp $$ }
-    "int"                                  { TInt $$ }
-    "pragma"                               { TPragma }
-    "import"                               { TImport }
-    "public"                               { TPublic }
-    "contract"                             { TContract }
-    "boolean"                              { TBooleanLit }
-    "true"                                 { TTrue }
-    "!"                                    { TNegate }
-    "&&"                                   { TAnd }
-    "||"                                   { TOr }
-    "!="                                   { TInEqual }
-    "<"                                    { TLThan }
-    ">"                                    { TGThan }
-    "<="                                   { TLTEq }
-    ">="                                   { TGTEq }
-    "=="                                   { TEquality }
-    "{"                                    { TLCurl }
-    "}"                                    { TRCurl }
-    "["                                    { TLBrack }
-    "]"                                    { TRBrack }
-    "."                                    { TPeriod }
-    "="                                    { TEquals}
-    "*"                                    { TMult }
-    "/"                                    { TDiv }
-    "**"                                   { TExpSym }
-    "%"                                    { TModul }
-    op                                     { TOp $$ }
-    "-"                                    { TSub }
-    ";"                                    { TSemiCol }
-    ident                                  { TIdent $$ }                       -- The lexical token for an identifier 
-    stringLiteral                          { TStringLiteral $$ }
-    "("                                    { TLeftParen }
-    ")"                                    { TRightParen }
+    "reservedid"                           { TReservedOp _ }
+    "decimalnum"                           { TDec _ $$ }
+    "exponent"                             { TExp _ $$ }
+    "int"                                  { TInt _ $$ }
+    "pragma"                               { TPragma _ }
+    "import"                               { TImport _ }
+    "public"                               { TPublic _ }
+    "contract"                             { TContract _ }
+    "boolean"                              { TBooleanLit _ }
+    "true"                                 { TTrue _ }
+    "!"                                    { TNegate _ }
+    "&&"                                   { TAnd _ }
+    "||"                                   { TOr _ }
+    "!="                                   { TInEqual _ }
+    "<"                                    { TLThan _ }
+    ">"                                    { TGThan _ }
+    "<="                                   { TLTEq _ }
+    ">="                                   { TGTEq _ }
+    "=="                                   { TEquality _ }
+    "{"                                    { TLCurl _ }
+    "}"                                    { TRCurl _ }
+    "["                                    { TLBrack _ }
+    "]"                                    { TRBrack _ }
+    "."                                    { TPeriod _ }
+    "="                                    { TEquals _}
+    "*"                                    { TMult _ }
+    "/"                                    { TDiv _ }
+    "**"                                   { TExpSym _ }
+    "%"                                    { TModul _ }
+    op                                     { TOp _ $$ }
+    "-"                                    { TSub _ }
+    ";"                                    { TSemiCol _ }
+    ident                                  { TIdent _ $$ }                       -- The lexical token for an identifier 
+    stringLiteral                          { TStringLiteral _ $$ }
+    "("                                    { TLeftParen _ }
+    ")"                                    { TRightParen _ }
 
 %%
 
@@ -62,10 +62,10 @@ ImportDirective
 
 ContractDefinition : "contract" ident "{" ContractPart "}"                  { ContractDef $2 $4 }
 
-ContractPart : StateVariableDeclaration  { ContractPart $1 }
+ContractPart : StateVariableDeclaration                                     { ContractPart $1 }
 
-StateVariableDeclaration : TypeName "public" ident ";"                 { StateVar $1 $3 }
-                         | TypeName "public" ident "=" Expression ";"  { StateV $1 $3 $5 }
+StateVariableDeclaration : TypeName "public" ident ";"                      { StateVar $1 $3 }
+                         | TypeName "public" ident "=" Expression ";"       { StateV $1 $3 $5 }
 
 TypeName : ElementaryTypeName { ElemTypeName $1 }
 
@@ -77,9 +77,11 @@ Type: ident                               { TypeIdent $1}
 
 
 {
-
+-- The following grabs a token from the token list
 parseError :: [Token] -> a
-parseError _ = error "Parse Error."
+parseError tokenList = let pos = tokenPosn(head(tokenList)) 
+  in 
+  error ("Parse error at " ++ show (head(tokenList)) ++ show(getLineNum(pos)) ++ ":" ++ show(getColumnNum(pos)))
 
 data ProgSource = ProgSource SourceUnit 
                 deriving (Show, Eq)
@@ -91,11 +93,11 @@ data SourceUnit = SourceUnit PragmaDirective
 data PragmaDirective = Pragma String
                        deriving(Show, Eq)
 
-data ContractDef = ContractDef Ident ContractPart
-                   deriving (Show, Eq)
-
 data ImportDirective = ImportDir String
                        deriving (Show, Eq)
+
+data ContractDefi = ContractDef Ident ContractPart
+                    deriving (Show, Eq)
 
 data ContractPart = ContractPart StateVariableDeclaration
                     deriving (Show, Eq)

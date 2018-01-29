@@ -63,7 +63,7 @@ happyReduction_2 _  = notHappyAtAll
 
 happyReduce_3 = happySpecReduce_3  6 happyReduction_3
 happyReduction_3 _
-	(HappyTerminal (TIdent happy_var_2))
+	(HappyTerminal (TIdent _ happy_var_2))
 	_
 	 =  HappyAbsSyn6
 		 (Pragma happy_var_2
@@ -72,7 +72,7 @@ happyReduction_3 _ _ _  = notHappyAtAll
 
 happyReduce_4 = happySpecReduce_3  7 happyReduction_4
 happyReduction_4 _
-	(HappyTerminal (TStringLiteral happy_var_2))
+	(HappyTerminal (TStringLiteral _ happy_var_2))
 	_
 	 =  HappyAbsSyn7
 		 (ImportDir happy_var_2
@@ -83,7 +83,7 @@ happyReduce_5 = happyReduce 5 8 happyReduction_5
 happyReduction_5 (_ `HappyStk`
 	(HappyAbsSyn9  happy_var_4) `HappyStk`
 	_ `HappyStk`
-	(HappyTerminal (TIdent happy_var_2)) `HappyStk`
+	(HappyTerminal (TIdent _ happy_var_2)) `HappyStk`
 	_ `HappyStk`
 	happyRest)
 	 = HappyAbsSyn8
@@ -99,7 +99,7 @@ happyReduction_6 _  = notHappyAtAll
 
 happyReduce_7 = happyReduce 4 10 happyReduction_7
 happyReduction_7 (_ `HappyStk`
-	(HappyTerminal (TIdent happy_var_3)) `HappyStk`
+	(HappyTerminal (TIdent _ happy_var_3)) `HappyStk`
 	_ `HappyStk`
 	(HappyAbsSyn11  happy_var_1) `HappyStk`
 	happyRest)
@@ -111,7 +111,7 @@ happyReduce_8 = happyReduce 6 10 happyReduction_8
 happyReduction_8 (_ `HappyStk`
 	(HappyAbsSyn13  happy_var_5) `HappyStk`
 	_ `HappyStk`
-	(HappyTerminal (TIdent happy_var_3)) `HappyStk`
+	(HappyTerminal (TIdent _ happy_var_3)) `HappyStk`
 	_ `HappyStk`
 	(HappyAbsSyn11  happy_var_1) `HappyStk`
 	happyRest)
@@ -127,7 +127,7 @@ happyReduction_9 (HappyAbsSyn12  happy_var_1)
 happyReduction_9 _  = notHappyAtAll 
 
 happyReduce_10 = happySpecReduce_1  12 happyReduction_10
-happyReduction_10 (HappyTerminal (TStringLiteral happy_var_1))
+happyReduction_10 (HappyTerminal (TStringLiteral _ happy_var_1))
 	 =  HappyAbsSyn12
 		 (ElemType happy_var_1
 	)
@@ -135,7 +135,7 @@ happyReduction_10 _  = notHappyAtAll
 
 happyReduce_11 = happySpecReduce_3  13 happyReduction_11
 happyReduction_11 (HappyAbsSyn13  happy_var_3)
-	(HappyTerminal (TOp happy_var_2))
+	(HappyTerminal (TOp _ happy_var_2))
 	(HappyAbsSyn13  happy_var_1)
 	 =  HappyAbsSyn13
 		 (ExpOp happy_var_1 happy_var_2 happy_var_3
@@ -143,7 +143,7 @@ happyReduction_11 (HappyAbsSyn13  happy_var_3)
 happyReduction_11 _ _ _  = notHappyAtAll 
 
 happyReduce_12 = happySpecReduce_1  14 happyReduction_12
-happyReduction_12 (HappyTerminal (TIdent happy_var_1))
+happyReduction_12 (HappyTerminal (TIdent _ happy_var_1))
 	 =  HappyAbsSyn14
 		 (TypeIdent happy_var_1
 	)
@@ -155,42 +155,42 @@ happyNewToken action sts stk [] =
 happyNewToken action sts stk (tk:tks) =
 	let cont i = action i i tk (HappyState action) sts stk tks in
 	case tk of {
-	TReservedOp -> cont 15;
-	TDec happy_dollar_dollar -> cont 16;
-	TExp happy_dollar_dollar -> cont 17;
-	TInt happy_dollar_dollar -> cont 18;
-	TPragma -> cont 19;
-	TImport -> cont 20;
-	TPublic -> cont 21;
-	TContract -> cont 22;
-	TBooleanLit -> cont 23;
-	TTrue -> cont 24;
-	TNegate -> cont 25;
-	TAnd -> cont 26;
-	TOr -> cont 27;
-	TInEqual -> cont 28;
-	TLThan -> cont 29;
-	TGThan -> cont 30;
-	TLTEq -> cont 31;
-	TGTEq -> cont 32;
-	TEquality -> cont 33;
-	TLCurl -> cont 34;
-	TRCurl -> cont 35;
-	TLBrack -> cont 36;
-	TRBrack -> cont 37;
-	TPeriod -> cont 38;
-	TEquals -> cont 39;
-	TMult -> cont 40;
-	TDiv -> cont 41;
-	TExpSym -> cont 42;
-	TModul -> cont 43;
-	TOp happy_dollar_dollar -> cont 44;
-	TSub -> cont 45;
-	TSemiCol -> cont 46;
-	TIdent happy_dollar_dollar -> cont 47;
-	TStringLiteral happy_dollar_dollar -> cont 48;
-	TLeftParen -> cont 49;
-	TRightParen -> cont 50;
+	TReservedOp _ -> cont 15;
+	TDec _ happy_dollar_dollar -> cont 16;
+	TExp _ happy_dollar_dollar -> cont 17;
+	TInt _ happy_dollar_dollar -> cont 18;
+	TPragma _ -> cont 19;
+	TImport _ -> cont 20;
+	TPublic _ -> cont 21;
+	TContract _ -> cont 22;
+	TBooleanLit _ -> cont 23;
+	TTrue _ -> cont 24;
+	TNegate _ -> cont 25;
+	TAnd _ -> cont 26;
+	TOr _ -> cont 27;
+	TInEqual _ -> cont 28;
+	TLThan _ -> cont 29;
+	TGThan _ -> cont 30;
+	TLTEq _ -> cont 31;
+	TGTEq _ -> cont 32;
+	TEquality _ -> cont 33;
+	TLCurl _ -> cont 34;
+	TRCurl _ -> cont 35;
+	TLBrack _ -> cont 36;
+	TRBrack _ -> cont 37;
+	TPeriod _ -> cont 38;
+	TEquals _ -> cont 39;
+	TMult _ -> cont 40;
+	TDiv _ -> cont 41;
+	TExpSym _ -> cont 42;
+	TModul _ -> cont 43;
+	TOp _ happy_dollar_dollar -> cont 44;
+	TSub _ -> cont 45;
+	TSemiCol _ -> cont 46;
+	TIdent _ happy_dollar_dollar -> cont 47;
+	TStringLiteral _ happy_dollar_dollar -> cont 48;
+	TLeftParen _ -> cont 49;
+	TRightParen _ -> cont 50;
 	_ -> happyError' (tk:tks)
 	}
 
@@ -227,8 +227,11 @@ solidiscan tks = happyRunIdentity happySomeParser where
 happySeq = happyDontSeq
 
 
+-- The following grabs a token from the token list
 parseError :: [Token] -> a
-parseError _ = error "Parse Error."
+parseError tokenList = let pos = tokenPosn(head(tokenList)) 
+  in 
+  error ("Parse error at " ++ show (head(tokenList)) ++ show(getLineNum(pos)) ++ ":" ++ show(getColumnNum(pos)))
 
 data ProgSource = ProgSource SourceUnit 
                 deriving (Show, Eq)
@@ -240,11 +243,11 @@ data SourceUnit = SourceUnit PragmaDirective
 data PragmaDirective = Pragma String
                        deriving(Show, Eq)
 
-data ContractDef = ContractDef Ident ContractPart
-                   deriving (Show, Eq)
-
 data ImportDirective = ImportDir String
                        deriving (Show, Eq)
+
+data ContractDefi = ContractDef Ident ContractPart
+                    deriving (Show, Eq)
 
 data ContractPart = ContractPart StateVariableDeclaration
                     deriving (Show, Eq)
