@@ -1,6 +1,6 @@
 {
 module Parser(solidiscan) where
-import tokens
+import Lexer
 }
 
 %name solidiscan
@@ -12,6 +12,10 @@ import tokens
     "decimalnum"                           { TDec $$ }
     "exponent"                             { TExp $$ }
     "int"                                  { TInt $$ }
+    "pragma"                               { TPragma }
+    "import"                               { TImport }
+    "public"                               { TPublic }
+    "contract"                             { TContract }
     "boolean"                              { TBooleanLit }
     "true"                                 { TTrue }
     "!"                                    { TNegate }
@@ -33,8 +37,9 @@ import tokens
     "/"                                    { TDiv }
     "**"                                   { TExpSym }
     "%"                                    { TModul }
-    "+"                                    { TPlus }
+    op                                     { TOp $$ }
     "-"                                    { TSub }
+    ";"                                    { TSemiCol }
     ident                                  { TIdent $$ }                       -- The lexical token for an identifier 
     stringLiteral                          { TStringLiteral $$ }
     "("                                    { TLeftParen }
@@ -42,38 +47,76 @@ import tokens
 
 %%
 
-ProgSource   : SourceUnit                 { ProgSource $1 }
-             | ProgSources SourceUnit     { $2 : $1}
+ProgSource   :: { ProgSource }
+ProgSource   : SourceUnit                                                   { ProgSource $1 }
 
-SourceUnit   : PragmaDirective            { SourceUnit $1}
-             | ImportDirective
-             | ContractDefinition ";"
+SourceUnit   : PragmaDirective                                              { SourceUnit $1}
+             --| ImportDirective                                            { SourceUnit $1 }
+             --| ContractDefinition ";"                                     { ContractDefinition $1}
 
 PragmaDirective 
-             : "pragma" <identifier> "id" (Version "version") ";"
+             : "pragma" ident ";"                                           { Pragma $2 }
 
 ImportDirective 
-             : "import" stringLiteral ";"
+             : "import" stringLiteral ";"                                   { ImportDir $2 }
 
-ContractDefinition
-             : 
+ContractDefinition : "contract" ident "{" ContractPart "}"                  { ContractDef $2 $4 }
+
+ContractPart : StateVariableDeclaration  { ContractPart $1 }
+
+StateVariableDeclaration : TypeName "public" ident ";"                 { StateVar $1 $3 }
+                         | TypeName "public" ident "=" Expression ";"  { StateV $1 $3 $5 }
+
+TypeName : ElementaryTypeName { ElemTypeName $1 }
+
+ElementaryTypeName : stringLiteral { ElemType $1}
+ 
+Expression : Expression op Expression    { ExpOp $1 $2 $3 }
+
+Type: ident                               { TypeIdent $1}
 
 
 {
--- Parse error is the fallback function when we come across a problem
--- within the parsing
 
 parseError :: [Token] -> a
 parseError _ = error "Parse Error."
 
-data ProgSource = 
-                String 
+data ProgSource = ProgSource SourceUnit 
                 deriving (Show, Eq)
 
-data SourceUnit =
-                PragmaDirective String String 
+data SourceUnit = SourceUnit PragmaDirective
+                | ImportDirective
+                deriving (Show, Eq)
+              
+data PragmaDirective = Pragma String
+                       deriving(Show, Eq)
+
+data ContractDef = ContractDef Ident ContractPart
+                   deriving (Show, Eq)
+
+data ImportDirective = ImportDir String
+                       deriving (Show, Eq)
+
+data ContractPart = ContractPart StateVariableDeclaration
+                    deriving (Show, Eq)
+
+data StateVariableDeclaration = StateVar TypeName String
+                              | StateV TypeName String Exp
+                                deriving (Show, Eq)
+
+data TypeName = ElemTypeName String
                 deriving (Show, Eq)
 
-data ContractDefinition 
-                = 
+data ElemTypeName = ElemType String
+                    deriving (Show, Eq)
+
+data Exp = Exp String
+         | ExpOp Exp Char Exp
+           deriving (Show, Eq)
+
+data TypeIdent = TypeIdent Ident
+                 deriving (Show, Eq)
+
+type Ident = String
+
 }

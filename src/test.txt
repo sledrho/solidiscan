@@ -1,0 +1,4 @@
+pragma solidity;
+contract test_123 {
+  public variable = 1;
+}

@@ -1,5 +1,5 @@
 {
-module Lexer(main) where
+module Lexer where
 import Control.Monad
 }
 
@@ -38,6 +38,7 @@ $graphic  = $printable # $white
 -- The initial tokens used by the lexer, followed by Haskell code segments
 -- Each token has type String -> Token 
 -- Token being a custom type by Alex, all tokens MUST have the same type.
+
 tokens :-
 
     $white+                                ;
@@ -49,6 +50,10 @@ tokens :-
     @reservedid                            { \s -> TReservedOp }
     @int                                   { \s -> TIntLit (read s) }
     $digit+                                { \s -> TInt (read s) }
+    "pragma"                               { \s -> TPragma }
+    "import"                               { \s -> TImport }
+    "contract"                             { \s -> TContract }
+    "public"                               { \s -> TPublic }
     "boolean"                              { \s -> TBooleanLit }
     "true"                                 { \s -> TTrue }
     "false"                                { \s -> TFalse }
@@ -71,8 +76,9 @@ tokens :-
     "/"                                    { \s -> TDiv }
     "**"                                   { \s -> TExpSym }
     "%"                                    { \s -> TModul }
-    "+"                                    { \s -> TPlus }
+    "+"                                    { \s -> TOp (head s) }
     "-"                                    { \s -> TSub }
+    ";"                                    { \s -> TSemiCol }
     $alpha[$alpha $digit \_ \']*           { \s -> TIdent s }                       -- The lexical token for an identifier 
     @string                                { \s -> TStringLiteral (init (tail s)) } -- Lexical token for a string, (init(tail s)) removes leading and trailing "
     "("                                    { \s -> TLeftParen }
@@ -92,6 +98,10 @@ data Token =
         | TInt Int
         | TDec Int
         | TStringLiteral String
+        | TPragma
+        | TImport
+        | TContract
+        | TPublic
         | TBooleanLit
         | TTrue
         | TFalse
@@ -117,8 +127,9 @@ data Token =
         | TDiv
         | TExpSym
         | TModul
-        | TPlus 
+        | TOp Char
         | TSub
+        | TSemiCol
         deriving (Eq, Show)
 
 -- test case for the Lexical analysis
