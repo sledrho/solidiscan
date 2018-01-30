@@ -2,10 +2,10 @@ module Main where
 import Parser
 import Lexer
 
-s = "pragma solidity"
+s = "pragma solidity;contract ident_1234 { }"
 main :: IO ()
 main = do 
-  inStr <- getContents
-  let parseTree = solidiscan (alexScanTokens2 inStr)  
+  inStr <- getLine
+  let parseTree = solidiscan (alexScanTokens2 s)  
   putStrLn ("parseTree: " ++ show(parseTree))
   print "done"
