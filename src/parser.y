@@ -15,7 +15,7 @@ import Lexer
     "pragma"                               { TPragma _ }
     "import"                               { TImport _ }
     "public"                               { TPublic _ }
-    "contract"                             { TContract _ }
+    contract                               { TContract _ }
     "boolean"                              { TBooleanLit _ }
     "true"                                 { TTrue _ }
     "!"                                    { TNegate _ }
@@ -48,11 +48,13 @@ import Lexer
 %%
 
 ProgSource   :: { ProgSource }
-ProgSource   : SourceUnit                                                   { ProgSource $1 }
+ProgSource   : ProgSource SourceUnit                                                   { $2 : $1}
+             | SourceUnit                                                              { [ProgSource $1]}
 
-SourceUnit   : PragmaDirective                                              { SourceUnit $1}
+SourceUnit   : SourceUnit PragmaDirective                                              { $2 : $1 }
+             | SourceUnit                                                              { SourceUnit $1 }
              --| ImportDirective                                            { SourceUnit $1 }
-             --| ContractDefinition ";"                                     { ContractDefinition $1}
+             --| ContractDefinition                                           { ContractDef $1}
 
 PragmaDirective 
              : "pragma" ident ";"                                           { Pragma $2 }
@@ -60,17 +62,18 @@ PragmaDirective
 ImportDirective 
              : "import" stringLiteral ";"                                   { ImportDir $2 }
 
-ContractDefinition : "contract" ident "{" ContractPart "}"                  { ContractDef $2 $4 }
+ContractDefinition : contract ident "{" ContractPart "}"                    { Contract $2 $4 }
 
-ContractPart : StateVariableDeclaration                                     { ContractPart $1 }
+ContractPart : {- -}                                                        { [] }
 
 StateVariableDeclaration : TypeName "public" ident ";"                      { StateVar $1 $3 }
                          | TypeName "public" ident "=" Expression ";"       { StateV $1 $3 $5 }
+                         | {- empty -}                                      { [] }
 
 TypeName : ElementaryTypeName { ElemTypeName $1 }
 
 ElementaryTypeName : stringLiteral { ElemType $1}
- 
+  
 Expression : Expression op Expression    { ExpOp $1 $2 $3 }
 
 Type: ident                               { TypeIdent $1}
@@ -96,7 +99,7 @@ data PragmaDirective = Pragma String
 data ImportDirective = ImportDir String
                        deriving (Show, Eq)
 
-data ContractDefi = ContractDef Ident ContractPart
+data ContractDefinition = Contract Ident ContractPart
                     deriving (Show, Eq)
 
 data ContractPart = ContractPart StateVariableDeclaration

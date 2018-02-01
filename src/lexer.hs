@@ -15,12 +15,7 @@ import Data.Array.Base (unsafeAt)
 #else
 import Array
 #endif
-{-# LINE 1 "templates\wrappers.hs" #-}
-{-# LINE 1 "templates\\wrappers.hs" #-}
-{-# LINE 1 "<built-in>" #-}
-{-# LINE 1 "<command-line>" #-}
-{-# LINE 9 "<command-line>" #-}
-{-# LINE 1 "G:\\GitHub\\haskell-platform\\build\\ghc-bindist\\local\\lib/include\\ghcversion.h" #-}
+{-# LINE 1 "templates/wrappers.hs" #-}
 
 
 
@@ -36,8 +31,6 @@ import Array
 
 
 
-{-# LINE 9 "<command-line>" #-}
-{-# LINE 1 "C:\\Users\\randy\\AppData\\Local\\Temp\\ghc5204_0\\ghc_2.h" #-}
 
 
 
@@ -194,8 +187,14 @@ import Array
 
 
 
-{-# LINE 9 "<command-line>" #-}
-{-# LINE 1 "templates\\wrappers.hs" #-}
+
+
+
+
+
+
+
+
 -- -----------------------------------------------------------------------------
 -- Alex wrapper code.
 --
@@ -208,7 +207,7 @@ import Array
 
 
 import Data.Word (Word8)
-{-# LINE 28 "templates\\wrappers.hs" #-}
+
 
 import Data.Char (ord)
 import qualified Data.Bits
@@ -261,11 +260,11 @@ alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c
                               in p' `seq`  Just (b, (p', c, bs, s))
 
 
-{-# LINE 102 "templates\\wrappers.hs" #-}
 
-{-# LINE 120 "templates\\wrappers.hs" #-}
 
-{-# LINE 138 "templates\\wrappers.hs" #-}
+
+
+
 
 -- -----------------------------------------------------------------------------
 -- Token positions
@@ -293,27 +292,27 @@ alexMove (AlexPn a l c) _    = AlexPn (a+1)  l     (c+1)
 -- -----------------------------------------------------------------------------
 -- Default monad
 
-{-# LINE 272 "templates\\wrappers.hs" #-}
+
 
 
 -- -----------------------------------------------------------------------------
 -- Monad (with ByteString input)
 
-{-# LINE 375 "templates\\wrappers.hs" #-}
+
 
 
 -- -----------------------------------------------------------------------------
 -- Basic wrapper
 
-{-# LINE 402 "templates\\wrappers.hs" #-}
+
 
 
 -- -----------------------------------------------------------------------------
 -- Basic wrapper, ByteString version
 
-{-# LINE 422 "templates\\wrappers.hs" #-}
 
-{-# LINE 438 "templates\\wrappers.hs" #-}
+
+
 
 
 -- -----------------------------------------------------------------------------
@@ -336,13 +335,14 @@ alexScanTokens str = go (alexStartPos,'\n',[],str)
 -- -----------------------------------------------------------------------------
 -- Posn wrapper, ByteString version
 
-{-# LINE 471 "templates\\wrappers.hs" #-}
+
 
 
 -- -----------------------------------------------------------------------------
 -- GScan wrapper
 
 -- For compatibility with previous versions of Alex, and because we can.
+
 
 alex_tab_size :: Int
 alex_tab_size = 8
@@ -362,7 +362,7 @@ alex_accept = listArray (0::Int,144) [AlexAccNone,AlexAccNone,AlexAccNone,AlexAc
 
 alex_actions = array (0::Int,127) [(126,alex_action_1),(125,alex_action_1),(124,alex_action_1),(123,alex_action_2),(122,alex_action_2),(121,alex_action_3),(120,alex_action_3),(119,alex_action_3),(118,alex_action_4),(117,alex_action_4),(116,alex_action_4),(115,alex_action_6),(114,alex_action_7),(113,alex_action_8),(112,alex_action_9),(111,alex_action_10),(110,alex_action_11),(109,alex_action_12),(108,alex_action_13),(107,alex_action_14),(106,alex_action_15),(105,alex_action_16),(104,alex_action_17),(103,alex_action_18),(102,alex_action_19),(101,alex_action_20),(100,alex_action_21),(99,alex_action_22),(98,alex_action_23),(97,alex_action_24),(96,alex_action_25),(95,alex_action_26),(94,alex_action_27),(93,alex_action_28),(92,alex_action_29),(91,alex_action_30),(90,alex_action_31),(89,alex_action_32),(88,alex_action_33),(87,alex_action_34),(86,alex_action_35),(85,alex_action_35),(84,alex_action_35),(83,alex_action_35),(82,alex_action_35),(81,alex_action_35),(80,alex_action_35),(79,alex_action_35),(78,alex_action_35),(77,alex_action_35),(76,alex_action_35),(75,alex_action_35),(74,alex_action_35),(73,alex_action_35),(72,alex_action_35),(71,alex_action_35),(70,alex_action_35),(69,alex_action_35),(68,alex_action_35),(67,alex_action_35),(66,alex_action_35),(65,alex_action_35),(64,alex_action_35),(63,alex_action_35),(62,alex_action_35),(61,alex_action_35),(60,alex_action_35),(59,alex_action_35),(58,alex_action_35),(57,alex_action_35),(56,alex_action_35),(55,alex_action_35),(54,alex_action_35),(53,alex_action_35),(52,alex_action_35),(51,alex_action_35),(50,alex_action_35),(49,alex_action_35),(48,alex_action_35),(47,alex_action_35),(46,alex_action_35),(45,alex_action_35),(44,alex_action_35),(43,alex_action_35),(42,alex_action_35),(41,alex_action_35),(40,alex_action_35),(39,alex_action_35),(38,alex_action_35),(37,alex_action_35),(36,alex_action_35),(35,alex_action_35),(34,alex_action_35),(33,alex_action_35),(32,alex_action_35),(31,alex_action_35),(30,alex_action_35),(29,alex_action_35),(28,alex_action_35),(27,alex_action_35),(26,alex_action_35),(25,alex_action_35),(24,alex_action_35),(23,alex_action_35),(22,alex_action_35),(21,alex_action_35),(20,alex_action_35),(19,alex_action_35),(18,alex_action_35),(17,alex_action_35),(16,alex_action_35),(15,alex_action_35),(14,alex_action_35),(13,alex_action_35),(12,alex_action_35),(11,alex_action_35),(10,alex_action_35),(9,alex_action_35),(8,alex_action_35),(7,alex_action_35),(6,alex_action_35),(5,alex_action_35),(4,alex_action_35),(3,alex_action_35),(2,alex_action_36),(1,alex_action_37),(0,alex_action_38)]
 
-{-# LINE 88 "lexer.x" #-}
+{-# LINE 89 "lexer.x" #-}
 
 
 -- Each token has type: AlexPosn -> String -> Token
@@ -508,12 +508,7 @@ alex_action_35 =  \p s -> TIdent p s
 alex_action_36 =  \p s -> TStringLiteral p (init (tail s)) 
 alex_action_37 =  \p s -> TLeftParen p 
 alex_action_38 =  \p s -> TRightParen p 
-{-# LINE 1 "templates\GenericTemplate.hs" #-}
-{-# LINE 1 "templates\\GenericTemplate.hs" #-}
-{-# LINE 1 "<built-in>" #-}
-{-# LINE 1 "<command-line>" #-}
-{-# LINE 8 "<command-line>" #-}
-{-# LINE 1 "G:\\GitHub\\haskell-platform\\build\\ghc-bindist\\local\\lib/include\\ghcversion.h" #-}
+{-# LINE 1 "templates/GenericTemplate.hs" #-}
 
 
 
@@ -529,8 +524,6 @@ alex_action_38 =  \p s -> TRightParen p
 
 
 
-{-# LINE 8 "<command-line>" #-}
-{-# LINE 1 "C:\\Users\\randy\\AppData\\Local\\Temp\\ghc1976_0\\ghc_2.h" #-}
 
 
 
@@ -687,8 +680,14 @@ alex_action_38 =  \p s -> TRightParen p
 
 
 
-{-# LINE 8 "<command-line>" #-}
-{-# LINE 1 "templates\\GenericTemplate.hs" #-}
+
+
+
+
+
+
+
+
 -- -----------------------------------------------------------------------------
 -- ALEX TEMPLATE
 --
@@ -698,19 +697,19 @@ alex_action_38 =  \p s -> TRightParen p
 -- -----------------------------------------------------------------------------
 -- INTERNALS and main scanner engine
 
-{-# LINE 21 "templates\\GenericTemplate.hs" #-}
 
-{-# LINE 51 "templates\\GenericTemplate.hs" #-}
 
-{-# LINE 72 "templates\\GenericTemplate.hs" #-}
+
+
+
 alexIndexInt16OffAddr arr off = arr ! off
 
 
-{-# LINE 93 "templates\\GenericTemplate.hs" #-}
+
 alexIndexInt32OffAddr arr off = arr ! off
 
 
-{-# LINE 105 "templates\\GenericTemplate.hs" #-}
+
 quickIndex arr i = arr ! i
 
 
@@ -842,3 +841,4 @@ alexRightContext (sc) user _ _ input =
         -- TODO: there's no need to find the longest
         -- match when checking the right context, just
         -- the first match will do.
+

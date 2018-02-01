@@ -44,6 +44,7 @@ tokens :-
     $white+                                ;
 <0> @decimalnum
     | 0[xX] @hexadecimal+                  { \p s -> TDec p (read s) }
+
 -- Because of the way Int's are bound, they will overflow and wrap around - Limitations of Haskell Int datatype.
 <0> @decimalnum \. @decimalnum @exponent?
     | @decimalnum @exponent                { \p s -> TExp p (read s) }
@@ -52,7 +53,7 @@ tokens :-
     $digit+                                { \p s -> TInt p (read s) }
     "pragma"                               { \p s -> TPragma p }
     "import"                               { \p s -> TImport p }
-    "contract"                             { \p s -> TContract p }
+<0> contract                               { \p s -> TContract p }
     "public"                               { \p s -> TPublic p }
     "boolean"                              { \p s -> TBooleanLit p }
     "true"                                 { \p s -> TTrue p }

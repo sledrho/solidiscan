@@ -21,84 +21,107 @@ data HappyAbsSyn t5 t6 t7 t8 t9 t10 t11 t12 t13 t14
 	| HappyAbsSyn13 t13
 	| HappyAbsSyn14 t14
 
-action_0 (19) = happyShift action_4
-action_0 (4) = happyGoto action_5
-action_0 (5) = happyGoto action_2
-action_0 (6) = happyGoto action_3
+action_0 (4) = happyGoto action_4
+action_0 (5) = happyGoto action_3
 action_0 _ = happyFail
 
-action_1 (19) = happyShift action_4
-action_1 (5) = happyGoto action_2
-action_1 (6) = happyGoto action_3
+action_1 (4) = happyGoto action_2
+action_1 (5) = happyGoto action_3
 action_1 _ = happyFail
 
-action_2 _ = happyReduce_1
+action_2 (5) = happyGoto action_5
+action_2 _ = happyFail
 
-action_3 _ = happyReduce_2
+action_3 (19) = happyShift action_7
+action_3 (51) = happyReduce_4
+action_3 (6) = happyGoto action_6
+action_3 _ = happyReduce_4
 
-action_4 (47) = happyShift action_6
+action_4 (51) = happyAccept
+action_4 (5) = happyGoto action_5
 action_4 _ = happyFail
 
-action_5 (51) = happyAccept
-action_5 _ = happyFail
+action_5 (19) = happyShift action_7
+action_5 (51) = happyReduce_4
+action_5 (6) = happyGoto action_6
+action_5 _ = happyReduce_4
 
-action_6 (46) = happyShift action_7
-action_6 _ = happyFail
+action_6 _ = happyReduce_3
 
-action_7 _ = happyReduce_3
+action_7 (47) = happyShift action_8
+action_7 _ = happyFail
 
-happyReduce_1 = happySpecReduce_1  4 happyReduction_1
-happyReduction_1 (HappyAbsSyn5  happy_var_1)
+action_8 (46) = happyShift action_9
+action_8 _ = happyFail
+
+action_9 _ = happyReduce_5
+
+happyReduce_1 = happySpecReduce_2  4 happyReduction_1
+happyReduction_1 (HappyAbsSyn5  happy_var_2)
+	(HappyAbsSyn4  happy_var_1)
 	 =  HappyAbsSyn4
-		 (ProgSource happy_var_1
+		 (happy_var_2 : happy_var_1
 	)
-happyReduction_1 _  = notHappyAtAll 
+happyReduction_1 _ _  = notHappyAtAll 
 
-happyReduce_2 = happySpecReduce_1  5 happyReduction_2
-happyReduction_2 (HappyAbsSyn6  happy_var_1)
-	 =  HappyAbsSyn5
-		 (SourceUnit happy_var_1
+happyReduce_2 = happySpecReduce_1  4 happyReduction_2
+happyReduction_2 (HappyAbsSyn5  happy_var_1)
+	 =  HappyAbsSyn4
+		 ([ProgSource happy_var_1]
 	)
 happyReduction_2 _  = notHappyAtAll 
 
-happyReduce_3 = happySpecReduce_3  6 happyReduction_3
-happyReduction_3 _
+happyReduce_3 = happySpecReduce_2  5 happyReduction_3
+happyReduction_3 (HappyAbsSyn6  happy_var_2)
+	(HappyAbsSyn5  happy_var_1)
+	 =  HappyAbsSyn5
+		 (happy_var_2 : happy_var_1
+	)
+happyReduction_3 _ _  = notHappyAtAll 
+
+happyReduce_4 = happySpecReduce_1  5 happyReduction_4
+happyReduction_4 (HappyAbsSyn5  happy_var_1)
+	 =  HappyAbsSyn5
+		 (SourceUnit happy_var_1
+	)
+happyReduction_4 _  = notHappyAtAll 
+
+happyReduce_5 = happySpecReduce_3  6 happyReduction_5
+happyReduction_5 _
 	(HappyTerminal (TIdent _ happy_var_2))
 	_
 	 =  HappyAbsSyn6
 		 (Pragma happy_var_2
 	)
-happyReduction_3 _ _ _  = notHappyAtAll 
+happyReduction_5 _ _ _  = notHappyAtAll 
 
-happyReduce_4 = happySpecReduce_3  7 happyReduction_4
-happyReduction_4 _
+happyReduce_6 = happySpecReduce_3  7 happyReduction_6
+happyReduction_6 _
 	(HappyTerminal (TStringLiteral _ happy_var_2))
 	_
 	 =  HappyAbsSyn7
 		 (ImportDir happy_var_2
 	)
-happyReduction_4 _ _ _  = notHappyAtAll 
+happyReduction_6 _ _ _  = notHappyAtAll 
 
-happyReduce_5 = happyReduce 5 8 happyReduction_5
-happyReduction_5 (_ `HappyStk`
+happyReduce_7 = happyReduce 5 8 happyReduction_7
+happyReduction_7 (_ `HappyStk`
 	(HappyAbsSyn9  happy_var_4) `HappyStk`
 	_ `HappyStk`
 	(HappyTerminal (TIdent _ happy_var_2)) `HappyStk`
 	_ `HappyStk`
 	happyRest)
 	 = HappyAbsSyn8
-		 (ContractDef happy_var_2 happy_var_4
+		 (Contract happy_var_2 happy_var_4
 	) `HappyStk` happyRest
 
-happyReduce_6 = happySpecReduce_1  9 happyReduction_6
-happyReduction_6 (HappyAbsSyn10  happy_var_1)
-	 =  HappyAbsSyn9
-		 (ContractPart happy_var_1
+happyReduce_8 = happySpecReduce_0  9 happyReduction_8
+happyReduction_8  =  HappyAbsSyn9
+		 ([]
 	)
-happyReduction_6 _  = notHappyAtAll 
 
-happyReduce_7 = happyReduce 4 10 happyReduction_7
-happyReduction_7 (_ `HappyStk`
+happyReduce_9 = happyReduce 4 10 happyReduction_9
+happyReduction_9 (_ `HappyStk`
 	(HappyTerminal (TIdent _ happy_var_3)) `HappyStk`
 	_ `HappyStk`
 	(HappyAbsSyn11  happy_var_1) `HappyStk`
@@ -107,8 +130,8 @@ happyReduction_7 (_ `HappyStk`
 		 (StateVar happy_var_1 happy_var_3
 	) `HappyStk` happyRest
 
-happyReduce_8 = happyReduce 6 10 happyReduction_8
-happyReduction_8 (_ `HappyStk`
+happyReduce_10 = happyReduce 6 10 happyReduction_10
+happyReduction_10 (_ `HappyStk`
 	(HappyAbsSyn13  happy_var_5) `HappyStk`
 	_ `HappyStk`
 	(HappyTerminal (TIdent _ happy_var_3)) `HappyStk`
@@ -119,35 +142,40 @@ happyReduction_8 (_ `HappyStk`
 		 (StateV happy_var_1 happy_var_3 happy_var_5
 	) `HappyStk` happyRest
 
-happyReduce_9 = happySpecReduce_1  11 happyReduction_9
-happyReduction_9 (HappyAbsSyn12  happy_var_1)
+happyReduce_11 = happySpecReduce_0  10 happyReduction_11
+happyReduction_11  =  HappyAbsSyn10
+		 ([]
+	)
+
+happyReduce_12 = happySpecReduce_1  11 happyReduction_12
+happyReduction_12 (HappyAbsSyn12  happy_var_1)
 	 =  HappyAbsSyn11
 		 (ElemTypeName happy_var_1
 	)
-happyReduction_9 _  = notHappyAtAll 
+happyReduction_12 _  = notHappyAtAll 
 
-happyReduce_10 = happySpecReduce_1  12 happyReduction_10
-happyReduction_10 (HappyTerminal (TStringLiteral _ happy_var_1))
+happyReduce_13 = happySpecReduce_1  12 happyReduction_13
+happyReduction_13 (HappyTerminal (TStringLiteral _ happy_var_1))
 	 =  HappyAbsSyn12
 		 (ElemType happy_var_1
 	)
-happyReduction_10 _  = notHappyAtAll 
+happyReduction_13 _  = notHappyAtAll 
 
-happyReduce_11 = happySpecReduce_3  13 happyReduction_11
-happyReduction_11 (HappyAbsSyn13  happy_var_3)
+happyReduce_14 = happySpecReduce_3  13 happyReduction_14
+happyReduction_14 (HappyAbsSyn13  happy_var_3)
 	(HappyTerminal (TOp _ happy_var_2))
 	(HappyAbsSyn13  happy_var_1)
 	 =  HappyAbsSyn13
 		 (ExpOp happy_var_1 happy_var_2 happy_var_3
 	)
-happyReduction_11 _ _ _  = notHappyAtAll 
+happyReduction_14 _ _ _  = notHappyAtAll 
 
-happyReduce_12 = happySpecReduce_1  14 happyReduction_12
-happyReduction_12 (HappyTerminal (TIdent _ happy_var_1))
+happyReduce_15 = happySpecReduce_1  14 happyReduction_15
+happyReduction_15 (HappyTerminal (TIdent _ happy_var_1))
 	 =  HappyAbsSyn14
 		 (TypeIdent happy_var_1
 	)
-happyReduction_12 _  = notHappyAtAll 
+happyReduction_15 _  = notHappyAtAll 
 
 happyNewToken action sts stk [] =
 	action 51 51 notHappyAtAll (HappyState action) sts stk []
@@ -246,7 +274,7 @@ data PragmaDirective = Pragma String
 data ImportDirective = ImportDir String
                        deriving (Show, Eq)
 
-data ContractDefi = ContractDef Ident ContractPart
+data ContractDefinition = Contract Ident ContractPart
                     deriving (Show, Eq)
 
 data ContractPart = ContractPart StateVariableDeclaration
@@ -270,12 +298,7 @@ data TypeIdent = TypeIdent Ident
                  deriving (Show, Eq)
 
 type Ident = String
-{-# LINE 1 "templates\GenericTemplate.hs" #-}
-{-# LINE 1 "templates\\GenericTemplate.hs" #-}
-{-# LINE 1 "<built-in>" #-}
-{-# LINE 1 "<command-line>" #-}
-{-# LINE 8 "<command-line>" #-}
-{-# LINE 1 "G:\\GitHub\\haskell-platform\\build\\ghc-bindist\\local\\lib/include\\ghcversion.h" #-}
+{-# LINE 1 "templates/GenericTemplate.hs" #-}
 
 
 
@@ -291,8 +314,6 @@ type Ident = String
 
 
 
-{-# LINE 8 "<command-line>" #-}
-{-# LINE 1 "C:\\Users\\randy\\AppData\\Local\\Temp\\ghc8056_0\\ghc_2.h" #-}
 
 
 
@@ -449,13 +470,16 @@ type Ident = String
 
 
 
-{-# LINE 8 "<command-line>" #-}
-{-# LINE 1 "templates\\GenericTemplate.hs" #-}
+
+
+
+
+
+
+
+
 -- Id: GenericTemplate.hs,v 1.26 2005/01/14 14:47:22 simonmar Exp 
 
-{-# LINE 13 "templates\\GenericTemplate.hs" #-}
-
-{-# LINE 46 "templates\\GenericTemplate.hs" #-}
 
 
 
@@ -464,11 +488,21 @@ type Ident = String
 
 
 
-{-# LINE 67 "templates\\GenericTemplate.hs" #-}
 
-{-# LINE 77 "templates\\GenericTemplate.hs" #-}
 
-{-# LINE 86 "templates\\GenericTemplate.hs" #-}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 infixr 9 `HappyStk`
 data HappyStk a = HappyStk a (HappyStk a)
@@ -492,7 +526,7 @@ happyAccept j tk st sts (HappyStk ans _) =
 -----------------------------------------------------------------------------
 -- Arrays only: do the next action
 
-{-# LINE 155 "templates\\GenericTemplate.hs" #-}
+
 
 -----------------------------------------------------------------------------
 -- HappyState data type (not arrays)
@@ -586,7 +620,14 @@ happyDropStk n (x `HappyStk` xs) = happyDropStk (n - ((1)::Int)) xs
 -----------------------------------------------------------------------------
 -- Moving to a new state after a reduction
 
-{-# LINE 256 "templates\\GenericTemplate.hs" #-}
+
+
+
+
+
+
+
+
 happyGoto action j tk st = action j j tk (HappyState action)
 
 
@@ -645,7 +686,14 @@ happyDontSeq a b = b
 -- of deciding to inline happyGoto everywhere, which increases the size of
 -- the generated parser quite a bit.
 
-{-# LINE 322 "templates\\GenericTemplate.hs" #-}
+
+
+
+
+
+
+
+
 {-# NOINLINE happyShift #-}
 {-# NOINLINE happySpecReduce_0 #-}
 {-# NOINLINE happySpecReduce_1 #-}
@@ -657,3 +705,4 @@ happyDontSeq a b = b
 {-# NOINLINE happyFail #-}
 
 -- end of Happy Template.
+
