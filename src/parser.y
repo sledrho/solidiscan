@@ -69,11 +69,13 @@ StateVariableDeclaration : TypeName "public" ident ";"                          
                     
 TypeName : ident                                                                       { ElemTypeName $1 }
 
-ElementaryTypeName : ident                                                             { ElemType $1}
-  
---Expression : Expression op Expression                                                  { ExpOp $1 $2 $3 }
+-- The following are commented out until they will be used
 
-Type: ident                                                                            { TypeIdent $1}
+--ElementaryTypeName : ident                                                             { ElemType $1}
+  
+--Expression : Expression op Expression                                                { ExpOp $1 $2 $3 }
+
+--Type: ident                                                                            { TypeIdent $1}
 
 
 {
@@ -83,29 +85,46 @@ parseError tokenList = let pos = tokenPosn(head(tokenList))
   in 
   error ("Parse error at " ++ show (head(tokenList)) ++ show(getLineNum(pos)) ++ ":" ++ show(getColumnNum(pos)))
 
+
+-- The following are data types to store the source codes value
+
+{-
+SourceUnit is the overall program source consists of 3 main data values:
+    1. PragmaDirective (Essentially Version Information)
+    2. ImportUnit (Imported Contracts/Libraries)
+    3. ContractDef (A definition of an actual contract.)
+-}
+
 data SourceUnit = SourceUnit PragmaDirective
                 | ImportUnit ImportDirective 
                 | ContractDef ContractDefinition
                 deriving (Show, Eq)
               
+-- Version Information
 data PragmaDirective = Pragma String
                        deriving(Show, Eq)
 
+-- File imports/Contract Imports
 data ImportDirective = ImportDir String
                        deriving (Show, Eq)
 
+-- The definition of an actual Contract Code Block
 data ContractDefinition = Contract Ident ContractConts
                     deriving (Show, Eq)
 
+-- The contents of a Contract
 data ContractConts = ContractContents StateVariableDeclaration
                     deriving (Show, Eq)
 
+-- Declaring a variable, 
 data StateVariableDeclaration = StateVar TypeName String
                                 deriving (Show, Eq)
 
+-- The type of the variable assignment
 data TypeName = ElemTypeName Ident
                 deriving (Show, Eq)
 
+-- Elementary types e.g address/bool/string/var etc etc
 data ElemTypeName = ElemType Ident
                     deriving (Show, Eq)
 
@@ -116,6 +135,7 @@ data Exp = Exp String
 data TypeIdent = TypeIdent Ident
                  deriving (Show, Eq)
 
+-- Basic Identifier type :: String
 type Ident = String
 
 }

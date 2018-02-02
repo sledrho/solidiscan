@@ -6,7 +6,7 @@ import Control.Monad (ap)
 
 -- parser produced by Happy Version 1.19.5
 
-data HappyAbsSyn t4 t5 t6 t7 t8 t9 t10 t11 t12 t13
+data HappyAbsSyn t4 t5 t6 t7 t8 t9 t10 t11
 	= HappyTerminal (Token)
 	| HappyErrorToken Int
 	| HappyAbsSyn4 t4
@@ -17,18 +17,16 @@ data HappyAbsSyn t4 t5 t6 t7 t8 t9 t10 t11 t12 t13
 	| HappyAbsSyn9 t9
 	| HappyAbsSyn10 t10
 	| HappyAbsSyn11 t11
-	| HappyAbsSyn12 t12
-	| HappyAbsSyn13 t13
 
 action_0 (4) = happyGoto action_2
 action_0 _ = happyReduce_1
 
 action_1 _ = happyFail
 
-action_2 (18) = happyShift action_7
-action_2 (19) = happyShift action_8
-action_2 (21) = happyShift action_9
-action_2 (50) = happyAccept
+action_2 (16) = happyShift action_7
+action_2 (17) = happyShift action_8
+action_2 (19) = happyShift action_9
+action_2 (48) = happyAccept
 action_2 (5) = happyGoto action_3
 action_2 (6) = happyGoto action_4
 action_2 (7) = happyGoto action_5
@@ -43,50 +41,50 @@ action_5 _ = happyReduce_4
 
 action_6 _ = happyReduce_5
 
-action_7 (46) = happyShift action_12
+action_7 (44) = happyShift action_12
 action_7 _ = happyFail
 
-action_8 (47) = happyShift action_11
+action_8 (45) = happyShift action_11
 action_8 _ = happyFail
 
-action_9 (46) = happyShift action_10
+action_9 (44) = happyShift action_10
 action_9 _ = happyFail
 
-action_10 (33) = happyShift action_15
+action_10 (31) = happyShift action_15
 action_10 _ = happyFail
 
-action_11 (45) = happyShift action_14
+action_11 (43) = happyShift action_14
 action_11 _ = happyFail
 
-action_12 (45) = happyShift action_13
+action_12 (43) = happyShift action_13
 action_12 _ = happyFail
 
 action_13 _ = happyReduce_6
 
 action_14 _ = happyReduce_7
 
-action_15 (46) = happyShift action_19
+action_15 (44) = happyShift action_19
 action_15 (9) = happyGoto action_16
 action_15 (10) = happyGoto action_17
 action_15 (11) = happyGoto action_18
 action_15 _ = happyFail
 
-action_16 (34) = happyShift action_21
+action_16 (32) = happyShift action_21
 action_16 _ = happyFail
 
 action_17 _ = happyReduce_9
 
-action_18 (20) = happyShift action_20
+action_18 (18) = happyShift action_20
 action_18 _ = happyFail
 
 action_19 _ = happyReduce_11
 
-action_20 (46) = happyShift action_22
+action_20 (44) = happyShift action_22
 action_20 _ = happyFail
 
 action_21 _ = happyReduce_8
 
-action_22 (45) = happyShift action_23
+action_22 (43) = happyShift action_23
 action_22 _ = happyFail
 
 action_23 _ = happyReduce_10
@@ -178,66 +176,52 @@ happyReduction_11 (HappyTerminal (TIdent _ happy_var_1))
 	)
 happyReduction_11 _  = notHappyAtAll 
 
-happyReduce_12 = happySpecReduce_1  12 happyReduction_12
-happyReduction_12 (HappyTerminal (TIdent _ happy_var_1))
-	 =  HappyAbsSyn12
-		 (ElemType happy_var_1
-	)
-happyReduction_12 _  = notHappyAtAll 
-
-happyReduce_13 = happySpecReduce_1  13 happyReduction_13
-happyReduction_13 (HappyTerminal (TIdent _ happy_var_1))
-	 =  HappyAbsSyn13
-		 (TypeIdent happy_var_1
-	)
-happyReduction_13 _  = notHappyAtAll 
-
 happyNewToken action sts stk [] =
-	action 50 50 notHappyAtAll (HappyState action) sts stk []
+	action 48 48 notHappyAtAll (HappyState action) sts stk []
 
 happyNewToken action sts stk (tk:tks) =
 	let cont i = action i i tk (HappyState action) sts stk tks in
 	case tk of {
-	TReservedOp _ -> cont 14;
-	TDec _ happy_dollar_dollar -> cont 15;
-	TExp _ happy_dollar_dollar -> cont 16;
-	TInt _ happy_dollar_dollar -> cont 17;
-	TPragma _ -> cont 18;
-	TImport _ -> cont 19;
-	TPublic _ -> cont 20;
-	TContract _ -> cont 21;
-	TBooleanLit _ -> cont 22;
-	TTrue _ -> cont 23;
-	TNegate _ -> cont 24;
-	TAnd _ -> cont 25;
-	TOr _ -> cont 26;
-	TInEqual _ -> cont 27;
-	TLThan _ -> cont 28;
-	TGThan _ -> cont 29;
-	TLTEq _ -> cont 30;
-	TGTEq _ -> cont 31;
-	TEquality _ -> cont 32;
-	TLCurl _ -> cont 33;
-	TRCurl _ -> cont 34;
-	TLBrack _ -> cont 35;
-	TRBrack _ -> cont 36;
-	TPeriod _ -> cont 37;
-	TEquals _ -> cont 38;
-	TMult _ -> cont 39;
-	TDiv _ -> cont 40;
-	TExpSym _ -> cont 41;
-	TModul _ -> cont 42;
-	TOp _ happy_dollar_dollar -> cont 43;
-	TSub _ -> cont 44;
-	TSemiCol _ -> cont 45;
-	TIdent _ happy_dollar_dollar -> cont 46;
-	TStringLiteral _ happy_dollar_dollar -> cont 47;
-	TLeftParen _ -> cont 48;
-	TRightParen _ -> cont 49;
+	TReservedOp _ -> cont 12;
+	TDec _ happy_dollar_dollar -> cont 13;
+	TExp _ happy_dollar_dollar -> cont 14;
+	TInt _ happy_dollar_dollar -> cont 15;
+	TPragma _ -> cont 16;
+	TImport _ -> cont 17;
+	TPublic _ -> cont 18;
+	TContract _ -> cont 19;
+	TBooleanLit _ -> cont 20;
+	TTrue _ -> cont 21;
+	TNegate _ -> cont 22;
+	TAnd _ -> cont 23;
+	TOr _ -> cont 24;
+	TInEqual _ -> cont 25;
+	TLThan _ -> cont 26;
+	TGThan _ -> cont 27;
+	TLTEq _ -> cont 28;
+	TGTEq _ -> cont 29;
+	TEquality _ -> cont 30;
+	TLCurl _ -> cont 31;
+	TRCurl _ -> cont 32;
+	TLBrack _ -> cont 33;
+	TRBrack _ -> cont 34;
+	TPeriod _ -> cont 35;
+	TEquals _ -> cont 36;
+	TMult _ -> cont 37;
+	TDiv _ -> cont 38;
+	TExpSym _ -> cont 39;
+	TModul _ -> cont 40;
+	TOp _ happy_dollar_dollar -> cont 41;
+	TSub _ -> cont 42;
+	TSemiCol _ -> cont 43;
+	TIdent _ happy_dollar_dollar -> cont 44;
+	TStringLiteral _ happy_dollar_dollar -> cont 45;
+	TLeftParen _ -> cont 46;
+	TRightParen _ -> cont 47;
 	_ -> happyError' (tk:tks)
 	}
 
-happyError_ 50 tk tks = happyError' tks
+happyError_ 48 tk tks = happyError' tks
 happyError_ _ tk tks = happyError' (tk:tks)
 
 newtype HappyIdentity a = HappyIdentity a
@@ -276,29 +260,46 @@ parseError tokenList = let pos = tokenPosn(head(tokenList))
   in 
   error ("Parse error at " ++ show (head(tokenList)) ++ show(getLineNum(pos)) ++ ":" ++ show(getColumnNum(pos)))
 
+
+-- The following are data types to store the source codes value
+
+{-
+SourceUnit is the overall program source consists of 3 main data values:
+    1. PragmaDirective (Essentially Version Information)
+    2. ImportUnit (Imported Contracts/Libraries)
+    3. ContractDef (A definition of an actual contract.)
+-}
+
 data SourceUnit = SourceUnit PragmaDirective
                 | ImportUnit ImportDirective 
                 | ContractDef ContractDefinition
                 deriving (Show, Eq)
               
+-- Version Information
 data PragmaDirective = Pragma String
                        deriving(Show, Eq)
 
+-- File imports/Contract Imports
 data ImportDirective = ImportDir String
                        deriving (Show, Eq)
 
+-- The definition of an actual Contract Code Block
 data ContractDefinition = Contract Ident ContractConts
                     deriving (Show, Eq)
 
+-- The contents of a Contract
 data ContractConts = ContractContents StateVariableDeclaration
                     deriving (Show, Eq)
 
+-- Declaring a variable, 
 data StateVariableDeclaration = StateVar TypeName String
                                 deriving (Show, Eq)
 
+-- The type of the variable assignment
 data TypeName = ElemTypeName Ident
                 deriving (Show, Eq)
 
+-- Elementary types e.g address/bool/string/var etc etc
 data ElemTypeName = ElemType Ident
                     deriving (Show, Eq)
 
@@ -309,6 +310,7 @@ data Exp = Exp String
 data TypeIdent = TypeIdent Ident
                  deriving (Show, Eq)
 
+-- Basic Identifier type :: String
 type Ident = String
 {-# LINE 1 "templates\GenericTemplate.hs" #-}
 {-# LINE 1 "templates\\GenericTemplate.hs" #-}
