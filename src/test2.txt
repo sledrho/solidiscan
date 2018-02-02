@@ -1,3 +1,2 @@
 pragma solidity;
-pragma solidity;
-pragma solidity;
+import "solidity";
