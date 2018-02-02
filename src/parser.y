@@ -47,36 +47,33 @@ import Lexer
 
 %%
 
-ProgSource   :: { ProgSource }
-ProgSource   : ProgSource SourceUnit                                                   { $2 : $1}
-             | SourceUnit                                                              { [ProgSource $1]}
+SourceUnit : {- empty -}                                                             { [] }
+           | SourceUnit SourceUnitSol                                                { $2 : $1}
 
-SourceUnit   : SourceUnit PragmaDirective                                              { $2 : $1 }
-             | SourceUnit                                                              { SourceUnit $1 }
-             --| ImportDirective                                            { SourceUnit $1 }
-             --| ContractDefinition                                           { ContractDef $1}
+SourceUnitSol  : PragmaDirective                                                       { SourceUnit $1 }
+               | ImportDirective                                                       { ImportUnit $1 }
+               | ContractDefinition                                                    { ContractDef $1 }
 
 PragmaDirective 
-             : "pragma" ident ";"                                           { Pragma $2 }
+             : "pragma" ident ";"                                                      { Pragma $2 }
 
 ImportDirective 
-             : "import" stringLiteral ";"                                   { ImportDir $2 }
+             : "import" stringLiteral ";"                                              { ImportDir $2 }
 
-ContractDefinition : contract ident "{" ContractPart "}"                    { Contract $2 $4 }
+ContractDefinition 
+             : contract ident "{" ContractPart "}"                                     { Contract $2 $4 }
 
-ContractPart : {- -}                                                        { [] }
+ContractPart : StateVariableDeclaration                                                { ContractContents $1 }
 
-StateVariableDeclaration : TypeName "public" ident ";"                      { StateVar $1 $3 }
-                         | TypeName "public" ident "=" Expression ";"       { StateV $1 $3 $5 }
-                         | {- empty -}                                      { [] }
+StateVariableDeclaration : TypeName "public" ident ";"                                 { StateVar $1 $3 }
+                    
+TypeName : ident                                                                       { ElemTypeName $1 }
 
-TypeName : ElementaryTypeName { ElemTypeName $1 }
-
-ElementaryTypeName : stringLiteral { ElemType $1}
+ElementaryTypeName : ident                                                             { ElemType $1}
   
-Expression : Expression op Expression    { ExpOp $1 $2 $3 }
+--Expression : Expression op Expression                                                  { ExpOp $1 $2 $3 }
 
-Type: ident                               { TypeIdent $1}
+Type: ident                                                                            { TypeIdent $1}
 
 
 {
@@ -86,11 +83,9 @@ parseError tokenList = let pos = tokenPosn(head(tokenList))
   in 
   error ("Parse error at " ++ show (head(tokenList)) ++ show(getLineNum(pos)) ++ ":" ++ show(getColumnNum(pos)))
 
-data ProgSource = ProgSource SourceUnit 
-                deriving (Show, Eq)
-
 data SourceUnit = SourceUnit PragmaDirective
-                | ImportDirective
+                | ImportUnit ImportDirective 
+                | ContractDef ContractDefinition
                 deriving (Show, Eq)
               
 data PragmaDirective = Pragma String
@@ -99,20 +94,19 @@ data PragmaDirective = Pragma String
 data ImportDirective = ImportDir String
                        deriving (Show, Eq)
 
-data ContractDefinition = Contract Ident ContractPart
+data ContractDefinition = Contract Ident ContractConts
                     deriving (Show, Eq)
 
-data ContractPart = ContractPart StateVariableDeclaration
+data ContractConts = ContractContents StateVariableDeclaration
                     deriving (Show, Eq)
 
 data StateVariableDeclaration = StateVar TypeName String
-                              | StateV TypeName String Exp
                                 deriving (Show, Eq)
 
-data TypeName = ElemTypeName String
+data TypeName = ElemTypeName Ident
                 deriving (Show, Eq)
 
-data ElemTypeName = ElemType String
+data ElemTypeName = ElemType Ident
                     deriving (Show, Eq)
 
 data Exp = Exp String
