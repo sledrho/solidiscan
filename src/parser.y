@@ -16,6 +16,7 @@ import Lexer
     "import"                               { TImport _ }
     "public"                               { TPublic _ }
     contract                               { TContract _ }
+    "function"                             { TFuncDef _ }
     "boolean"                              { TBooleanLit _ }
     "true"                                 { TTrue _ }
     "!"                                    { TNegate _ }
@@ -47,12 +48,12 @@ import Lexer
 
 %%
 
-SourceUnit : {- empty -}                                                             { [] }
-           | SourceUnit SourceUnitSol                                                { $2 : $1}
+SourceUnit    : {- empty -}                                                            { [] }
+              | SourceUnit SourceUnitSol                                               { $2 : $1 }
 
-SourceUnitSol  : PragmaDirective                                                       { SourceUnit $1 }
-               | ImportDirective                                                       { ImportUnit $1 }
-               | ContractDefinition                                                    { ContractDef $1 }
+SourceUnitSol : PragmaDirective                                                        { SourceUnit $1 }
+              | ImportDirective                                                        { ImportUnit $1 }
+              | ContractDefinition                                                     { ContractDef $1 }
 
 PragmaDirective 
              : "pragma" ident ";"                                                      { Pragma $2 }
@@ -61,13 +62,33 @@ ImportDirective
              : "import" stringLiteral ";"                                              { ImportDir $2 }
 
 ContractDefinition 
-             : contract ident "{" ContractPart "}"                                     { Contract $2 $4 }
+             : contract ident "{" list1(ContractPart) "}"                               { Contract $2 $4 }
 
 ContractPart : StateVariableDeclaration                                                { ContractContents $1 }
+             | FunctionDefinition                                                      { FunctionDefinition $1 }
+
+FunctionDefinition
+             : "function" ident Parameter ";"                                          { FunctionDef $2 $3 }
+
+ParameterList : Parameter                                                              { $1 }
+
+Parameter    : ident                                                                   { $1 }
 
 StateVariableDeclaration : TypeName "public" ident ";"                                 { StateVar $1 $3 }
                     
 TypeName : ident                                                                       { ElemTypeName $1 }
+
+
+-- The following allows the parser to create lists of one or more or zero or more lists.
+-- one or more
+list1(p) : p                                                                           { [$1] }
+         | p list1(p)                                                                  { $1 : $2 }
+
+
+-- zero or more 
+list(p) : list1(p)                                                                     { $1 }
+        | {- empty -}                                                                  { [] }
+
 
 -- The following are commented out until they will be used
 
@@ -109,12 +130,16 @@ data ImportDirective = ImportDir String
                        deriving (Show, Eq)
 
 -- The definition of an actual Contract Code Block
-data ContractDefinition = Contract Ident ContractConts
+data ContractDefinition = Contract Ident [ContractConts]
                     deriving (Show, Eq)
 
 -- The contents of a Contract
 data ContractConts = ContractContents StateVariableDeclaration
+                   | FunctionDefinition FunctionContents
                     deriving (Show, Eq)
+
+data FunctionContents = FunctionDef FuncName FuncParam
+                        deriving(Show, Eq)
 
 -- Declaring a variable, 
 data StateVariableDeclaration = StateVar TypeName String
@@ -137,5 +162,7 @@ data TypeIdent = TypeIdent Ident
 
 -- Basic Identifier type :: String
 type Ident = String
+type FuncName = String
+type FuncParam = String
 
 }
