@@ -1,0 +1,20 @@
+pragma solidity;
+contract this_is_a_contract1 {
+  address public bank_account1;
+  function test_name test_param;
+}
+
+contract this_is_a_contract2 {
+  address public bank_account2;
+  function test_name2 test_param2;
+  address public test_1234;
+  function test_name5 test_param5;
+  address public test_14;
+}
+
+contract this_is_a_contract3 {
+  address public bank_account3;
+  function test_name3 test_param3;
+}
+
+
