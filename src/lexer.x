@@ -54,6 +54,7 @@ tokens :-
     "pragma"                               { \p s -> TPragma p }
     "import"                               { \p s -> TImport p }
 <0> contract                               { \p s -> TContract p }
+    "function"                             { \p s -> TFuncDef p }
     "public"                               { \p s -> TPublic p }
     "boolean"                              { \p s -> TBooleanLit p }
     "true"                                 { \p s -> TTrue p }
@@ -102,6 +103,7 @@ data Token =
         | TPragma AlexPosn
         | TImport AlexPosn
         | TContract AlexPosn
+        | TFuncDef AlexPosn
         | TPublic AlexPosn
         | TBooleanLit AlexPosn
         | TTrue AlexPosn
@@ -144,6 +146,7 @@ tokenPosn (TStringLiteral p str) = p
 tokenPosn (TPragma p) = p 
 tokenPosn (TImport p) = p 
 tokenPosn (TContract p) = p 
+tokenPosn (TFuncDef p) = p
 tokenPosn (TPublic p) = p 
 tokenPosn (TBooleanLit p) = p 
 tokenPosn (TTrue p) = p 
