@@ -1,4 +1,4 @@
 pragma solidity; 
 contract test_contract {
-  function test_name test_param;
+  function public dar;
 }
