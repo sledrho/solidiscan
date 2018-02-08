@@ -17,6 +17,7 @@ module Lexer where
 $digit = 0-9                                       -- digits
 $alpha = [a-zA-Z]                                  -- alphabetic characters
 $hexit = [0-9A-Fa-f]
+--$version = [\^\;]
 $graphic  = $printable # $white
 
 -- for comments
@@ -25,6 +26,8 @@ $graphic  = $printable # $white
 @string         = \" ($graphic # \")* \"
 @decimalnum     = $digit+
 @hexadecimal    = $hexit+
+-- Version info to parse pragma version
+@version        = \^ @decimalnum \. @decimalnum \. @decimalnum
 @exponent       = [eE] [\-\+] @decimalnum
 
 @int = int (8 | 16 | 24 | 32 | 40 | 48 | 56 | 64 | 72 | 80 | 88 | 96 | 104 | 112 | 120 
@@ -42,6 +45,7 @@ $graphic  = $printable # $white
 tokens :-
 
     $white+                                ;
+<0> @version                               { \p s -> TVers p }
 <0> @decimalnum
     | 0[xX] @hexadecimal+                  { \p s -> TDec p (read s) }
 
@@ -53,12 +57,18 @@ tokens :-
     $digit+                                { \p s -> TInt p (read s) }
     "pragma"                               { \p s -> TPragma p }
     "import"                               { \p s -> TImport p }
-<0> contract                               { \p s -> TContract p }
-    "function"                             { \p s -> TFuncDef p }
+    contract                               { \p s -> TContract p }
+    function                               { \p s -> TFuncDef p }
     "public"                               { \p s -> TPublic p }
-    "boolean"                              { \p s -> TBooleanLit p }
+    "internal"                             { \p s -> TIntern p }
+    "private"                              { \p s -> TPriv p }
+    "constant"                             { \p s -> TConst p }
+    "address"                              { \p s -> TAddr p }
+    "bool"                                 { \p s -> TBooleanLit p }
+    "var"                                  { \p s -> TVar p }
     "true"                                 { \p s -> TTrue p }
     "false"                                { \p s -> TFalse p }
+    "^"                                    { \p s -> THat p }
     "!"                                    { \p s -> TNegate p }
     "&&"                                   { \p s -> TAnd p }
     "||"                                   { \p s -> TOr p }
@@ -105,9 +115,16 @@ data Token =
         | TContract AlexPosn
         | TFuncDef AlexPosn
         | TPublic AlexPosn
+        | TIntern AlexPosn
+        | TPriv AlexPosn
+        | TConst AlexPosn
         | TBooleanLit AlexPosn
+        | TAddr AlexPosn
+        | TVar AlexPosn
         | TTrue AlexPosn
         | TFalse AlexPosn
+        | TVers AlexPosn
+        | THat AlexPosn
         | TNegate AlexPosn
         | TAnd AlexPosn
         | TOr AlexPosn
@@ -135,6 +152,7 @@ data Token =
         | TSemiCol AlexPosn
         deriving (Eq, Show)
 
+tokenPosn (TVers p) = p
 tokenPosn (TIdent p id) = p
 tokenPosn (TReservedOp p) = p 
 tokenPosn (THexNum p) = p
@@ -146,11 +164,16 @@ tokenPosn (TStringLiteral p str) = p
 tokenPosn (TPragma p) = p 
 tokenPosn (TImport p) = p 
 tokenPosn (TContract p) = p 
-tokenPosn (TFuncDef p) = p
 tokenPosn (TPublic p) = p 
-tokenPosn (TBooleanLit p) = p 
+tokenPosn (TPriv p) = p 
+tokenPosn (TIntern p) = p
+tokenPosn (TConst p) = p
+tokenPosn (TAddr p) = p
+tokenPosn (TBooleanLit p) = p
+tokenPosn (TVar p ) = p 
 tokenPosn (TTrue p) = p 
-tokenPosn (TFalse p) = p 
+tokenPosn (TFalse p) = p
+tokenPosn (THat p) = p 
 tokenPosn (TNegate p) = p 
 tokenPosn (TAnd p) = p 
 tokenPosn (TOr p) = p 
