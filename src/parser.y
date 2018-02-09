@@ -69,8 +69,8 @@ PragmaDirective :: { PragmaDirective }
 PragmaDirective 
              : "pragma" PragmaName version ";"                                         { PragmaDirective $2 }
 
+PragmaName :: { PragmaName }
 PragmaName : ident                                                                     { PragmaName $1 }
-PragmaValue : "decimalnum"                                                                    { $1 }
 
 ImportDirective :: { ImportDirective }
 ImportDirective 
@@ -89,7 +89,7 @@ ContractPart : StateVarDec                                                      
 
 FunctionDefinition :: { FunctionContents }
 FunctionDefinition 
-             : function ident Parameter ";"                                      { FunctionDef $2 $3 }
+             : function ident Parameter ";"                                            { FunctionDef $2 $3 }
 
 Parameter :: { Ident }
 Parameter    : ident                                                                   { $1 }
@@ -97,7 +97,7 @@ Parameter    : ident                                                            
 -- StateVarDec = TypeName ( 'public' | 'internal' | 'private' | 'constant' )? Identifier ('=' Expression)? ';'
 -- Passing the ident into the Ident function to ensure its type is formatted correctly
 StateVarDec :: { StateVarDec }                                                         -- Passing $3 token into Identifier to return the appropriate data type
-             : TypeName zero(AssVar) ident zero(MExpression) ";"                      { StateVariableDeclaration $1 $2 (Identifier $3) $4 }
+             : TypeName zero(AssVar) ident zero(MExpression) ";"                       { StateVariableDeclaration $1 $2 (Identifier $3) $4 }
 
 TypeName     : ElementaryTypeName                                                      { ElementaryTypeName $1 }
              | UserDefinedTypeName                                                     {  $1 }
