@@ -59,13 +59,14 @@ tokens :-
     "import"                               { \p s -> TImport p }
     contract                               { \p s -> TContract p }
     function                               { \p s -> TFuncDef p }
-    "public"                               { \p s -> TPublic p }
-    "internal"                             { \p s -> TIntern p }
-    "private"                              { \p s -> TPriv p }
-    "constant"                             { \p s -> TConst p }
-    "address"                              { \p s -> TAddr p }
-    "bool"                                 { \p s -> TBooleanLit p }
-    "var"                                  { \p s -> TVar p }
+    "public"                                { \p s -> TPublic p s }
+    "internal"                             { \p s -> TIntern p s }
+    "private"                              { \p s -> TPriv p s }
+    "constant"                             { \p s -> TConst p s }
+    "string"                               { \p s -> TStringAs p s }
+    "address"                              { \p s -> TAddr p s }
+    "bool"                                 { \p s -> TBooleanLit p s }
+    "var"                                  { \p s -> TVar p s }
     "true"                                 { \p s -> TTrue p }
     "false"                                { \p s -> TFalse p }
     "^"                                    { \p s -> THat p }
@@ -114,13 +115,14 @@ data Token =
         | TImport AlexPosn
         | TContract AlexPosn
         | TFuncDef AlexPosn
-        | TPublic AlexPosn
-        | TIntern AlexPosn
-        | TPriv AlexPosn
-        | TConst AlexPosn
-        | TBooleanLit AlexPosn
-        | TAddr AlexPosn
-        | TVar AlexPosn
+        | TPublic AlexPosn String                   -- In order to pass through the value of the token, as opposed to the token position.
+        | TIntern AlexPosn String
+        | TPriv AlexPosn String
+        | TConst AlexPosn String
+        | TStringAs AlexPosn String
+        | TAddr AlexPosn String
+        | TVar AlexPosn String
+        | TBooleanLit AlexPosn String
         | TTrue AlexPosn
         | TFalse AlexPosn
         | TVers AlexPosn
@@ -164,13 +166,14 @@ tokenPosn (TStringLiteral p str) = p
 tokenPosn (TPragma p) = p 
 tokenPosn (TImport p) = p 
 tokenPosn (TContract p) = p 
-tokenPosn (TPublic p) = p 
-tokenPosn (TPriv p) = p 
-tokenPosn (TIntern p) = p
-tokenPosn (TConst p) = p
-tokenPosn (TAddr p) = p
-tokenPosn (TBooleanLit p) = p
-tokenPosn (TVar p ) = p 
+tokenPosn (TPublic p str) = p 
+tokenPosn (TPriv p str) = p 
+tokenPosn (TIntern p str) = p
+tokenPosn (TConst p str) = p
+tokenPosn (TStringAs p str) = p
+tokenPosn (TAddr p str) = p
+tokenPosn (TBooleanLit p str) = p
+tokenPosn (TVar p str) = p 
 tokenPosn (TTrue p) = p 
 tokenPosn (TFalse p) = p
 tokenPosn (THat p) = p 
