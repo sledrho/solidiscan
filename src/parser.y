@@ -10,20 +10,21 @@ import Lexer
 %token
     "reservedid"                           { TReservedOp _ }
     version                                { TVers _ }
-    "decimalnum"                           { TDec _ $$ }
-    "exponent"                             { TExp _ $$ }
+    "decimalnum"                           { TDec _ $$ }            -- $$ allows us to pass through the value of the token
+    "exponent"                             { TExp _ $$ }            -- Can be seen in Int/Op/StringLiteral tokens also
     "int"                                  { TInt _ $$ }
     "pragma"                               { TPragma _ }
     "import"                               { TImport _ }
-    "public"                               { TPublic _ }
-    "internal"                             { TIntern _ }
-    "private"                              { TPriv _ }
-    "constant"                             { TConst _ }
+    "public"                               { TPublic _ $$}
+    "internal"                             { TIntern _ $$}
+    "private"                              { TPriv _ $$}
+    "constant"                             { TConst _ $$}
+    "string"                               { TStringAs _ $$}
     contract                               { TContract _ }
     function                               { TFuncDef _ }
-    "address"                              { TAddr _}
-    "bool"                                 { TBooleanLit _ }
-    "var"                                  { TVar _ }
+    "address"                              { TAddr _ $$ }
+    "bool"                                 { TBooleanLit _ $$ }
+    "var"                                  { TVar _ $$ }
     "true"                                 { TTrue _ }
     "false"                                { TFalse _ }
     "^"                                    { THat _ }
@@ -79,7 +80,7 @@ ContractDefinition                                                              
              : contract ident "{" list(ContractPart) "}"                               { Contract (Identifier $2) $4 }
 
 ContractPart :: { ContractConts }
-ContractPart : StateVariableDeclaration                                                { ContractContents $1 }
+ContractPart : StateVarDec                                                             { ContractContents $1 }
              | FunctionDefinition                                                      { FunctionDefinition $1 }
 
 FunctionDefinition :: { FunctionContents }
@@ -88,34 +89,38 @@ FunctionDefinition
 
 Parameter    : ident                                                                   { $1 }
 
--- StateVariableDeclaration = TypeName ( 'public' | 'internal' | 'private' | 'constant' )? Identifier ('=' Expression)? ';'
+-- StateVarDec = TypeName ( 'public' | 'internal' | 'private' | 'constant' )? Identifier ('=' Expression)? ';'
 -- Passing the ident into the Ident function to ensure its type is formatted correctly
-StateVariableDeclaration                                                               -- Passing $3 token into Identifier to return the appropriate data type
-             : TypeName AssVar ident MExpression ";"                                      { StateVar $1 (Identifier $3) $4 }
+StateVarDec                                                               -- Passing $3 token into Identifier to return the appropriate data type
+             : TypeName zero(AssVar) ident zero(MExpression) ";"                      { StateVariableDeclaration $1 $2 (Identifier $3) $4 }
 
-AssVarL      : AssVar                                                                  { [$1] } 
+AssVarL      : AssVar                                                                  { $1 } 
              | AssVarL AssVar                                                          { $2 : $1 }
 
-AssVar       : "public"                                                                { $1 }
-             | "internal"                                                              { $1 }
-             | "private"                                                               { $1 }
-             | "constant"                                                              { $1 }       
+AssVar       : "public"                                                                { PublicKeyword $1 }       
+             | "private"                                                               { PrivateKeyword $1 }
+             | "internal"                                                              { InternalKeyword $1 }
+             | "constant"                                                              { ConstantKeyword $1 }
 
-MaybeExp     : {- empty -}                                                             { [] }
-             | MaybeExp MExpression                                                    { $2 : $1 }
+MaybeExp     : MExpression                                                             { $1 }
+             | {- empty -}                                                             { [] }
+             
 
 MExpression  : "=" Expression                                                          { Expression $2 }
 
-Expression   : ident                                       { $1 }
+Expression   : ident                                                                   { $1 }
+
+TypeName     : ElementaryTypeName                                                     { Elem$1 }
+             | UserDefinedTypeName                                                    { $1 }
+
+UserDefinedTypeName
+            : ident                                                                    {UserDefinedTypeName $1}
 
 
-TypeName     : ElementaryTypeNames                                                     { $1 }
-
-ElementaryTypeNames : ident                                                            {ElemType $1}
-ElementaryTypeName : "address"                                                         {  $1 }                                                
-                   | "bool"                                                            {  $1 }
-                   | "var"                                                             {  $1 }
-                   --| "string"                                                        {  $1 }
+ElementaryTypeName : "address"                                                         { AddrType $1 }                                     
+                   | "bool"                                                            { BoolType $1 }
+                   | "var"                                                             { VarType $1 }
+                   | "string"                                                          { StringType $1 }
 
 -- The following allows the parser to create lists of one or more or zero or more lists.
 -- one or more
@@ -124,6 +129,15 @@ list1(p) : p                                                                    
 -- zero or more 
 list(p) : list1(p)                                                                     { $1 }
         | {- empty -}                                                                  { [] }
+
+-- 1 or many of StateVar assignments
+multi(z): z                                                                            { [$1] }
+        | z multi(z)                                                                   { $1 : $2 }
+
+zero(q) : q                                                                            { [$1] }
+        | {- empty -}                                                                  { [] }  
+
+
 -- The following are commented out until they will be used
 --Expression : Expression op Expression                                                { ExpOp $1 $2 $3 }
 --Type: ident                                                                            { TypeIdent $1}
@@ -164,36 +178,44 @@ data ImportDirective = ImportDir String
 
 -- The definition of an actual Contract Code Block
 data ContractDefinition = Contract Identifier [ContractConts]
-                    deriving (Show, Eq)
+                          deriving (Show, Eq)
 
 -- The contents of a Contract
-data ContractConts = ContractContents StateVariableDeclaration
+data ContractConts = ContractContents StateVarDec
                    | FunctionDefinition FunctionContents
-                    deriving (Show, Eq)
+                     deriving (Show, Eq)
 
 data FunctionContents = FunctionDef FuncName FuncParam
                         deriving(Show, Eq)
 
 -- Declaring a variable, 
-data StateVariableDeclaration = StateVar ElemTypeName Identifier Expression
+data StateVarDec = StateVariableDeclaration TypeName [PublicKeyword] Identifier [Expression]
                                 deriving (Show, Eq)
 
-
 data Identifier = Identifier Ident
-                deriving(Show, Eq)    
+                  deriving(Show, Eq)    
 
-data AssVars = AssVar Ident
-              deriving(Show, Eq)
+data AssVar = AssVar Ident
+               deriving(Show, Eq)
+            
+data PublicKeyword = PublicKeyword Ident
+                   | InternalKeyword Ident
+                   | VarType Ident
+                   | StringType Ident
+                     deriving(Show, Eq)
+
 -- The type of the variable assignment
-{-
-data TypeName = ElemTypeName Ident
-                deriving (Show, Eq)
-
--}
+data ElemType = AddrType Ident
+              | BoolType Ident
+              | PrivateKeyword Ident
+              | ConstantKeyword Ident
+                deriving(Show, Eq)
 
 -- Elementary types e.g address/bool/string/var etc etc
-data ElemTypeName = ElemType Ident
-                    deriving (Show, Eq)
+data TypeName = TypeName Ident
+--              | ElementaryTypeName ElemType      
+--              | UserDefinedTypeName Ident         
+                deriving (Show, Eq)
 
 data Exp = Exp String
          | ExpOp Exp Char Exp
@@ -202,7 +224,7 @@ data Exp = Exp String
 data TypeIdent = TypeIdent Ident
                  deriving (Show, Eq)
 
-data Expression = Expression Identifier
+data Expression = Expression Ident
                   deriving (Show, Eq)
 
 -- Basic Identifier type :: String
