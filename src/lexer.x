@@ -59,7 +59,7 @@ tokens :-
     "import"                               { \p s -> TImport p }
     contract                               { \p s -> TContract p }
     function                               { \p s -> TFuncDef p }
-    "public"                                { \p s -> TPublic p s }
+    "public"                               { \p s -> TPublic p s }
     "internal"                             { \p s -> TIntern p s }
     "private"                              { \p s -> TPriv p s }
     "constant"                             { \p s -> TConst p s }
@@ -69,6 +69,7 @@ tokens :-
     "var"                                  { \p s -> TVar p s }
     "true"                                 { \p s -> TTrue p }
     "false"                                { \p s -> TFalse p }
+    "as"                                   { \p s -> TAs p }
     "^"                                    { \p s -> THat p }
     "!"                                    { \p s -> TNegate p }
     "&&"                                   { \p s -> TAnd p }
@@ -125,6 +126,7 @@ data Token =
         | TBooleanLit AlexPosn String
         | TTrue AlexPosn
         | TFalse AlexPosn
+        | TAs AlexPosn
         | TVers AlexPosn
         | THat AlexPosn
         | TNegate AlexPosn
@@ -176,6 +178,7 @@ tokenPosn (TBooleanLit p str) = p
 tokenPosn (TVar p str) = p 
 tokenPosn (TTrue p) = p 
 tokenPosn (TFalse p) = p
+tokenPosn (TAs p) = p
 tokenPosn (THat p) = p 
 tokenPosn (TNegate p) = p 
 tokenPosn (TAnd p) = p 
