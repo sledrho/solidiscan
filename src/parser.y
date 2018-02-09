@@ -27,6 +27,7 @@ import Lexer
     "var"                                  { TVar _ $$ }
     "true"                                 { TTrue _ }
     "false"                                { TFalse _ }
+    "as"                                   { TAs _ }
     "^"                                    { THat _ }
     "!"                                    { TNegate _ }
     "&&"                                   { TAnd _ }
@@ -73,7 +74,10 @@ PragmaValue : "decimalnum"                                                      
 
 ImportDirective :: { ImportDirective }
 ImportDirective 
-             : "import" stringLiteral ";"                                              { ImportDir $2 }
+             : "import" stringLiteral ImportAs ";"                                              { ImportDir $2 }
+
+ImportAs     : "as" ident                                                              { $2 } 
+             | {- empty -}                                                             { [] }
 
 ContractDefinition :: { ContractDefinition }
 ContractDefinition                                                                    -- Passing the $2 token to Identifier to return the appropriate data type
@@ -85,17 +89,18 @@ ContractPart : StateVarDec                                                      
 
 FunctionDefinition :: { FunctionContents }
 FunctionDefinition 
-             : function ident Parameter ";"                                            { FunctionDef $2 $3 }
+             : function ident Parameter ";"                                      { FunctionDef $2 $3 }
 
+Parameter :: { Ident }
 Parameter    : ident                                                                   { $1 }
 
 -- StateVarDec = TypeName ( 'public' | 'internal' | 'private' | 'constant' )? Identifier ('=' Expression)? ';'
 -- Passing the ident into the Ident function to ensure its type is formatted correctly
-StateVarDec                                                               -- Passing $3 token into Identifier to return the appropriate data type
+StateVarDec :: { StateVarDec }                                                         -- Passing $3 token into Identifier to return the appropriate data type
              : TypeName zero(AssVar) ident zero(MExpression) ";"                      { StateVariableDeclaration $1 $2 (Identifier $3) $4 }
 
-AssVarL      : AssVar                                                                  { $1 } 
-             | AssVarL AssVar                                                          { $2 : $1 }
+TypeName     : ElementaryTypeName                                                      { ElementaryTypeName $1 }
+             | UserDefinedTypeName                                                     {  $1 }
 
 AssVar       : "public"                                                                { PublicKeyword $1 }       
              | "private"                                                               { PrivateKeyword $1 }
@@ -105,17 +110,11 @@ AssVar       : "public"                                                         
 MaybeExp     : MExpression                                                             { $1 }
              | {- empty -}                                                             { [] }
              
-
 MExpression  : "=" Expression                                                          { Expression $2 }
 
 Expression   : ident                                                                   { $1 }
 
-TypeName     : ElementaryTypeName                                                     { Elem$1 }
-             | UserDefinedTypeName                                                    { $1 }
-
-UserDefinedTypeName
-            : ident                                                                    {UserDefinedTypeName $1}
-
+UserDefinedTypeName : ident                                                           {UserDefinedTypeName $1}
 
 ElementaryTypeName : "address"                                                         { AddrType $1 }                                     
                    | "bool"                                                            { BoolType $1 }
@@ -190,7 +189,7 @@ data FunctionContents = FunctionDef FuncName FuncParam
 
 -- Declaring a variable, 
 data StateVarDec = StateVariableDeclaration TypeName [PublicKeyword] Identifier [Expression]
-                                deriving (Show, Eq)
+                   deriving (Show, Eq)
 
 data Identifier = Identifier Ident
                   deriving(Show, Eq)    
@@ -199,22 +198,23 @@ data AssVar = AssVar Ident
                deriving(Show, Eq)
             
 data PublicKeyword = PublicKeyword Ident
+                   | PrivateKeyword Ident
                    | InternalKeyword Ident
-                   | VarType Ident
-                   | StringType Ident
+                   | ConstantKeyword Ident
                      deriving(Show, Eq)
 
 -- The type of the variable assignment
+
 data ElemType = AddrType Ident
               | BoolType Ident
-              | PrivateKeyword Ident
-              | ConstantKeyword Ident
+              | StringType Ident
+              | VarType Ident
                 deriving(Show, Eq)
 
 -- Elementary types e.g address/bool/string/var etc etc
 data TypeName = TypeName Ident
---              | ElementaryTypeName ElemType      
---              | UserDefinedTypeName Ident         
+              | ElementaryTypeName ElemType
+              | UserDefinedTypeName Ident         
                 deriving (Show, Eq)
 
 data Exp = Exp String
