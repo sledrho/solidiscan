@@ -4,8 +4,6 @@ import Lexer
 import Test
 import Test.HUnit
 
-s = "pragma solidity; contract ident_1234 { }"
-
 {-
 main :: IO ()
 main = do 
@@ -13,6 +11,7 @@ main = do
   let parseTree = solidiscan (alexScanTokens2 inStr)  
   putStrLn ("parseTree: " ++ show(reverse(parseTree)))
 -}
+
 main :: IO ()
 main = do
   runTestTT test1
