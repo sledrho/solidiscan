@@ -1,6 +1,7 @@
 {
 module Parser(solidiscan) where
 import Lexer
+import AST
 }
 
 %name solidiscan
@@ -21,13 +22,17 @@ import Lexer
     "constant"                             { TConst _ $$}
     "string"                               { TStringAs _ $$}
     contract                               { TContract _ }
+    "library"                              { TLibrary _ }
+    "interface"                            { TInterface _ }
     function                               { TFuncDef _ }
     "address"                              { TAddr _ $$ }
     "bool"                                 { TBooleanLit _ $$ }
     "var"                                  { TVar _ $$ }
-    "true"                                 { TTrue _ }
-    "false"                                { TFalse _ }
+    "true"                                 { TTrue _ $$ }
+    "false"                                { TFalse _ $$ }
     "as"                                   { TAs _ }
+    "is"                                   { TIs _ }
+    "from"                                 { TFrom _ }
     "^"                                    { THat _ }
     "!"                                    { TNegate _ }
     "&&"                                   { TAnd _ }
@@ -51,6 +56,7 @@ import Lexer
     op                                     { TOp _ $$ }
     "-"                                    { TSub _ }
     ";"                                    { TSemiCol _ }
+    ","                                    { TComma _ }
     ident                                  { TIdent _ $$ }                       -- The lexical token for an identifier 
     stringLiteral                          { TStringLiteral _ $$ }
     "("                                    { TLeftParen _ }
@@ -65,34 +71,54 @@ SourceUnitSol : PragmaDirective                                                 
               | ImportDirective                                                        { ImportUnit $1 }
               | ContractDefinition                                                     { ContractDef $1 }
 
-PragmaDirective :: { PragmaDirective }
-PragmaDirective 
+PragmaDirective :: { PragmaDirective } 
              : "pragma" PragmaName version ";"                                         { PragmaDirective $2 }
 
 PragmaName :: { PragmaName }
-PragmaName : ident                                                                     { PragmaName $1 }
+             : ident                                                                   { PragmaName $1 }
 
-ImportDirective :: { ImportDirective }
-ImportDirective 
-             : "import" stringLiteral ImportAs ";"                                              { ImportDir $2 }
+ImportDirective :: { ImportDirective } 
+             : "import" stringLiteral ImportAs ";"                                     { ImportDir $2 }
+             | "import" ImportAster ImportAs "from" stringLiteral ";"                  { ImportMulti $2 $3 "from" $5}
 
 ImportAs     : "as" ident                                                              { $2 } 
              | {- empty -}                                                             { [] }
 
-ContractDefinition :: { ContractDefinition }
-ContractDefinition                                                                    -- Passing the $2 token to Identifier to return the appropriate data type
-             : contract ident "{" list(ContractPart) "}"                               { Contract (Identifier $2) $4 }
+ImportAster : "*"                                                                      { "*" }
+            | ident                                                                    { $1 }
+
+-- Production for the Contract Definition
+ContractDefinition :: { ContractDefinition }                                                       -- Passing the $2 token to Identifier to return the appropriate data type
+             : ConLibInt ident zero(InheritanceSpecList) "{" list(ContractPart) "}"    { Contract (Identifier $2) $3 $5 }
+
+-- Production for (Contract | Library | Interface)
+ConLibInt   : contract                                                                 { $1 }
+            | "library"                                                                { $1 }
+            | "interface"                                                              { $1 }
+
+-- The following is a production group for 
+--          ( 'is' InheritanceSpecifier (',' InheritanceSpecifier )* )?
+--  Where each production is nested below
+InheritanceSpecList : "is" InheritanceSpecifier list(OMInheritanceSpec)               {InheritanceSpec $2 $3}
+OMInheritanceSpec : "," InheritanceSpecifier                                           { $2 }
+
+-- InheritanceSpecifier Production 
+--       InheritanceSpecifier = UserDefinedTypeName ( '(' Expression ( ',' Expression )* ')' )? 
+InheritanceSpecifier : UserDefinedTypeName                                             { $1 }
+--InheritanceSpecifier : UserDefinedTypeName zero(InhExpList)                             { $1 [$2] }
+InhExpList : "(" Expression multi(CSExpList) ")"                                        { $2 [$3] }
+CSExpList : "," Expression                                                              { $2}
+
 
 ContractPart :: { ContractConts }
-ContractPart : StateVarDec                                                             { ContractContents $1 }
+             : StateVarDec                                                             { ContractContents $1 }
              | FunctionDefinition                                                      { FunctionDefinition $1 }
 
-FunctionDefinition :: { FunctionContents }
-FunctionDefinition 
+FunctionDefinition :: { FunctionContents } 
              : function ident Parameter ";"                                            { FunctionDef $2 $3 }
 
 Parameter :: { Ident }
-Parameter    : ident                                                                   { $1 }
+             : ident                                                                   { $1 }
 
 -- StateVarDec = TypeName ( 'public' | 'internal' | 'private' | 'constant' )? Identifier ('=' Expression)? ';'
 -- Passing the ident into the Ident function to ensure its type is formatted correctly
@@ -100,26 +126,40 @@ StateVarDec :: { StateVarDec }                                                  
              : TypeName zero(AssVar) ident zero(MExpression) ";"                       { StateVariableDeclaration $1 $2 (Identifier $3) $4 }
 
 TypeName     : ElementaryTypeName                                                      { ElementaryTypeName $1 }
-             | UserDefinedTypeName                                                     {  $1 }
+             | UserDefinedTypeName                                                     { $1 }
 
 AssVar       : "public"                                                                { PublicKeyword $1 }       
              | "private"                                                               { PrivateKeyword $1 }
              | "internal"                                                              { InternalKeyword $1 }
              | "constant"                                                              { ConstantKeyword $1 }
 
+-- MaybeExp = Possibility of an Expression
 MaybeExp     : MExpression                                                             { $1 }
-             | {- empty -}                                                             { [] }
-             
-MExpression  : "=" Expression                                                          { Expression $2 }
+             | {- empty -}                                                             { [] }  
+MExpression  : "=" Expression                                                          { $2 }
 
-Expression   : ident                                                                   { $1 }
+-- The basic Expression type
+Expression   : PrimaryExpression                                                       { $1 }
 
-UserDefinedTypeName : ident                                                           {UserDefinedTypeName $1}
+-- Nums/Bools/Strings
+PrimaryExpression : BooleanLiteral                                                     { BoolExpression $1 }
+                  | NumberLiteral                                                      { NumExpression $1 }
+                  | ident                                                              { IdentExpression $1 }
+
+BooleanLiteral : "true"                                                                { BooleanLiteral $1 }
+               | "false"                                                               { BooleanLiteral $1 }
+
+NumberLiteral  : "decimalnum"                                                          { $1 }
+               
+
+UserDefinedTypeName : ident                                                            {UserDefinedTypeName $1}
 
 ElementaryTypeName : "address"                                                         { AddrType $1 }                                     
                    | "bool"                                                            { BoolType $1 }
                    | "var"                                                             { VarType $1 }
                    | "string"                                                          { StringType $1 }
+                   -- | Int                                                               { $1 }
+                   -- | Uint                                                              { $1}
 
 -- The following allows the parser to create lists of one or more or zero or more lists.
 -- one or more
@@ -133,105 +173,19 @@ list(p) : list1(p)                                                              
 multi(z): z                                                                            { [$1] }
         | z multi(z)                                                                   { $1 : $2 }
 
+-- Zero or one
 zero(q) : q                                                                            { [$1] }
         | {- empty -}                                                                  { [] }  
 
 
 -- The following are commented out until they will be used
 --Expression : Expression op Expression                                                { ExpOp $1 $2 $3 }
---Type: ident                                                                            { TypeIdent $1}
+--Type: ident                                                                           { TypeIdent $1}
 {
 -- The following grabs a token from the token list
 parseError :: [Token] -> a
 parseError tokenList = let pos = tokenPosn(head(tokenList)) 
   in 
   error ("Parse error at " ++ show (head(tokenList)) ++ show(getLineNum(pos)) ++ ":" ++ show(getColumnNum(pos)))
-
-
--- The following are data types to store the source codes value
-
-{-
-SourceUnit is the overall program source consists of 3 main data values:
-    1. PragmaDirective (Essentially Version Information)
-    2. ImportUnit (Imported Contracts/Libraries)
-    3. ContractDef (A definition of an actual contract.)
--}
-
-data SourceUnit = SourceUnit PragmaDirective
-                | ImportUnit ImportDirective 
-                | ContractDef ContractDefinition
-                deriving (Show, Eq)
-              
--- Version Information
-data PragmaDirective = PragmaDirective PragmaName
-                       deriving(Show, Eq)
-
-data PragmaName = PragmaName Ident
-                  deriving(Show, Eq)
-
-data PragmaValue = PragmaValue Dnum
-                   deriving(Show, Eq)
--- File imports/Contract Imports
-data ImportDirective = ImportDir String
-                       deriving (Show, Eq)
-
--- The definition of an actual Contract Code Block
-data ContractDefinition = Contract Identifier [ContractConts]
-                          deriving (Show, Eq)
-
--- The contents of a Contract
-data ContractConts = ContractContents StateVarDec
-                   | FunctionDefinition FunctionContents
-                     deriving (Show, Eq)
-
-data FunctionContents = FunctionDef FuncName FuncParam
-                        deriving(Show, Eq)
-
--- Declaring a variable, 
-data StateVarDec = StateVariableDeclaration TypeName [PublicKeyword] Identifier [Expression]
-                   deriving (Show, Eq)
-
-data Identifier = Identifier Ident
-                  deriving(Show, Eq)    
-
-data AssVar = AssVar Ident
-               deriving(Show, Eq)
-            
-data PublicKeyword = PublicKeyword Ident
-                   | PrivateKeyword Ident
-                   | InternalKeyword Ident
-                   | ConstantKeyword Ident
-                     deriving(Show, Eq)
-
--- The type of the variable assignment
-
-data ElemType = AddrType Ident
-              | BoolType Ident
-              | StringType Ident
-              | VarType Ident
-                deriving(Show, Eq)
-
--- Elementary types e.g address/bool/string/var etc etc
-data TypeName = TypeName Ident
-              | ElementaryTypeName ElemType
-              | UserDefinedTypeName Ident         
-                deriving (Show, Eq)
-
-data Exp = Exp String
-         | ExpOp Exp Char Exp
-           deriving (Show, Eq)
-
-data TypeIdent = TypeIdent Ident
-                 deriving (Show, Eq)
-
-data Expression = Expression Ident
-                  deriving (Show, Eq)
-
--- Basic Identifier type :: String
-type Ident = String
-type FuncName = String
-type FuncParam = String
-type Dnum = Double
---type AssVar = String
 
 }
