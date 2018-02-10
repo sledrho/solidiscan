@@ -1,6 +1,6 @@
 module AST where
+-- The following module is the AST data type for the parser.
 
--- The following are data types to store the source codes value
 {-
 SourceUnit is the overall program source consists of 3 main data values:
     1. PragmaDirective (Essentially Version Information)
@@ -32,7 +32,7 @@ data ContractDefinition = Contract Identifier [InheritanceSpec] [ContractConts]
                           deriving (Show, Eq)
 
 -- Data for the iheritance specifications
-data InheritanceSpec = InheritanceSpec TypeName 
+data InheritanceSpec = InheritanceSpec TypeName [TypeName]
                   deriving (Show, Eq)
 -- The contents of a Contract
 data ContractConts = ContractContents StateVarDec
@@ -79,8 +79,13 @@ data Exp = Exp String
 data TypeIdent = TypeIdent Ident
                  deriving (Show, Eq)
 
-data Expression = Expression Ident
+data Expression = BoolExpression BooleanLiteral
+                | NumExpression Int
+                | IdentExpression Ident
                   deriving (Show, Eq)
+
+data BooleanLiteral = BooleanLiteral Ident  
+                      deriving (Show, Eq)
 
 -- Basic Identifier type :: String
 type Ident = String
