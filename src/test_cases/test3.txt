@@ -1,0 +1,4 @@
+pragma solidity; 
+contract test_contract {
+  function public dar;
+}

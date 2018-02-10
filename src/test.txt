@@ -1,4 +1,0 @@
-pragma solidity; 
-;contract identifier12 {
-  public variable = 1;
-}

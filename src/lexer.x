@@ -17,14 +17,17 @@ module Lexer where
 $digit = 0-9                                       -- digits
 $alpha = [a-zA-Z]                                  -- alphabetic characters
 $hexit = [0-9A-Fa-f]
+--$version = [\^\;]
 $graphic  = $printable # $white
-
+$int = [8-16]
 -- for comments
-@comment = \\
+@comment = \/\/ [^\r\n]* | \/\*[^\*]
 -- Char Sets for Specific Number combinations
 @string         = \" ($graphic # \")* \"
 @decimalnum     = $digit+
 @hexadecimal    = $hexit+
+-- Version info to parse pragma version
+@version        = \^ @decimalnum \. @decimalnum \. @decimalnum
 @exponent       = [eE] [\-\+] @decimalnum
 
 @int = int (8 | 16 | 24 | 32 | 40 | 48 | 56 | 64 | 72 | 80 | 88 | 96 | 104 | 112 | 120 
@@ -34,7 +37,7 @@ $graphic  = $printable # $white
 -- List of reserved words used by Solidity
 @reservedid = abstract| case| catch| default| final| in| inline| match| null| of|
               relocatable| static| switch| try| type| typeof                       -- reserved keywords within the Solidity language
-
+@numberunit =  wei | szabo | finney | ether | seconds | minutes | hours | days | weeks | years
 -- The initial tokens used by the lexer, followed by Haskell code segments
 -- Each token has type String -> Token 
 -- Token being a custom type by Alex, all tokens MUST have the same type.
@@ -42,21 +45,38 @@ $graphic  = $printable # $white
 tokens :-
 
     $white+                                ;
+    @comment                               ;
+<0> @version                               { \p s -> TVers p }
 <0> @decimalnum
     | 0[xX] @hexadecimal+                  { \p s -> TDec p (read s) }
+
 -- Because of the way Int's are bound, they will overflow and wrap around - Limitations of Haskell Int datatype.
 <0> @decimalnum \. @decimalnum @exponent?
     | @decimalnum @exponent                { \p s -> TExp p (read s) }
     @reservedid                            { \p s -> TReservedOp p }
     @int                                   { \p s -> TIntLit p (read s) }
+    @numberunit                            { \p s -> TNumUnit p }
     $digit+                                { \p s -> TInt p (read s) }
     "pragma"                               { \p s -> TPragma p }
     "import"                               { \p s -> TImport p }
-    "contract"                             { \p s -> TContract p }
-    "public"                               { \p s -> TPublic p }
-    "boolean"                              { \p s -> TBooleanLit p }
-    "true"                                 { \p s -> TTrue p }
-    "false"                                { \p s -> TFalse p }
+    contract                               { \p s -> TContract p }
+    "library"                              { \p s -> TLibrary p }
+    "interface"                            { \p s -> TInterface p }
+    function                               { \p s -> TFuncDef p }
+    "public"                               { \p s -> TPublic p s }
+    "internal"                             { \p s -> TIntern p s }
+    "private"                              { \p s -> TPriv p s }
+    "constant"                             { \p s -> TConst p s }
+    "string"                               { \p s -> TStringAs p s }
+    "address"                              { \p s -> TAddr p s }
+    "bool"                                 { \p s -> TBooleanLit p s }
+    "var"                                  { \p s -> TVar p s }
+    "true"                                 { \p s -> TTrue p s }
+    "false"                                { \p s -> TFalse p s }
+    "as"                                   { \p s -> TAs p }
+    "is"                                   { \p s -> TIs p }
+    "from"                                 { \p s -> TFrom p }
+    "^"                                    { \p s -> THat p }
     "!"                                    { \p s -> TNegate p }
     "&&"                                   { \p s -> TAnd p }
     "||"                                   { \p s -> TOr p }
@@ -79,6 +99,7 @@ tokens :-
     "+"                                    { \p s -> TOp p (head s) }
     "-"                                    { \p s -> TSub p }
     ";"                                    { \p s -> TSemiCol p }
+    ","                                    { \p s -> TComma p }
     $alpha[$alpha $digit \_ \']*           { \p s -> TIdent p s }                       -- The lexical token for an identifier 
     @string                                { \p s -> TStringLiteral p (init (tail s)) } -- Lexical token for a string, (init(tail s)) removes leading and trailing "
     "("                                    { \p s -> TLeftParen p }
@@ -96,15 +117,30 @@ data Token =
         | TExp AlexPosn Int
         | TIntLit AlexPosn Int
         | TInt AlexPosn Int
+        | TNumUnit AlexPosn
         | TDec AlexPosn Int
         | TStringLiteral AlexPosn String
         | TPragma AlexPosn
         | TImport AlexPosn
         | TContract AlexPosn
-        | TPublic AlexPosn
-        | TBooleanLit AlexPosn
-        | TTrue AlexPosn
-        | TFalse AlexPosn
+        | TLibrary AlexPosn
+        | TInterface AlexPosn
+        | TFuncDef AlexPosn
+        | TPublic AlexPosn String                   -- In order to pass through the value of the token, as opposed to the token position.
+        | TIntern AlexPosn String
+        | TPriv AlexPosn String
+        | TConst AlexPosn String
+        | TStringAs AlexPosn String
+        | TAddr AlexPosn String
+        | TVar AlexPosn String
+        | TBooleanLit AlexPosn String
+        | TTrue AlexPosn String
+        | TFalse AlexPosn String
+        | TAs AlexPosn
+        | TIs AlexPosn
+        | TFrom AlexPosn
+        | TVers AlexPosn
+        | THat AlexPosn
         | TNegate AlexPosn
         | TAnd AlexPosn
         | TOr AlexPosn
@@ -130,23 +166,38 @@ data Token =
         | TOp AlexPosn Char
         | TSub AlexPosn
         | TSemiCol AlexPosn
+        | TComma AlexPosn
         deriving (Eq, Show)
 
+tokenPosn (TVers p) = p
 tokenPosn (TIdent p id) = p
 tokenPosn (TReservedOp p) = p 
 tokenPosn (THexNum p) = p
 tokenPosn (TExp p f) = p 
 tokenPosn (TIntLit p i) = p 
 tokenPosn (TInt p i) = p 
+tokenPosn (TNumUnit p) = p
 tokenPosn (TDec p i) = p 
 tokenPosn (TStringLiteral p str) = p 
 tokenPosn (TPragma p) = p 
 tokenPosn (TImport p) = p 
 tokenPosn (TContract p) = p 
-tokenPosn (TPublic p) = p 
-tokenPosn (TBooleanLit p) = p 
-tokenPosn (TTrue p) = p 
-tokenPosn (TFalse p) = p 
+tokenPosn (TLibrary p) = p 
+tokenPosn (TInterface p) = p 
+tokenPosn (TPublic p str) = p 
+tokenPosn (TPriv p str) = p 
+tokenPosn (TIntern p str) = p
+tokenPosn (TConst p str) = p
+tokenPosn (TStringAs p str) = p
+tokenPosn (TAddr p str) = p
+tokenPosn (TBooleanLit p str) = p
+tokenPosn (TVar p str) = p 
+tokenPosn (TTrue p str) = p 
+tokenPosn (TFalse p str) = p
+tokenPosn (TAs p) = p
+tokenPosn (TIs p) = p
+tokenPosn (TFrom p) = p
+tokenPosn (THat p) = p 
 tokenPosn (TNegate p) = p 
 tokenPosn (TAnd p) = p 
 tokenPosn (TOr p) = p 
@@ -172,7 +223,7 @@ tokenPosn (TModul p) = p
 tokenPosn (TOp p c) = p  
 tokenPosn (TSub p) = p  
 tokenPosn (TSemiCol p) = p  
-  
+tokenPosn (TComma p) = p  
 
 -- In order to get position information a new alexScanTokens must be created
 
