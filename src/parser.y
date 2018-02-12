@@ -14,8 +14,10 @@ import AST
     "decimalnum"                           { TDec _ $$ }            -- $$ allows us to pass through the value of the token
     "exponent"                             { TExp _ $$ }            -- Can be seen in Int/Op/StringLiteral tokens also
     "int"                                  { TInt _ $$ }
+    numberunit                             { TNumUnit _ }
     "pragma"                               { TPragma _ }
     "import"                               { TImport _ }
+    "external"                             { TExternal _ $$ }
     "public"                               { TPublic _ $$}
     "internal"                             { TIntern _ $$}
     "private"                              { TPriv _ $$}
@@ -28,11 +30,19 @@ import AST
     "address"                              { TAddr _ $$ }
     "bool"                                 { TBooleanLit _ $$ }
     "var"                                  { TVar _ $$ }
+    "using"                                { TUsing _ $$ }
+    "for"                                  { TFor _ $$ }
     "true"                                 { TTrue _ $$ }
     "false"                                { TFalse _ $$ }
     "as"                                   { TAs _ }
     "is"                                   { TIs _ }
     "from"                                 { TFrom _ }
+    "view"                                 { TView _ $$ }
+    "pure"                                 { TPure _ $$ }
+    "payable"                              { TPayable _ $$ }
+    "returns"                              { TReturns _ }
+    "if"                                   { TIf _ }
+    "else"                                 { TElse _ }
     "^"                                    { THat _ }
     "!"                                    { TNegate _ }
     "&&"                                   { TAnd _ }
@@ -99,12 +109,13 @@ ConLibInt   : contract                                                          
 -- The following is a production group for 
 --          ( 'is' InheritanceSpecifier (',' InheritanceSpecifier )* )?
 --  Where each production is nested below
-InheritanceSpecList : "is" InheritanceSpecifier list(OMInheritanceSpec)               {InheritanceSpec $2 $3}
+-- ! Needs finished
+InheritanceSpecList : "is" InheritanceSpecifier list(OMInheritanceSpec)                {InheritanceSpec $2 $3}
 OMInheritanceSpec : "," InheritanceSpecifier                                           { $2 }
 
 -- InheritanceSpecifier Production 
 --       InheritanceSpecifier = UserDefinedTypeName ( '(' Expression ( ',' Expression )* ')' )? 
-InheritanceSpecifier : UserDefinedTypeName                                             { $1 }
+InheritanceSpecifier : UserDefinedTypeName                                              { $1 }
 --InheritanceSpecifier : UserDefinedTypeName zero(InhExpList)                             { $1 [$2] }
 InhExpList : "(" Expression multi(CSExpList) ")"                                        { $2 [$3] }
 CSExpList : "," Expression                                                              { $2}
@@ -113,17 +124,59 @@ CSExpList : "," Expression                                                      
 ContractPart :: { ContractConts }
              : StateVarDec                                                             { ContractContents $1 }
              | FunctionDefinition                                                      { FunctionDefinition $1 }
+             | UsingForDec                                                             { UsingFor $1 }
 
 FunctionDefinition :: { FunctionContents } 
-             : function ident Parameter ";"                                            { FunctionDef $2 $3 }
+             : function ident ParameterList multi(FuncMods) zero(ReturnParam) TermBlock { FunctionDef $2 $3 $4 $5 $6 }
 
-Parameter :: { Ident }
-             : ident                                                                   { $1 }
+-- ParameterList = '(' ( Parameter (',' Parameter)* )? ')'
+ParameterList : "(" zero(Parameters) ")"                                                 { $2 }
+Parameters    : Parameter list(ParamList)                                                { $1:$2 }
+ParamList     : "," Parameter                                                            { $2 }
+Parameter      : TypeName                                                                { Parameter $1 }
+
+-- Func mods allow the use of any ModifierInvocation | StateMutability | FuncVar
+FuncMods     : ModifierInvocation                                                        { ModifierInvs $1 }
+             | StateMutability                                                           { StateMutability $1 }
+             | FuncVar                                                                   { FuncVars $1 }
+
+-- Either 'return' | ParamaterList
+--  ( 'returns' ParameterList )? 
+ReturnParam  : "returns" ParameterList                                                   { $2 } 
+
+-- Either terminates the function declaration with ';'
+-- Or a Block
+-- ( ';' | Block )
+TermBlock    : ";"                                                                       { [] }
+             | "{" list(Statement) "}"                                                   { $2 }
+
+ModifierInvocation 
+             : ident "(" list(ModExpList) ")"                                            { $3 }
+ModExpList   : ExpressionList                                                     { $1 }
+
+StateMutability 
+             : "pure"                                                                    { PureKeyword $1 }
+             | "constant"                                                                { ConstantKeyword $1 }
+             | "view"                                                                    { ViewKeyword $1 }
+             | "payable"                                                                 { PayableKeyword $1 }
+
+FuncVar      : "external"                                                                { ExternalKeyword $1 }
+             | "internal"                                                                { InternalKeyword $1}
+             | "private"                                                                 { PrivateKeyword $1}
+             | "public"                                                                  { PublicKeyword $1 }
 
 -- StateVarDec = TypeName ( 'public' | 'internal' | 'private' | 'constant' )? Identifier ('=' Expression)? ';'
 -- Passing the ident into the Ident function to ensure its type is formatted correctly
 StateVarDec :: { StateVarDec }                                                         -- Passing $3 token into Identifier to return the appropriate data type
              : TypeName zero(AssVar) ident zero(MExpression) ";"                       { StateVariableDeclaration $1 $2 (Identifier $3) $4 }
+
+
+UsingForDec :: { UsingForDec }
+             : "using" ident "for" TypeName ";"                                        { UsingForDeclaration $1 $2 $3 $4}
+        
+--Todo: finish this method for * implementation
+MTypeName    : "*"                                                                     { $1 }
+             | TypeName                                                                { $1}
 
 TypeName     : ElementaryTypeName                                                      { ElementaryTypeName $1 }
              | UserDefinedTypeName                                                     { $1 }
@@ -138,20 +191,51 @@ MaybeExp     : MExpression                                                      
              | {- empty -}                                                             { [] }  
 MExpression  : "=" Expression                                                          { $2 }
 
+-- Expression list
+-- ExpressionList = Expression ( ',' Expression )*
+ExpressionList
+             : Expression list(ExprList)                                               { $1:$2 }
+ExprList     : "," Expression                                                          { $2 }
+
 -- The basic Expression type
 Expression   : PrimaryExpression                                                       { $1 }
 
+Statement    : SimpleStatement ";"                                                     { $1 }
+SimpleStatement : VariableDefinition                                                   { $1 }
+                | ExpressionStatement                                                  { $1 }
+VariableDefinition : "var" VariableDeclaration                                         { $2 } 
+VariableDeclaration : TypeName ident                                                   { VariableDeclaration $1 $2 }
+ExpressionStatement : Expression                                                       { $1 } 
+
+{-
+
+VariableDeclaration : TypeName ident                                                     { VariableDeclaration $1 $2 }
+
+IfStatement  : "if" "(" Expression ")" Statement zero(ElseState)                       { $1 }
+
+ElseState    : "else" Statement                                                        { $1 }
+
+SimpleStatement : VariableDefinition                                                   { $1 }
+                | ExpressionStatement                                                  { $1 }
+
+VariableDefinition : "var" VariableDeclaration                                         { $2 } 
+
+ExpressionStatement : Expression                                                       { $1 } 
+
+-}
+
 -- Nums/Bools/Strings
-PrimaryExpression : BooleanLiteral                                                     { BoolExpression $1 }
+PrimaryExpression :: { Expression }
+                  : BooleanLiteral                                                     { BoolExpression $1 }
                   | NumberLiteral                                                      { NumExpression $1 }
+                  | stringLiteral                                                      { StringExpression $1 }
                   | ident                                                              { IdentExpression $1 }
 
 BooleanLiteral : "true"                                                                { BooleanLiteral $1 }
                | "false"                                                               { BooleanLiteral $1 }
 
-NumberLiteral  : "decimalnum"                                                          { $1 }
+NumberLiteral  : "decimalnum" numberunit                                               { $1 }
                
-
 UserDefinedTypeName : ident                                                            {UserDefinedTypeName $1}
 
 ElementaryTypeName : "address"                                                         { AddrType $1 }                                     
@@ -180,12 +264,11 @@ zero(q) : q                                                                     
 
 -- The following are commented out until they will be used
 --Expression : Expression op Expression                                                { ExpOp $1 $2 $3 }
---Type: ident                                                                           { TypeIdent $1}
+--Type: ident                                                                          { TypeIdent $1}
 {
 -- The following grabs a token from the token list
 parseError :: [Token] -> a
 parseError tokenList = let pos = tokenPosn(head(tokenList)) 
   in 
   error ("Parse error at " ++ show (head(tokenList)) ++ show(getLineNum(pos)) ++ ":" ++ show(getColumnNum(pos)))
-
 }
