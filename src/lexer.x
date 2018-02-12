@@ -63,6 +63,7 @@ tokens :-
     "library"                              { \p s -> TLibrary p }
     "interface"                            { \p s -> TInterface p }
     function                               { \p s -> TFuncDef p }
+    "external"                             { \p s -> TExternal p s }
     "public"                               { \p s -> TPublic p s }
     "internal"                             { \p s -> TIntern p s }
     "private"                              { \p s -> TPriv p s }
@@ -71,11 +72,19 @@ tokens :-
     "address"                              { \p s -> TAddr p s }
     "bool"                                 { \p s -> TBooleanLit p s }
     "var"                                  { \p s -> TVar p s }
+    "using"                                { \p s -> TUsing p s }
+    "for"                                  { \p s -> TFor p s }
     "true"                                 { \p s -> TTrue p s }
     "false"                                { \p s -> TFalse p s }
     "as"                                   { \p s -> TAs p }
     "is"                                   { \p s -> TIs p }
     "from"                                 { \p s -> TFrom p }
+    "pure"                                 { \p s -> TPure p s }
+    "view"                                 { \p s -> TView p s }
+    "payable"                              { \p s -> TPayable p s }
+    "returns"                              { \p s -> TReturns p }
+    "if"                                   { \p s -> TIf p }
+    "else"                                 { \p s -> TElse p }
     "^"                                    { \p s -> THat p }
     "!"                                    { \p s -> TNegate p }
     "&&"                                   { \p s -> TAnd p }
@@ -126,6 +135,7 @@ data Token =
         | TLibrary AlexPosn
         | TInterface AlexPosn
         | TFuncDef AlexPosn
+        | TExternal AlexPosn String
         | TPublic AlexPosn String                   -- In order to pass through the value of the token, as opposed to the token position.
         | TIntern AlexPosn String
         | TPriv AlexPosn String
@@ -133,12 +143,20 @@ data Token =
         | TStringAs AlexPosn String
         | TAddr AlexPosn String
         | TVar AlexPosn String
+        | TUsing AlexPosn String
+        | TFor AlexPosn String
         | TBooleanLit AlexPosn String
         | TTrue AlexPosn String
         | TFalse AlexPosn String
         | TAs AlexPosn
         | TIs AlexPosn
         | TFrom AlexPosn
+        | TView AlexPosn String
+        | TPure AlexPosn String
+        | TPayable AlexPosn String
+        | TReturns AlexPosn
+        | TIf AlexPosn
+        | TElse AlexPosn
         | TVers AlexPosn
         | THat AlexPosn
         | TNegate AlexPosn
@@ -184,6 +202,7 @@ tokenPosn (TImport p) = p
 tokenPosn (TContract p) = p 
 tokenPosn (TLibrary p) = p 
 tokenPosn (TInterface p) = p 
+tokenPosn (TExternal p str) = p 
 tokenPosn (TPublic p str) = p 
 tokenPosn (TPriv p str) = p 
 tokenPosn (TIntern p str) = p
@@ -192,11 +211,19 @@ tokenPosn (TStringAs p str) = p
 tokenPosn (TAddr p str) = p
 tokenPosn (TBooleanLit p str) = p
 tokenPosn (TVar p str) = p 
+tokenPosn (TUsing p str) = p
+tokenPosn (TFor p str) = p
 tokenPosn (TTrue p str) = p 
 tokenPosn (TFalse p str) = p
 tokenPosn (TAs p) = p
 tokenPosn (TIs p) = p
 tokenPosn (TFrom p) = p
+tokenPosn (TPure p str) = p
+tokenPosn (TPayable p str) = p
+tokenPosn (TReturns p ) = p
+tokenPosn (TView p str) = p
+tokenPosn (TIf p ) = p
+tokenPosn (TElse p) = p
 tokenPosn (THat p) = p 
 tokenPosn (TNegate p) = p 
 tokenPosn (TAnd p) = p 
