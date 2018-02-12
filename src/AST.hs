@@ -37,14 +37,63 @@ data InheritanceSpec = InheritanceSpec TypeName [TypeName]
 -- The contents of a Contract
 data ContractConts = ContractContents StateVarDec
                    | FunctionDefinition FunctionContents
+                   | UsingFor UsingForDec
                      deriving (Show, Eq)
 
-data FunctionContents = FunctionDef FuncName FuncParam
-                        deriving(Show, Eq)
+data FunctionContents = FunctionDef FuncName [[Parameter]] [FuncMods] [[[Parameter]]] [Expression]
+                        deriving (Show, Eq)
 
+data FuncMods = ModifierInvs [[Expression]]
+              | StateMutability PublicKeyword
+              | FuncVars PublicKeyword
+                deriving (Show, Eq)
+
+
+data Statements = Statements Statement
+                  deriving (Show, Eq)
+
+data Statement = IfStatement
+               | SimpleStatement Expression
+                 deriving (Show, Eq)
+{-
+data Block = Statem Statements
+           |  Expressions Expression
+           | VarDec VariableDeclaration 
+             deriving (Show, Eq)
+
+data ReturnParam = ReturnParam Parameter
+                   deriving (Show, Eq)
+
+data VariableDeclaration = VariableDeclaration TypeName Ident 
+                           deriving(Show, Eq)
+-}
+data ModifierInvocation = ModifierInvocation [[[Expression]]]
+                          deriving (Show, Eq)
+{- 
+data StateMutability = StateMutability PublicKeyword
+                       deriving (Show, Eq)
+-}
+data ParameterList = ParameterList Parameters
+                   deriving (Show, Eq)
+
+data Parameters = Parameters TypeName TypeName
+                 deriving (Show, Eq)
+
+data Parameter = Parameter TypeName
+                 deriving(Show, Eq)
+
+-- Data Type for FuncVariable keywords
+data FuncVar = FuncVar PublicKeyword
+               deriving (Show, Eq)
+                 
 -- Declaring a variable, 
 data StateVarDec = StateVariableDeclaration TypeName [PublicKeyword] Identifier [Expression]
                    deriving (Show, Eq)
+
+data UsingForDec = UsingForDeclaration Ident Ident Ident TypeName
+                   deriving (Show, Eq)
+
+
 
 data Identifier = Identifier Ident
                   deriving(Show, Eq)    
@@ -56,10 +105,13 @@ data PublicKeyword = PublicKeyword Ident
                    | PrivateKeyword Ident
                    | InternalKeyword Ident
                    | ConstantKeyword Ident
+                   | ExternalKeyword Ident
+                   | PureKeyword Ident
+                   | ViewKeyword Ident
+                   | PayableKeyword Ident
                      deriving(Show, Eq)
 
 -- The type of the variable assignment
-
 data ElemType = AddrType Ident
               | BoolType Ident
               | StringType Ident
@@ -82,6 +134,8 @@ data TypeIdent = TypeIdent Ident
 data Expression = BoolExpression BooleanLiteral
                 | NumExpression Int
                 | IdentExpression Ident
+                | StringExpression Ident 
+                | VariableDeclaration TypeName Ident 
                   deriving (Show, Eq)
 
 data BooleanLiteral = BooleanLiteral Ident  
@@ -89,7 +143,6 @@ data BooleanLiteral = BooleanLiteral Ident
 
 -- Basic Identifier type :: String
 type Ident = String
-type FuncName = String
-type FuncParam = String
+type FuncName = Ident
 type Dnum = Double
 --type AssVar = String
