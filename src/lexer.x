@@ -85,6 +85,9 @@ tokens :-
     "returns"                              { \p s -> TReturns p }
     "if"                                   { \p s -> TIf p }
     "else"                                 { \p s -> TElse p }
+    "event"                                { \p s -> TEvent p }
+    "anonymous"                            { \p s -> TAnon p }
+    "modifier"                             { \p s -> TModi p }
     "^"                                    { \p s -> THat p }
     "!"                                    { \p s -> TNegate p }
     "&&"                                   { \p s -> TAnd p }
@@ -157,6 +160,9 @@ data Token =
         | TReturns AlexPosn
         | TIf AlexPosn
         | TElse AlexPosn
+        | TEvent AlexPosn
+        | TAnon AlexPosn
+        | TModi AlexPosn
         | TVers AlexPosn
         | THat AlexPosn
         | TNegate AlexPosn
@@ -224,6 +230,9 @@ tokenPosn (TReturns p ) = p
 tokenPosn (TView p str) = p
 tokenPosn (TIf p ) = p
 tokenPosn (TElse p) = p
+tokenPosn (TEvent p) = p
+tokenPosn (TAnon p) = p
+tokenPosn (TModi p) = p
 tokenPosn (THat p) = p 
 tokenPosn (TNegate p) = p 
 tokenPosn (TAnd p) = p 
