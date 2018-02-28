@@ -38,6 +38,8 @@ data InheritanceSpec = InheritanceSpec TypeName [TypeName]
 data ContractConts = ContractContents StateVarDec
                    | FunctionDefinition FunctionContents
                    | UsingFor UsingForDec
+                   | EventDef EventDefinition
+                   | ModDef ModifierDefinition
                      deriving (Show, Eq)
 
 data FunctionContents = FunctionDef FuncName [[Parameter]] [FuncMods] [[[Parameter]]] [Expression]
@@ -48,8 +50,10 @@ data FuncMods = ModifierInvs [[Expression]]
               | FuncVars PublicKeyword
                 deriving (Show, Eq)
 
+data EventDefinition = EventDefinition Ident [[[EParamaters]]]
+                       deriving (Show, Eq)
 
-data Statements = Statements Statement
+data Statements = Statements [Statement]
                   deriving (Show, Eq)
 
 data Statement = IfStatement
@@ -67,21 +71,32 @@ data ReturnParam = ReturnParam Parameter
 data VariableDeclaration = VariableDeclaration TypeName Ident 
                            deriving(Show, Eq)
 -}
+
+data ModifierDefinition = ModifierDefinition Ident [[[Parameter]]] [Expression]
+                          deriving (Show, Eq)
+
 data ModifierInvocation = ModifierInvocation [[[Expression]]]
                           deriving (Show, Eq)
 {- 
 data StateMutability = StateMutability PublicKeyword
                        deriving (Show, Eq)
 -}
+
+data EParamaters = EParameters TypeName Ident
+                   deriving (Show, Eq)
+
+
 data ParameterList = ParameterList Parameters
                    deriving (Show, Eq)
 
 data Parameters = Parameters TypeName TypeName
                  deriving (Show, Eq)
 
-data Parameter = Parameter TypeName
+data Parameter = Parameter TypeName Ident
                  deriving(Show, Eq)
 
+data ParamName = ParamName Ident
+                 deriving (Show, Eq)
 -- Data Type for FuncVariable keywords
 data FuncVar = FuncVar PublicKeyword
                deriving (Show, Eq)
