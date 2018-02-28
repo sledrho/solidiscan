@@ -43,6 +43,9 @@ import AST
     "returns"                              { TReturns _ }
     "if"                                   { TIf _ }
     "else"                                 { TElse _ }
+    "event"                                { TEvent _ }
+    "anonymous"                            { TAnon _ }
+    "modifier"                             { TModi _ }
     "^"                                    { THat _ }
     "!"                                    { TNegate _ }
     "&&"                                   { TAnd _ }
@@ -110,7 +113,7 @@ ConLibInt   : contract                                                          
 --          ( 'is' InheritanceSpecifier (',' InheritanceSpecifier )* )?
 --  Where each production is nested below
 -- ! Needs finished
-InheritanceSpecList : "is" InheritanceSpecifier list(OMInheritanceSpec)                {InheritanceSpec $2 $3}
+InheritanceSpecList : "is" InheritanceSpecifier list(OMInheritanceSpec)                { InheritanceSpec $2 $3 }
 OMInheritanceSpec : "," InheritanceSpecifier                                           { $2 }
 
 -- InheritanceSpecifier Production 
@@ -123,17 +126,41 @@ CSExpList : "," Expression                                                      
 
 ContractPart :: { ContractConts }
              : StateVarDec                                                             { ContractContents $1 }
-             | FunctionDefinition                                                      { FunctionDefinition $1 }
              | UsingForDec                                                             { UsingFor $1 }
+             | FunctionDefinition                                                      { FunctionDefinition $1 }
+             | EventDefinition                                                         { EventDef $1 }
+             | ModifierDefinition                                                      { ModDef $1 }
+             
 
 FunctionDefinition :: { FunctionContents } 
              : function ident ParameterList multi(FuncMods) zero(ReturnParam) TermBlock { FunctionDef $2 $3 $4 $5 $6 }
+
+-- Eventdefinition grammar production
+EventDefinition
+             : "event" ident zero(EventParamList) zero(AnonList) ";"                    { EventDefinition $2 $3 }
+
+-- Production rules for modifier definitions + invocations
+ModifierDefinition 
+             : "modifier" ident zero(ParameterList) TermBlock                           { ModifierDefinition $2 $3 $4 }
+ModifierInvocation 
+             : ident "(" list(ModExpList) ")"                                            { $3 }
+ModExpList   : ExpressionList                                                            { $1 }
+
+-- Production rules for the Event definition and it's parameters
+-- Setup is very similar to the FunctionDefinition paramater list
+EventParamList
+             : "(" zero(EventParams) ")"                                                { $2 }
+EventParams  : EParameters list(EParamList)                                             { $1:$2 }
+EParamList   : "," EParameters                                                          { $2 }
+EParameters  : TypeName ident                                                           { EParameters $1 $2 }
+
+AnonList     : "anonymous"                                                              { $1 }
 
 -- ParameterList = '(' ( Parameter (',' Parameter)* )? ')'
 ParameterList : "(" zero(Parameters) ")"                                                 { $2 }
 Parameters    : Parameter list(ParamList)                                                { $1:$2 }
 ParamList     : "," Parameter                                                            { $2 }
-Parameter      : TypeName                                                                { Parameter $1 }
+Parameter      : TypeName ident                                                          { Parameter $1 $2 }
 
 -- Func mods allow the use of any ModifierInvocation | StateMutability | FuncVar
 FuncMods     : ModifierInvocation                                                        { ModifierInvs $1 }
@@ -142,7 +169,7 @@ FuncMods     : ModifierInvocation                                               
 
 -- Either 'return' | ParamaterList
 --  ( 'returns' ParameterList )? 
-ReturnParam  : "returns" ParameterList                                                   { $2 } 
+ReturnParam  : "returns" ParameterList                                                   { $2 }
 
 -- Either terminates the function declaration with ';'
 -- Or a Block
@@ -150,9 +177,7 @@ ReturnParam  : "returns" ParameterList                                          
 TermBlock    : ";"                                                                       { [] }
              | "{" list(Statement) "}"                                                   { $2 }
 
-ModifierInvocation 
-             : ident "(" list(ModExpList) ")"                                            { $3 }
-ModExpList   : ExpressionList                                                     { $1 }
+
 
 StateMutability 
              : "pure"                                                                    { PureKeyword $1 }
@@ -204,7 +229,7 @@ Statement    : SimpleStatement ";"                                              
 SimpleStatement : VariableDefinition                                                   { $1 }
                 | ExpressionStatement                                                  { $1 }
 VariableDefinition : "var" VariableDeclaration                                         { $2 } 
-VariableDeclaration : TypeName ident                                                   { VariableDeclaration $1 $2 }
+VariableDeclaration : TypeName ident                                               { VariableDeclaration $1 $2 }
 ExpressionStatement : Expression                                                       { $1 } 
 
 {-
