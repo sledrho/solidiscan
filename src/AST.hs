@@ -42,7 +42,7 @@ data ContractConts = ContractContents StateVarDec
                    | ModDef ModifierDefinition
                      deriving (Show, Eq)
 
-data FunctionContents = FunctionDef FuncName [[Parameter]] [FuncMods] [[[Parameter]]] [Expression]
+data FunctionContents = FunctionDef FuncName [[Parameter]] [FuncMods] [ReturnParam] [Expression]
                         deriving (Show, Eq)
 
 data FuncMods = ModifierInvs [[Expression]]
@@ -56,7 +56,7 @@ data EventDefinition = EventDefinition Ident [[[EParamaters]]]
 data Statements = Statements [Statement]
                   deriving (Show, Eq)
 
-data Statement = IfStatement
+data Statement = IfStatement Expression
                | SimpleStatement Expression
                  deriving (Show, Eq)
 {-
@@ -89,10 +89,10 @@ data EParamaters = EParameters TypeName Ident
 data ParameterList = ParameterList Parameters
                    deriving (Show, Eq)
 
-data Parameters = Parameters TypeName TypeName
+data Parameters = Parameters Ident TypeName
                  deriving (Show, Eq)
 
-data Parameter = Parameter TypeName Ident
+data Parameter = Parameter TypeName [StorageLocation] Ident
                  deriving(Show, Eq)
 
 data ParamName = ParamName Ident
@@ -108,7 +108,11 @@ data StateVarDec = StateVariableDeclaration TypeName [PublicKeyword] Identifier 
 data UsingForDec = UsingForDeclaration Ident Ident Ident TypeName
                    deriving (Show, Eq)
 
+data StorageLocation = StorageLocation Ident
+                       deriving (Show, Eq)
 
+data ReturnParam = ReturnParam [[Parameter]]
+                      deriving (Show, Eq)
 
 data Identifier = Identifier Ident
                   deriving(Show, Eq)    
@@ -150,7 +154,7 @@ data Expression = BoolExpression BooleanLiteral
                 | NumExpression Int
                 | IdentExpression Ident
                 | StringExpression Ident 
-                | VariableDeclaration TypeName Ident 
+                | VariableDeclaration TypeName [StorageLocation] Ident 
                   deriving (Show, Eq)
 
 data BooleanLiteral = BooleanLiteral Ident  

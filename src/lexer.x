@@ -88,6 +88,8 @@ tokens :-
     "event"                                { \p s -> TEvent p }
     "anonymous"                            { \p s -> TAnon p }
     "modifier"                             { \p s -> TModi p }
+    "memory"                               { \p s -> TMem p s }
+    "storage"                              { \p s -> TStorage p s }
     "^"                                    { \p s -> THat p }
     "!"                                    { \p s -> TNegate p }
     "&&"                                   { \p s -> TAnd p }
@@ -158,6 +160,8 @@ data Token =
         | TPure AlexPosn String
         | TPayable AlexPosn String
         | TReturns AlexPosn
+        | TMem AlexPosn String
+        | TStorage AlexPosn String
         | TIf AlexPosn
         | TElse AlexPosn
         | TEvent AlexPosn
@@ -227,6 +231,8 @@ tokenPosn (TFrom p) = p
 tokenPosn (TPure p str) = p
 tokenPosn (TPayable p str) = p
 tokenPosn (TReturns p ) = p
+tokenPosn (TMem p str) = p
+tokenPosn (TStorage p str) = p
 tokenPosn (TView p str) = p
 tokenPosn (TIf p ) = p
 tokenPosn (TElse p) = p

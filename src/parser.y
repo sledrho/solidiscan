@@ -46,6 +46,8 @@ import AST
     "event"                                { TEvent _ }
     "anonymous"                            { TAnon _ }
     "modifier"                             { TModi _ }
+    "memory"                               { TMem _  $$ }
+    "storage"                              { TStorage _ $$ }
     "^"                                    { THat _ }
     "!"                                    { TNegate _ }
     "&&"                                   { TAnd _ }
@@ -133,7 +135,7 @@ ContractPart :: { ContractConts }
              
 
 FunctionDefinition :: { FunctionContents } 
-             : function ident ParameterList multi(FuncMods) zero(ReturnParam) TermBlock { FunctionDef $2 $3 $4 $5 $6 }
+             : function ident ParameterList list(FuncMods) zero(ReturnParam) TermBlock { FunctionDef $2 $3 $4 $5 $6 }
 
 -- Eventdefinition grammar production
 EventDefinition
@@ -160,7 +162,7 @@ AnonList     : "anonymous"                                                      
 ParameterList : "(" zero(Parameters) ")"                                                 { $2 }
 Parameters    : Parameter list(ParamList)                                                { $1:$2 }
 ParamList     : "," Parameter                                                            { $2 }
-Parameter      : TypeName ident                                                          { Parameter $1 $2 }
+Parameter      : TypeName zero(StorageLocation) ident                                    { Parameter $1 $2 $3 }
 
 -- Func mods allow the use of any ModifierInvocation | StateMutability | FuncVar
 FuncMods     : ModifierInvocation                                                        { ModifierInvs $1 }
@@ -169,7 +171,7 @@ FuncMods     : ModifierInvocation                                               
 
 -- Either 'return' | ParamaterList
 --  ( 'returns' ParameterList )? 
-ReturnParam  : "returns" ParameterList                                                   { $2 }
+ReturnParam  : "returns" ParameterList                                                   { ReturnParam $2 }
 
 -- Either terminates the function declaration with ';'
 -- Or a Block
@@ -178,12 +180,15 @@ TermBlock    : ";"                                                              
              | "{" list(Statement) "}"                                                   { $2 }
 
 
-
 StateMutability 
              : "pure"                                                                    { PureKeyword $1 }
              | "constant"                                                                { ConstantKeyword $1 }
              | "view"                                                                    { ViewKeyword $1 }
              | "payable"                                                                 { PayableKeyword $1 }
+
+StorageLocation
+             : "memory"                                                                  { StorageLocation $1 }
+             | "storage"                                                                 { StorageLocation $1 }
 
 FuncVar      : "external"                                                                { ExternalKeyword $1 }
              | "internal"                                                                { InternalKeyword $1}
@@ -225,27 +230,28 @@ ExprList     : "," Expression                                                   
 -- The basic Expression type
 Expression   : PrimaryExpression                                                       { $1 }
 
-Statement    : SimpleStatement ";"                                                     { $1 }
-SimpleStatement : VariableDefinition                                                   { $1 }
-                | ExpressionStatement                                                  { $1 }
-VariableDefinition : "var" VariableDeclaration                                         { $2 } 
-VariableDeclaration : TypeName ident                                               { VariableDeclaration $1 $2 }
-ExpressionStatement : Expression                                                       { $1 } 
+Statement    : IfStatement                                                             { $1 }
+             | SimpleStatement ";"                                                     { $1 }
+
+SimpleStatement  
+             : VariableDefinition                                                      { $1 }
+             | ExpressionStatement                                                     { $1 }
+VariableDefinition 
+             : "var" VariableDeclaration                                               { $2 } 
+VariableDeclaration :: { Expression }
+             : TypeName zero(StorageLocation) ident                                    { VariableDeclaration $1 $2 $3 }
+ExpressionStatement 
+             : Expression                                                              { $1 } 
+
+IfStatement  : "if" "(" Expression ")"                                                 { $3 }
+
+ElseState    : "else" Statement                                                        { $2 }
 
 {-
-
-VariableDeclaration : TypeName ident                                                     { VariableDeclaration $1 $2 }
-
 IfStatement  : "if" "(" Expression ")" Statement zero(ElseState)                       { $1 }
 
 ElseState    : "else" Statement                                                        { $1 }
 
-SimpleStatement : VariableDefinition                                                   { $1 }
-                | ExpressionStatement                                                  { $1 }
-
-VariableDefinition : "var" VariableDeclaration                                         { $2 } 
-
-ExpressionStatement : Expression                                                       { $1 } 
 
 -}
 
