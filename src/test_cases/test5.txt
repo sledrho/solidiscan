@@ -1,0 +1,4 @@
+pragma solidity;
+contract this_is_a_contract1 {
+  address dank bank_account1;
+}
