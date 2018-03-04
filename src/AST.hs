@@ -43,6 +43,7 @@ data ContractConts = ContractContents StateVarDec
                    | UsingFor UsingForDec
                    | EventDef EventDefinition
                    | ModDef ModifierDefinition
+                   | EnumDef EnumDefinition
                      deriving (Show, Eq)
 
 data FunctionContents = FunctionDef FuncName [[Parameter]] [FuncMods] [ReturnParam] [Expression]
@@ -53,7 +54,7 @@ data FuncMods = ModifierInvs [[Expression]]
               | FuncVars PublicKeyword
                 deriving (Show, Eq)
 
-data EventDefinition = EventDefinition Ident [[[EParamaters]]]
+data EventDefinition = EventDefinition Ident [[[EParameters]]]
                        deriving (Show, Eq)
 {-
 data Statements = Statements [Statement]
@@ -73,14 +74,18 @@ data ElseState = ElseState Statement
 data ModifierDefinition = ModifierDefinition Ident [[[Parameter]]] [Expression]
                           deriving (Show, Eq)
 
-data ModifierInvocation = ModifierInvocation [[[Expression]]]
-                          deriving (Show, Eq)
+data EnumDefinition = EnumDefinition Ident [EnumValue]
+                      deriving (Show, Eq)
+
+data EnumValue = EnumValue Ident
+                 deriving (Show, Eq)
+
 {- 
 data StateMutability = StateMutability PublicKeyword
                        deriving (Show, Eq)
 -}
 
-data EParamaters = EParameters TypeName Ident
+data EParameters = EParameters TypeName Ident
                    deriving (Show, Eq)
 
 
@@ -154,8 +159,33 @@ data Expression = BoolExpression BooleanLiteral
                 | StringExpression Ident 
                 | VariableDeclaration TypeName [StorageLocation] Ident 
                 | IfStatement Expression Expression [ElseState]
+                | AdditionExp Expression Expression
+                | SubtractionExp Expression Expression
+                | ExponentExp Expression Expression
+                | DivisionExp Expression Expression
+                | MultiExp Expression Expression
+                | ModuloExp Expression Expression
+                | BracketsExp Expression
+                | IncrExp Expression
+                | DecrExp Expression
+                | LShiftExp Expression Expression
+                | RShiftExp Expression Expression
+                | BitAndExp Expression Expression
+                | BitXOrExp Expression Expression
+                | BitOrExp Expression Expression
+                | LThanExp Expression Expression
+                | GThanExp Expression Expression
+                | LThanEqExp Expression Expression
+                | GThanEqExp Expression Expression
+                | EqualExp Expression Expression
+                | NotEqualExp Expression Expression
+                | AndExp Expression Expression
+                | OrExp Expression Expression
+                | NewExpression TypeName
                   deriving (Show, Eq)
 
+data NewExp = NewExp TypeName
+              deriving (Show, Eq)
 data ElseState = ElseState Expression
                  deriving (Show, Eq)
 

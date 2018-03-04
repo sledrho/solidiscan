@@ -48,13 +48,21 @@ import AST
     "modifier"                             { TModi _ }
     "memory"                               { TMem _  $$ }
     "storage"                              { TStorage _ $$ }
+    "enum"                                 { TEnum _ }
+    "new"                                  { TNew _ }
+    "++"                                   { TIncr _ }
+    "--"                                   { TDecr _ }
     "^"                                    { THat _ }
     "!"                                    { TNegate _ }
     "&&"                                   { TAnd _ }
+    "&"                                    { TBitAnd _ }
     "||"                                   { TOr _ }
+    "|"                                    { TBOr _ }
     "!="                                   { TInEqual _ }
     "<"                                    { TLThan _ }
     ">"                                    { TGThan _ }
+    ">>"                                   { TRShift _ }
+    "<<"                                   { TLShift _ }
     "<="                                   { TLTEq _ }
     ">="                                   { TGTEq _ }
     "=="                                   { TEquality _ }
@@ -68,7 +76,7 @@ import AST
     "/"                                    { TDiv _ }
     "**"                                   { TExpSym _ }
     "%"                                    { TModul _ }
-    op                                     { TOp _ $$ }
+    "+"                                    { TOp _ $$ }
     "-"                                    { TSub _ }
     ";"                                    { TSemiCol _ }
     ","                                    { TComma _ }
@@ -79,6 +87,21 @@ import AST
 
 -- Added to prevent dangling else issue
 %right "else"
+%left "||"
+%left "&&"
+%left "==" "!="
+%left "<" "<=" ">" ">="
+%left "|"
+%left "^"
+%left "&"
+%left "<<" ">>"
+%left "+" "-"
+%left "*" "/" "%"
+%left "**"
+%left "++" "--"
+
+-- Tells happy to expect at least 1 shift reduce conflict (at current this is within the if-else block)
+%expect 1
 %%
 
 SourceUnit    : {- empty -}                                                            { [] }
@@ -124,7 +147,7 @@ OMInheritanceSpec : "," InheritanceSpecifier                                    
 --       InheritanceSpecifier = UserDefinedTypeName ( '(' Expression ( ',' Expression )* ')' )? 
 --InheritanceSpecifier : UserDefinedTypeName                                              { $1 }
 InheritanceSpecifier : UserDefinedTypeName zero(InhExpList)                             { InheritanceSpecifier $1 $2 }
-InhExpList : "(" Expression list(CSExpList) ")"                                        { $2:$3 }
+InhExpList : "(" Expression list(CSExpList) ")"                                         { $2:$3 }
 CSExpList : "," Expression                                                              { $2}
 
 
@@ -134,21 +157,33 @@ ContractPart :: { ContractConts }
              | FunctionDefinition                                                      { FunctionDefinition $1 }
              | EventDefinition                                                         { EventDef $1 }
              | ModifierDefinition                                                      { ModDef $1 }
+             | EnumDefinition                                                          { EnumDef $1 }
              
 
 FunctionDefinition :: { FunctionContents } 
              : function ident ParameterList list(FuncMods) zero(ReturnParam) TermBlock { FunctionDef $2 $3 $4 $5 $6 }
 
 -- Eventdefinition grammar production
-EventDefinition
+EventDefinition :: { EventDefinition }
              : "event" ident zero(EventParamList) zero(AnonList) ";"                    { EventDefinition $2 $3 }
 
 -- Production rules for modifier definitions + invocations
-ModifierDefinition 
+ModifierDefinition :: { ModifierDefinition }
              : "modifier" ident zero(ParameterList) TermBlock                           { ModifierDefinition $2 $3 $4 }
 ModifierInvocation 
-             : ident "(" list(ModExpList) ")"                                            { $3 }
-ModExpList   : ExpressionList                                                            { $1 }
+             : ident "(" list(ModExpList) ")"                                           { $3 }
+ModExpList   : ExpressionList                                                           { $1 }
+
+-- Enum Definition follows the following grammar production
+--             'enum' Identifier '{' EnumValue? (',' EnumValue)* '}'
+EnumDefinition :: { EnumDefinition }
+             : "enum" ident "{" EnumValList "}"                                         { EnumDefinition $2 $4 }
+EnumValue :: { EnumValue }
+             : ident                                                                    { EnumValue $1 }
+EnumValList  : EnumValue list(MultiEnumValue)                                           { $2 }
+MultiEnumValue 
+             : "," EnumValue                                                            { $2 }
+
 
 -- Production rules for the Event definition and it's parameters
 -- Setup is very similar to the FunctionDefinition paramater list
@@ -156,20 +191,23 @@ EventParamList
              : "(" zero(EventParams) ")"                                                { $2 }
 EventParams  : EParameters list(EParamList)                                             { $1:$2 }
 EParamList   : "," EParameters                                                          { $2 }
-EParameters  : TypeName ident                                                           { EParameters $1 $2 }
-
+EParameters :: { EParameters }
+             : TypeName ident                                                           { EParameters $1 $2 }
 AnonList     : "anonymous"                                                              { $1 }
 
+
 -- ParameterList = '(' ( Parameter (',' Parameter)* )? ')'
-ParameterList : "(" zero(Parameters) ")"                                                 { $2 }
-Parameters    : Parameter list(ParamList)                                                { $1:$2 }
-ParamList     : "," Parameter                                                            { $2 }
-Parameter      : TypeName zero(StorageLocation) ident                                    { Parameter $1 $2 $3 }
+ParameterList : "(" zero(Parameters) ")"                                                { $2 }
+Parameters    : Parameter list(ParamList)                                               { $1:$2 }
+ParamList     : "," Parameter                                                           { $2 }
+Parameter :: { Parameter }
+              : TypeName zero(StorageLocation) ident                                    { Parameter $1 $2 $3 }
 
 -- Func mods allow the use of any ModifierInvocation | StateMutability | FuncVar
-FuncMods     : ModifierInvocation                                                        { ModifierInvs $1 }
-             | StateMutability                                                           { StateMutability $1 }
-             | FuncVar                                                                   { FuncVars $1 }
+FuncMods :: { FuncMods }
+             : ModifierInvocation                                                       { ModifierInvs $1 }
+             | StateMutability                                                          { StateMutability $1 }
+             | FuncVar                                                                  { FuncVars $1 }
 
 -- Either 'return' | ParamaterList
 --  ( 'returns' ParameterList )? 
@@ -182,17 +220,18 @@ TermBlock    : ";"                                                              
              | "{" list(Statement) "}"                                                   { $2 }
 
 
-StateMutability 
+StateMutability :: { PublicKeyword } 
              : "pure"                                                                    { PureKeyword $1 }
              | "constant"                                                                { ConstantKeyword $1 }
              | "view"                                                                    { ViewKeyword $1 }
              | "payable"                                                                 { PayableKeyword $1 }
 
-StorageLocation
+StorageLocation :: { StorageLocation }
              : "memory"                                                                  { StorageLocation $1 }
              | "storage"                                                                 { StorageLocation $1 }
 
-FuncVar      : "external"                                                                { ExternalKeyword $1 }
+FuncVar :: { PublicKeyword }
+             : "external"                                                                { ExternalKeyword $1 }
              | "internal"                                                                { InternalKeyword $1}
              | "private"                                                                 { PrivateKeyword $1}
              | "public"                                                                  { PublicKeyword $1 }
@@ -230,7 +269,37 @@ ExpressionList
 ExprList     : "," Expression                                                          { $2 }
 
 -- The basic Expression type
-Expression   : PrimaryExpression                                                       { $1 }
+Expression   :: { Expression }
+             : Expression "++"                                                         { IncrExp $1 }
+             | Expression "--"                                                         { DecrExp $1 }                      
+             | NewExpression                                                           { NewExpression $1 }
+             -- | IndexAccess                                                             { IndexAccess $1 }
+             | "(" Expression ")"                                                      { BracketsExp $2 }
+             | Expression "**" Expression                                              { ExponentExp $1 $3 }
+             | Expression "*" Expression                                               { MultiExp $1 $3 }
+             | Expression "/" Expression                                               { DivisionExp $1 $3 }
+             | Expression "%" Expression                                               { ModuloExp $1 $3 }
+             | Expression "+" Expression                                               { AdditionExp $1 $3 }
+             | Expression "-" Expression                                               { SubtractionExp $1 $3 }
+             | Expression "<<" Expression                                              { LShiftExp $1 $3 }
+             | Expression ">>" Expression                                              { RShiftExp $1 $3 }
+             | Expression "&" Expression                                               { BitAndExp $1 $3 }
+             | Expression "^" Expression                                               { BitXOrExp $1 $3 }
+             | Expression "|" Expression                                               { BitOrExp $1 $3 }
+             | Expression "<" Expression                                               { LThanExp $1 $3 }
+             | Expression ">" Expression                                               { GThanExp $1 $3 }
+             | Expression "<=" Expression                                              { LThanEqExp $1 $3 }
+             | Expression ">=" Expression                                              { GThanEqExp $1 $3 }
+             | Expression "==" Expression                                              { EqualExp $1 $3 }
+             | Expression "!=" Expression                                              { NotEqualExp $1 $3 }
+             | Expression "&&" Expression                                              { AndExp $1 $3 }
+             | Expression "||" Expression                                              { OrExp $1 $3 }
+             | PrimaryExpression                                                       { $1 }
+
+NewExpression
+             : "new" TypeName                                                          { $2 }
+
+IndexAccess  : Expression "[" zero(Expression) "]"                                     { $3 }
 
 Statement    : IfStatement                                                             { $1 }
              | SimpleStatement ";"                                                     { $1 }
@@ -245,17 +314,10 @@ VariableDeclaration :: { Expression }
 ExpressionStatement 
              : Expression                                                              { $1 } 
 
-IfStatement  : "if" "(" Expression ")" Statement zero(ElseState)                           { IfStatement $3 $5 $6  }
-
+-- Production rule for an if-else statement, currently contains a shift reduce conflict
+IfStatement  :: { Expression }
+             : "if" "(" Expression ")" Statement zero(ElseState)                       { IfStatement $3 $5 $6  }
 ElseState    : "else" Statement                                                        { ElseState $2 }
-
-{-
-IfStatement  : "if" "(" Expression ")" Statement zero(ElseState)                       { $1 }
-
-ElseState    : "else" Statement                                                        { $1 }
-
-
--}
 
 -- Nums/Bools/Strings
 PrimaryExpression :: { Expression }
@@ -264,7 +326,8 @@ PrimaryExpression :: { Expression }
                   | stringLiteral                                                      { StringExpression $1 }
                   | ident                                                              { IdentExpression $1 }
 
-BooleanLiteral : "true"                                                                { BooleanLiteral $1 }
+BooleanLiteral :: {BooleanLiteral}
+               : "true"                                                                { BooleanLiteral $1 }
                | "false"                                                               { BooleanLiteral $1 }
 
 NumberLiteral  : "decimalnum" numberunit                                               { $1 }

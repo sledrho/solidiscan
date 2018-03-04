@@ -90,10 +90,18 @@ tokens :-
     "modifier"                             { \p s -> TModi p }
     "memory"                               { \p s -> TMem p s }
     "storage"                              { \p s -> TStorage p s }
+    "enum"                                 { \p s -> TEnum p }
+    "new"                                  { \p s -> TNew p }
+    "++"                                   { \p s -> TIncr p }
+    "<<"                                   { \p s -> TLShift p }
+    ">>"                                   { \p s -> TRShift p }
+    "--"                                   { \p s -> TDecr p }
     "^"                                    { \p s -> THat p }
     "!"                                    { \p s -> TNegate p }
     "&&"                                   { \p s -> TAnd p }
+    "&"                                    { \p s -> TBitAnd p }
     "||"                                   { \p s -> TOr p }
+    "|"                                    { \p s -> TBOr p }
     "!="                                   { \p s -> TInEqual p }
     "<"                                    { \p s -> TLThan p }
     ">"                                    { \p s -> TGThan p }
@@ -162,6 +170,8 @@ data Token =
         | TReturns AlexPosn
         | TMem AlexPosn String
         | TStorage AlexPosn String
+        | TEnum AlexPosn
+        | TNew AlexPosn
         | TIf AlexPosn
         | TElse AlexPosn
         | TEvent AlexPosn
@@ -169,9 +179,15 @@ data Token =
         | TModi AlexPosn
         | TVers AlexPosn
         | THat AlexPosn
+        | TIncr AlexPosn
+        | TDecr AlexPosn
+        | TRShift AlexPosn
+        | TLShift AlexPosn
         | TNegate AlexPosn
         | TAnd AlexPosn
+        | TBitAnd AlexPosn
         | TOr AlexPosn
+        | TBOr AlexPosn
         | TInEqual AlexPosn
         | TLThan AlexPosn
         | TGThan AlexPosn
@@ -233,6 +249,8 @@ tokenPosn (TPayable p str) = p
 tokenPosn (TReturns p ) = p
 tokenPosn (TMem p str) = p
 tokenPosn (TStorage p str) = p
+tokenPosn (TEnum p) = p
+tokenPosn (TNew p) = p
 tokenPosn (TView p str) = p
 tokenPosn (TIf p ) = p
 tokenPosn (TElse p) = p
@@ -240,9 +258,15 @@ tokenPosn (TEvent p) = p
 tokenPosn (TAnon p) = p
 tokenPosn (TModi p) = p
 tokenPosn (THat p) = p 
+tokenPosn (TIncr p) = p
+tokenPosn (TDecr p) = p 
+tokenPosn (TLShift p) = p
+tokenPosn (TRShift p) = p
 tokenPosn (TNegate p) = p 
+tokenPosn (TBitAnd p) = p
 tokenPosn (TAnd p) = p 
 tokenPosn (TOr p) = p 
+tokenPosn (TBOr p) = p
 tokenPosn (TInEqual p) = p 
 tokenPosn (TLThan p) = p 
 tokenPosn (TGThan p) = p 
