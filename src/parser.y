@@ -77,6 +77,8 @@ import AST
     "("                                    { TLeftParen _ }
     ")"                                    { TRightParen _ }
 
+-- Added to prevent dangling else issue
+%right "else"
 %%
 
 SourceUnit    : {- empty -}                                                            { [] }
@@ -120,9 +122,9 @@ OMInheritanceSpec : "," InheritanceSpecifier                                    
 
 -- InheritanceSpecifier Production 
 --       InheritanceSpecifier = UserDefinedTypeName ( '(' Expression ( ',' Expression )* ')' )? 
-InheritanceSpecifier : UserDefinedTypeName                                              { $1 }
---InheritanceSpecifier : UserDefinedTypeName zero(InhExpList)                             { $1 [$2] }
-InhExpList : "(" Expression multi(CSExpList) ")"                                        { $2 [$3] }
+--InheritanceSpecifier : UserDefinedTypeName                                              { $1 }
+InheritanceSpecifier : UserDefinedTypeName zero(InhExpList)                             { InheritanceSpecifier $1 $2 }
+InhExpList : "(" Expression list(CSExpList) ")"                                        { $2:$3 }
 CSExpList : "," Expression                                                              { $2}
 
 
@@ -243,9 +245,9 @@ VariableDeclaration :: { Expression }
 ExpressionStatement 
              : Expression                                                              { $1 } 
 
-IfStatement  : "if" "(" Expression ")"                                                 { $3 }
+IfStatement  : "if" "(" Expression ")" Statement zero(ElseState)                           { IfStatement $3 $5 $6  }
 
-ElseState    : "else" Statement                                                        { $2 }
+ElseState    : "else" Statement                                                        { ElseState $2 }
 
 {-
 IfStatement  : "if" "(" Expression ")" Statement zero(ElseState)                       { $1 }
@@ -283,10 +285,6 @@ list1(p) : p                                                                    
 -- zero or more 
 list(p) : list1(p)                                                                     { $1 }
         | {- empty -}                                                                  { [] }
-
--- 1 or many of StateVar assignments
-multi(z): z                                                                            { [$1] }
-        | z multi(z)                                                                   { $1 : $2 }
 
 -- Zero or one
 zero(q) : q                                                                            { [$1] }

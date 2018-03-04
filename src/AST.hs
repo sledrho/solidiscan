@@ -32,8 +32,11 @@ data ContractDefinition = Contract Identifier [InheritanceSpec] [ContractConts]
                           deriving (Show, Eq)
 
 -- Data for the iheritance specifications
-data InheritanceSpec = InheritanceSpec TypeName [TypeName]
+data InheritanceSpec = InheritanceSpec InheritanceSpecifier [InheritanceSpecifier]
                   deriving (Show, Eq)
+
+data InheritanceSpecifier = InheritanceSpecifier TypeName [[Expression]]
+                            deriving (Show, Eq)
 -- The contents of a Contract
 data ContractConts = ContractContents StateVarDec
                    | FunctionDefinition FunctionContents
@@ -52,24 +55,19 @@ data FuncMods = ModifierInvs [[Expression]]
 
 data EventDefinition = EventDefinition Ident [[[EParamaters]]]
                        deriving (Show, Eq)
-
+{-
 data Statements = Statements [Statement]
                   deriving (Show, Eq)
 
 data Statement = IfStatement Expression
                | SimpleStatement Expression
                  deriving (Show, Eq)
-{-
-data Block = Statem Statements
-           |  Expressions Expression
-           | VarDec VariableDeclaration 
-             deriving (Show, Eq)
 
-data ReturnParam = ReturnParam Parameter
-                   deriving (Show, Eq)
+data IfState = IfState ElseState
+               deriving (Show, Eq)
 
-data VariableDeclaration = VariableDeclaration TypeName Ident 
-                           deriving(Show, Eq)
+data ElseState = ElseState Statement
+                 deriving (Show, Eq)
 -}
 
 data ModifierDefinition = ModifierDefinition Ident [[[Parameter]]] [Expression]
@@ -155,7 +153,11 @@ data Expression = BoolExpression BooleanLiteral
                 | IdentExpression Ident
                 | StringExpression Ident 
                 | VariableDeclaration TypeName [StorageLocation] Ident 
+                | IfStatement Expression Expression [ElseState]
                   deriving (Show, Eq)
+
+data ElseState = ElseState Expression
+                 deriving (Show, Eq)
 
 data BooleanLiteral = BooleanLiteral Ident  
                       deriving (Show, Eq)
