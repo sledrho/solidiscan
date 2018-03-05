@@ -32,17 +32,21 @@ data ContractDefinition = Contract Identifier [InheritanceSpec] [ContractConts]
                           deriving (Show, Eq)
 
 -- Data for the iheritance specifications
-data InheritanceSpec = InheritanceSpec TypeName [TypeName]
+data InheritanceSpec = InheritanceSpec InheritanceSpecifier [InheritanceSpecifier]
                   deriving (Show, Eq)
+
+data InheritanceSpecifier = InheritanceSpecifier TypeName [[Expression]]
+                            deriving (Show, Eq)
 -- The contents of a Contract
 data ContractConts = ContractContents StateVarDec
                    | FunctionDefinition FunctionContents
                    | UsingFor UsingForDec
                    | EventDef EventDefinition
                    | ModDef ModifierDefinition
+                   | EnumDef EnumDefinition
                      deriving (Show, Eq)
 
-data FunctionContents = FunctionDef FuncName [[Parameter]] [FuncMods] [[[Parameter]]] [Expression]
+data FunctionContents = FunctionDef FuncName [[Parameter]] [FuncMods] [ReturnParam] [Expression]
                         deriving (Show, Eq)
 
 data FuncMods = ModifierInvs [[Expression]]
@@ -50,49 +54,48 @@ data FuncMods = ModifierInvs [[Expression]]
               | FuncVars PublicKeyword
                 deriving (Show, Eq)
 
-data EventDefinition = EventDefinition Ident [[[EParamaters]]]
+data EventDefinition = EventDefinition Ident [[[EParameters]]]
                        deriving (Show, Eq)
-
+{-
 data Statements = Statements [Statement]
                   deriving (Show, Eq)
 
-data Statement = IfStatement
+data Statement = IfStatement Expression
                | SimpleStatement Expression
                  deriving (Show, Eq)
-{-
-data Block = Statem Statements
-           |  Expressions Expression
-           | VarDec VariableDeclaration 
-             deriving (Show, Eq)
 
-data ReturnParam = ReturnParam Parameter
-                   deriving (Show, Eq)
+data IfState = IfState ElseState
+               deriving (Show, Eq)
 
-data VariableDeclaration = VariableDeclaration TypeName Ident 
-                           deriving(Show, Eq)
+data ElseState = ElseState Statement
+                 deriving (Show, Eq)
 -}
 
 data ModifierDefinition = ModifierDefinition Ident [[[Parameter]]] [Expression]
                           deriving (Show, Eq)
 
-data ModifierInvocation = ModifierInvocation [[[Expression]]]
-                          deriving (Show, Eq)
+data EnumDefinition = EnumDefinition Ident [EnumValue]
+                      deriving (Show, Eq)
+
+data EnumValue = EnumValue Ident
+                 deriving (Show, Eq)
+
 {- 
 data StateMutability = StateMutability PublicKeyword
                        deriving (Show, Eq)
 -}
 
-data EParamaters = EParameters TypeName Ident
+data EParameters = EParameters TypeName Ident
                    deriving (Show, Eq)
 
 
 data ParameterList = ParameterList Parameters
                    deriving (Show, Eq)
 
-data Parameters = Parameters TypeName TypeName
+data Parameters = Parameters Ident TypeName
                  deriving (Show, Eq)
 
-data Parameter = Parameter TypeName Ident
+data Parameter = Parameter TypeName [StorageLocation] Ident
                  deriving(Show, Eq)
 
 data ParamName = ParamName Ident
@@ -108,7 +111,11 @@ data StateVarDec = StateVariableDeclaration TypeName [PublicKeyword] Identifier 
 data UsingForDec = UsingForDeclaration Ident Ident Ident TypeName
                    deriving (Show, Eq)
 
+data StorageLocation = StorageLocation Ident
+                       deriving (Show, Eq)
 
+data ReturnParam = ReturnParam [[Parameter]]
+                      deriving (Show, Eq)
 
 data Identifier = Identifier Ident
                   deriving(Show, Eq)    
@@ -150,8 +157,37 @@ data Expression = BoolExpression BooleanLiteral
                 | NumExpression Int
                 | IdentExpression Ident
                 | StringExpression Ident 
-                | VariableDeclaration TypeName Ident 
+                | VariableDeclaration TypeName [StorageLocation] Ident 
+                | IfStatement Expression Expression [ElseState]
+                | AdditionExp Expression Expression
+                | SubtractionExp Expression Expression
+                | ExponentExp Expression Expression
+                | DivisionExp Expression Expression
+                | MultiExp Expression Expression
+                | ModuloExp Expression Expression
+                | BracketsExp Expression
+                | IncrExp Expression
+                | DecrExp Expression
+                | LShiftExp Expression Expression
+                | RShiftExp Expression Expression
+                | BitAndExp Expression Expression
+                | BitXOrExp Expression Expression
+                | BitOrExp Expression Expression
+                | LThanExp Expression Expression
+                | GThanExp Expression Expression
+                | LThanEqExp Expression Expression
+                | GThanEqExp Expression Expression
+                | EqualExp Expression Expression
+                | NotEqualExp Expression Expression
+                | AndExp Expression Expression
+                | OrExp Expression Expression
+                | NewExpression TypeName
                   deriving (Show, Eq)
+
+data NewExp = NewExp TypeName
+              deriving (Show, Eq)
+data ElseState = ElseState Expression
+                 deriving (Show, Eq)
 
 data BooleanLiteral = BooleanLiteral Ident  
                       deriving (Show, Eq)
