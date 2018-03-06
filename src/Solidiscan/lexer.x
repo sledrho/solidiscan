@@ -1,5 +1,5 @@
 {
-module Lexer where
+module Solidiscan.Lexer where
 }
 
 -- Attempting to make a Monadic lexer

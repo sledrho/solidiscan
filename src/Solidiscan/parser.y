@@ -1,7 +1,7 @@
 {
-module Parser(solidiscan) where
-import Lexer
-import AST
+module Solidiscan.Parser where
+import Solidiscan.Lexer
+import Solidiscan.AST
 }
 
 %name solidiscan

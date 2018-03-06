@@ -1,4 +1,4 @@
-module AST where
+module Solidiscan.AST where
 -- The following module is the AST data type for the parser.
 
 {-
