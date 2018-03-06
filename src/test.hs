@@ -1,7 +1,6 @@
 module Test where
 import Test.HUnit  
-import Parser
-import Lexer
+import Solidiscan
 
 -- Run parse allows the ability to run the parser from within GHCI, passing in the test case that failed
 

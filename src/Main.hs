@@ -1,7 +1,4 @@
 module Main where
-import Parser
-import Lexer
-import AST
 import Test
 import Test.HUnit
 
