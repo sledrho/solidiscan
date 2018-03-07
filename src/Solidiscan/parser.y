@@ -70,7 +70,7 @@ import Solidiscan.AST
     "}"                                    { TRCurl _ }
     "["                                    { TLBrack _ }
     "]"                                    { TRBrack _ }
-    "."                                    { TPeriod _ }
+    "."                                    { TPeriod _ $$ }
     "="                                    { TEquals _}
     "*"                                    { TMult _ }
     "/"                                    { TDiv _ }
@@ -99,6 +99,7 @@ import Solidiscan.AST
 %left "*" "/" "%"
 %left "**"
 %left "++" "--"
+%left "."
 
 -- Tells happy to expect at least 1 shift reduce conflict (at current this is within the if-else block)
 %expect 1
@@ -274,6 +275,7 @@ Expression   :: { Expression }
              | Expression "--"                                                         { DecrExp $1 }                      
              | NewExpression                                                           { NewExpression $1 }
              -- | IndexAccess                                                             { IndexAccess $1 }
+             | MemberAccess                                                            { $1 }
              | "(" Expression ")"                                                      { BracketsExp $2 }
              | Expression "**" Expression                                              { ExponentExp $1 $3 }
              | Expression "*" Expression                                               { MultiExp $1 $3 }
@@ -300,6 +302,8 @@ NewExpression
              : "new" TypeName                                                          { $2 }
 
 IndexAccess  : Expression "[" zero(Expression) "]"                                     { $3 }
+
+MemberAccess : Expression "." ident                                                    { MemberAccess $1 $2 (Identifier $3) }
 
 Statement    : IfStatement                                                             { $1 }
              | SimpleStatement ";"                                                     { $1 }

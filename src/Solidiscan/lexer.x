@@ -23,7 +23,7 @@ $int = [8-16]
 -- for comments
 @comment = \/\/ [^\r\n]* | \/\*[^\*]
 -- Char Sets for Specific Number combinations
-@string         = \" ($graphic # \")* \"
+@string         = \" ($graphic # \")* \"k
 @decimalnum     = $digit+
 @hexadecimal    = $hexit+
 -- Version info to parse pragma version
@@ -112,7 +112,6 @@ tokens :-
     "}"                                    { \p s -> TRCurl p }
     "["                                    { \p s -> TLBrack p }
     "]"                                    { \p s -> TRBrack p }
-    "."                                    { \p s -> TPeriod p }
     "="                                    { \p s -> TEquals p }
     "*"                                    { \p s -> TMult p }
     "/"                                    { \p s -> TDiv p }
@@ -122,6 +121,7 @@ tokens :-
     "-"                                    { \p s -> TSub p }
     ";"                                    { \p s -> TSemiCol p }
     ","                                    { \p s -> TComma p }
+    "."                                    { \p s -> TPeriod p s } 
     $alpha[$alpha $digit \_ \']*           { \p s -> TIdent p s }                       -- The lexical token for an identifier 
     @string                                { \p s -> TStringLiteral p (init (tail s)) } -- Lexical token for a string, (init(tail s)) removes leading and trailing "
     "("                                    { \p s -> TLeftParen p }
@@ -201,7 +201,6 @@ data Token =
         | TBytes AlexPosn
         | TLeftParen AlexPosn
         | TRightParen AlexPosn
-        | TPeriod AlexPosn
         | TEquals AlexPosn
         | TMult AlexPosn
         | TDiv AlexPosn
@@ -211,6 +210,7 @@ data Token =
         | TSub AlexPosn
         | TSemiCol AlexPosn
         | TComma AlexPosn
+        | TPeriod AlexPosn String
         deriving (Eq, Show)
 
 tokenPosn (TVers p) = p
@@ -280,7 +280,6 @@ tokenPosn (TRBrack p) = p
 tokenPosn (TBytes p) = p  
 tokenPosn (TLeftParen p) = p  
 tokenPosn (TRightParen p) = p  
-tokenPosn (TPeriod p) = p  
 tokenPosn (TEquals p) = p  
 tokenPosn (TMult p) = p  
 tokenPosn (TDiv p) = p
@@ -289,7 +288,8 @@ tokenPosn (TModul p) = p
 tokenPosn (TOp p c) = p  
 tokenPosn (TSub p) = p  
 tokenPosn (TSemiCol p) = p  
-tokenPosn (TComma p) = p  
+tokenPosn (TComma p) = p 
+tokenPosn (TPeriod p str) = p 
 
 -- In order to get position information a new alexScanTokens must be created
 

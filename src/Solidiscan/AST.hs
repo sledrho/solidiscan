@@ -117,7 +117,7 @@ data StorageLocation = StorageLocation Ident
 data ReturnParam = ReturnParam [[Parameter]]
                       deriving (Show, Eq)
 
-data Identifier = Identifier Ident
+data Identifier = Identifier String
                   deriving(Show, Eq)    
 
 data AssVar = AssVar Ident
@@ -182,8 +182,13 @@ data Expression = BoolExpression BooleanLiteral
                 | AndExp Expression Expression
                 | OrExp Expression Expression
                 | NewExpression TypeName
+                -- | MemberExp MemberAccess
+                | MemberAccess Expression String Identifier
                   deriving (Show, Eq)
-
+{-
+data MemberAccess = MemberAccess Expression String Identifier
+                    deriving (Show, Eq)
+-}
 data NewExp = NewExp TypeName
               deriving (Show, Eq)
 data ElseState = ElseState Expression
