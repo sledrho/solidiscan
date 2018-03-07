@@ -116,10 +116,11 @@ tokens :-
     "*"                                    { \p s -> TMult p }
     "/"                                    { \p s -> TDiv p }
     "**"                                   { \p s -> TExpSym p }
-    "%"                                    { \p s -> TModul p }
+    "%"                                    { \p s -> TModul p } 
     "+"                                    { \p s -> TOp p (head s) }
     "-"                                    { \p s -> TSub p }
     ";"                                    { \p s -> TSemiCol p }
+    ":"                                    { \p s -> TCol p }
     ","                                    { \p s -> TComma p }
     "."                                    { \p s -> TPeriod p s } 
     $alpha[$alpha $digit \_ \']*           { \p s -> TIdent p s }                       -- The lexical token for an identifier 
@@ -209,6 +210,7 @@ data Token =
         | TOp AlexPosn Char
         | TSub AlexPosn
         | TSemiCol AlexPosn
+        | TCol AlexPosn
         | TComma AlexPosn
         | TPeriod AlexPosn String
         deriving (Eq, Show)
@@ -288,6 +290,7 @@ tokenPosn (TModul p) = p
 tokenPosn (TOp p c) = p  
 tokenPosn (TSub p) = p  
 tokenPosn (TSemiCol p) = p  
+tokenPosn (TCol p) = p  
 tokenPosn (TComma p) = p 
 tokenPosn (TPeriod p str) = p 
 

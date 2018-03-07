@@ -184,11 +184,30 @@ data Expression = BoolExpression BooleanLiteral
                 | NewExpression TypeName
                 -- | MemberExp MemberAccess
                 | MemberAccess Expression String Identifier
+                | FunctionCall Expression FunctionCallArgsLst
                   deriving (Show, Eq)
 {-
 data MemberAccess = MemberAccess Expression String Identifier
                     deriving (Show, Eq)
+data FunctionCall = FunctionCall Expression FunctionCallArgs
+                    deriving (Show, Eq)
 -}
+
+
+data FunctionCallArgs = FunctionCallArgs FunctionCallArgsLst
+                        deriving (Show, Eq)
+
+data FunctionCallArgsLst = NameValues [NameValueList]
+                         | ExpLst [[Expression]]
+                           deriving (Show, Eq)
+
+
+data NameValueList = NameValueList NameValue [NameValue]
+                     deriving (Show, Eq)
+-- Used to simplify production rules within the parser
+data NameValue = NameValue Identifier Expression
+                 deriving (Show, Eq)
+
 data NewExp = NewExp TypeName
               deriving (Show, Eq)
 data ElseState = ElseState Expression

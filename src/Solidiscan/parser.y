@@ -79,12 +79,15 @@ import Solidiscan.AST
     "+"                                    { TOp _ $$ }
     "-"                                    { TSub _ }
     ";"                                    { TSemiCol _ }
+    ":"                                    { TCol _ }
     ","                                    { TComma _ }
     ident                                  { TIdent _ $$ }                       -- The lexical token for an identifier 
     stringLiteral                          { TStringLiteral _ $$ }
     "("                                    { TLeftParen _ }
     ")"                                    { TRightParen _ }
 
+-- To prevent shift reduce by these keywords
+%left "constant" "internal" 
 -- Added to prevent dangling else issue
 %right "else"
 %left "||"
@@ -102,7 +105,7 @@ import Solidiscan.AST
 %left "."
 
 -- Tells happy to expect at least 1 shift reduce conflict (at current this is within the if-else block)
-%expect 1
+%expect 22
 %%
 
 SourceUnit    : {- empty -}                                                            { [] }
@@ -276,6 +279,7 @@ Expression   :: { Expression }
              | NewExpression                                                           { NewExpression $1 }
              -- | IndexAccess                                                             { IndexAccess $1 }
              | MemberAccess                                                            { $1 }
+             | Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 }
              | "(" Expression ")"                                                      { BracketsExp $2 }
              | Expression "**" Expression                                              { ExponentExp $1 $3 }
              | Expression "*" Expression                                               { MultiExp $1 $3 }
@@ -303,7 +307,23 @@ NewExpression
 
 IndexAccess  : Expression "[" zero(Expression) "]"                                     { $3 }
 
+-- To handle member access e.g test.Test
 MemberAccess : Expression "." ident                                                    { MemberAccess $1 $2 (Identifier $3) }
+
+FunctionCall : Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 }
+FunctionCallArgs
+             : "{" zero(NameValueList) "}"                                             { NameValues $2 }
+             | zero(ExpressionList)                                                    { ExpLst $1}
+
+-- Production rules to do the following grammar rule
+--             Identifier : Expression ( , Identifier : Expression )*
+-- This is for named function calls see - http://solidity.readthedocs.io/en/develop/control-structures.html#function-calls
+NameValueList
+             : NameVal list(NameValueList_Lst)                                         { NameValueList $1 $2}
+NameValueList_Lst
+             : "," NameVal                                                             { $2 }
+NameVal      : ident ":" Expression                                                    { NameValue (Identifier $1) $3}
+
 
 Statement    : IfStatement                                                             { $1 }
              | SimpleStatement ";"                                                     { $1 }
