@@ -78,7 +78,7 @@ tokens :-
     "false"                                { \p s -> TFalse p s }
     "as"                                   { \p s -> TAs p }
     "is"                                   { \p s -> TIs p }
-    "from"                                 { \p s -> TFrom p }
+    "from"                                 { \p s -> TFrom p s }
     "pure"                                 { \p s -> TPure p s }
     "view"                                 { \p s -> TView p s }
     "payable"                              { \p s -> TPayable p s }
@@ -113,7 +113,7 @@ tokens :-
     "["                                    { \p s -> TLBrack p }
     "]"                                    { \p s -> TRBrack p }
     "="                                    { \p s -> TEquals p }
-    "*"                                    { \p s -> TMult p }
+    "*"                                    { \p s -> TMult p s }
     "/"                                    { \p s -> TDiv p }
     "**"                                   { \p s -> TExpSym p }
     "%"                                    { \p s -> TModul p } 
@@ -122,8 +122,18 @@ tokens :-
     ";"                                    { \p s -> TSemiCol p }
     ":"                                    { \p s -> TCol p }
     ","                                    { \p s -> TComma p }
+    "|="                                   { \p s -> TLVOr p }
+    "^="                                   { \p s -> TLVXor p}
+    "&="                                   { \p s -> TLVAnd p }
+    "<<="                                  { \p s -> TLVLeftShift p }
+    ">>="                                  { \p s -> TLVRightShift p }
+    "+="                                   { \p s -> TLVIncr p }
+    "-="                                   { \p s -> TLVDecr p }
+    "*="                                   { \p s -> TLVMult p }
+    "/="                                   { \p s -> TLVDiv p }
+    "%="                                   { \p s -> TLVMod p }
     "."                                    { \p s -> TPeriod p s } 
-    $alpha[$alpha $digit \_ \']*           { \p s -> TIdent p s }                       -- The lexical token for an identifier 
+    $alpha[$alpha $digit \_ \' \$]*        { \p s -> TIdent p s }                       -- The lexical token for an identifier 
     @string                                { \p s -> TStringLiteral p (init (tail s)) } -- Lexical token for a string, (init(tail s)) removes leading and trailing "
     "("                                    { \p s -> TLeftParen p }
     ")"                                    { \p s -> TRightParen p }
@@ -164,7 +174,7 @@ data Token =
         | TFalse AlexPosn String
         | TAs AlexPosn
         | TIs AlexPosn
-        | TFrom AlexPosn
+        | TFrom AlexPosn String
         | TView AlexPosn String
         | TPure AlexPosn String
         | TPayable AlexPosn String
@@ -203,7 +213,7 @@ data Token =
         | TLeftParen AlexPosn
         | TRightParen AlexPosn
         | TEquals AlexPosn
-        | TMult AlexPosn
+        | TMult AlexPosn String
         | TDiv AlexPosn
         | TExpSym AlexPosn
         | TModul AlexPosn
@@ -212,6 +222,16 @@ data Token =
         | TSemiCol AlexPosn
         | TCol AlexPosn
         | TComma AlexPosn
+        | TLVOr AlexPosn
+        | TLVXor AlexPosn
+        | TLVAnd AlexPosn
+        | TLVLeftShift AlexPosn
+        | TLVRightShift AlexPosn
+        | TLVIncr AlexPosn
+        | TLVDecr AlexPosn
+        | TLVMult AlexPosn
+        | TLVDiv AlexPosn
+        | TLVMod AlexPosn
         | TPeriod AlexPosn String
         deriving (Eq, Show)
 
@@ -245,7 +265,7 @@ tokenPosn (TTrue p str) = p
 tokenPosn (TFalse p str) = p
 tokenPosn (TAs p) = p
 tokenPosn (TIs p) = p
-tokenPosn (TFrom p) = p
+tokenPosn (TFrom p str) = p
 tokenPosn (TPure p str) = p
 tokenPosn (TPayable p str) = p
 tokenPosn (TReturns p ) = p
@@ -283,7 +303,7 @@ tokenPosn (TBytes p) = p
 tokenPosn (TLeftParen p) = p  
 tokenPosn (TRightParen p) = p  
 tokenPosn (TEquals p) = p  
-tokenPosn (TMult p) = p  
+tokenPosn (TMult p str) = p  
 tokenPosn (TDiv p) = p
 tokenPosn (TExpSym p) = p  
 tokenPosn (TModul p) = p  
@@ -292,6 +312,17 @@ tokenPosn (TSub p) = p
 tokenPosn (TSemiCol p) = p  
 tokenPosn (TCol p) = p  
 tokenPosn (TComma p) = p 
+tokenPosn (TLVAnd p) = p 
+tokenPosn (TLVOr p) = p 
+tokenPosn (TLVXor p) = p 
+tokenPosn (TLVLeftShift p) = p 
+tokenPosn (TLVRightShift p) = p 
+tokenPosn (TLVIncr p) = p 
+tokenPosn (TLVDecr p) = p 
+tokenPosn (TLVMult p) = p 
+tokenPosn (TLVDiv p) = p 
+tokenPosn (TLVMod p) = p 
+
 tokenPosn (TPeriod p str) = p 
 
 -- In order to get position information a new alexScanTokens must be created

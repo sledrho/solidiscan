@@ -36,7 +36,7 @@ import Solidiscan.AST
     "false"                                { TFalse _ $$ }
     "as"                                   { TAs _ }
     "is"                                   { TIs _ }
-    "from"                                 { TFrom _ }
+    "from"                                 { TFrom _ $$ }
     "view"                                 { TView _ $$ }
     "pure"                                 { TPure _ $$ }
     "payable"                              { TPayable _ $$ }
@@ -72,7 +72,7 @@ import Solidiscan.AST
     "]"                                    { TRBrack _ }
     "."                                    { TPeriod _ $$ }
     "="                                    { TEquals _}
-    "*"                                    { TMult _ }
+    "*"                                    { TMult _ $$ }
     "/"                                    { TDiv _ }
     "**"                                   { TExpSym _ }
     "%"                                    { TModul _ }
@@ -81,6 +81,16 @@ import Solidiscan.AST
     ";"                                    { TSemiCol _ }
     ":"                                    { TCol _ }
     ","                                    { TComma _ }
+    "|="                                   { TLVOr _}
+    "^="                                   { TLVXor _}
+    "&="                                   { TLVAnd _}
+    "<<="                                  { TLVLeftShift _}
+    ">>="                                  { TLVRightShift _}
+    "+="                                   { TLVIncr _}
+    "-="                                   { TLVDecr _}
+    "*="                                   { TLVMult _}
+    "/="                                   { TLVDiv _}
+    "%="                                   { TLVMod _}
     ident                                  { TIdent _ $$ }                       -- The lexical token for an identifier 
     stringLiteral                          { TStringLiteral _ $$ }
     "("                                    { TLeftParen _ }
@@ -90,6 +100,8 @@ import Solidiscan.AST
 %left "constant" "internal" 
 -- Added to prevent dangling else issue
 %right "else"
+%right "=" "|=" "^=" "&=" "<<=" ">>=" "+=" "-=" "*=" "/=" "%="
+
 %left "||"
 %left "&&"
 %left "==" "!="
@@ -104,8 +116,8 @@ import Solidiscan.AST
 %left "++" "--"
 %left "."
 
--- Tells happy to expect at least 1 shift reduce conflict (at current this is within the if-else block)
-%expect 22
+-- Tells happy to expect at least 22 shift reduce conflict (at current this is within the if-else block and function-call methods)
+-- %expect 22
 %%
 
 SourceUnit    : {- empty -}                                                            { [] }
@@ -123,13 +135,14 @@ PragmaName :: { PragmaName }
 
 ImportDirective :: { ImportDirective } 
              : "import" stringLiteral ImportAs ";"                                     { ImportDir $2 }
-             | "import" ImportAster ImportAs "from" stringLiteral ";"                  { ImportMulti $2 $3 "from" $5}
+             | "import" ImportAster ImportAs "from" stringLiteral ";"                  { ImportMulti $2 $3 (Identifier $4) $5}
 
-ImportAs     : "as" ident                                                              { $2 } 
-             | {- empty -}                                                             { [] }
+ImportAs
+             : "as" ident                                                              { (Identifier $2) } 
+             
 
-ImportAster : "*"                                                                      { "*" }
-            | ident                                                                    { $1 }
+ImportAster : "*"                                                                      { (Identifier $1) }
+            | ident                                                                    { (Identifier $1)  }
 
 -- Production for the Contract Definition
 ContractDefinition :: { ContractDefinition }                                                       -- Passing the $2 token to Identifier to return the appropriate data type
@@ -143,7 +156,6 @@ ConLibInt   : contract                                                          
 -- The following is a production group for 
 --          ( 'is' InheritanceSpecifier (',' InheritanceSpecifier )* )?
 --  Where each production is nested below
--- ! Needs finished
 InheritanceSpecList : "is" InheritanceSpecifier list(OMInheritanceSpec)                { InheritanceSpec $2 $3 }
 OMInheritanceSpec : "," InheritanceSpecifier                                           { $2 }
 
@@ -151,8 +163,9 @@ OMInheritanceSpec : "," InheritanceSpecifier                                    
 --       InheritanceSpecifier = UserDefinedTypeName ( '(' Expression ( ',' Expression )* ')' )? 
 --InheritanceSpecifier : UserDefinedTypeName                                              { $1 }
 InheritanceSpecifier : UserDefinedTypeName zero(InhExpList)                             { InheritanceSpecifier $1 $2 }
-InhExpList : "(" Expression list(CSExpList) ")"                                         { $2:$3 }
-CSExpList : "," Expression                                                              { $2}
+InhExpList :: { [Expression] }
+          : "(" Expression list(CSExpList) ")"                                         { $2:$3 }
+CSExpList : "," Expression                                                              { $2 }
 
 
 ContractPart :: { ContractConts }
@@ -215,7 +228,8 @@ FuncMods :: { FuncMods }
 
 -- Either 'return' | ParamaterList
 --  ( 'returns' ParameterList )? 
-ReturnParam  : "returns" ParameterList                                                   { ReturnParam $2 }
+ReturnParam  :: { ReturnParam } 
+             : "returns" ParameterList                                                   { ReturnParam $2 }
 
 -- Either terminates the function declaration with ';'
 -- Or a Block
@@ -247,12 +261,13 @@ StateVarDec :: { StateVarDec }                                                  
 
 
 UsingForDec :: { UsingForDec }
-             : "using" ident "for" TypeName ";"                                        { UsingForDeclaration $1 $2 $3 $4}
+             : "using" ident "for" TypeName ";"                                        { UsingForDeclaration $1 (Identifier $2) $3 $4}
         
 --Todo: finish this method for * implementation
+{-
 MTypeName    : "*"                                                                     { $1 }
              | TypeName                                                                { $1}
-
+-}
 TypeName     : ElementaryTypeName                                                      { ElementaryTypeName $1 }
              | UserDefinedTypeName                                                     { $1 }
 
@@ -262,15 +277,15 @@ AssVar       : "public"                                                         
              | "constant"                                                              { ConstantKeyword $1 }
 
 -- MaybeExp = Possibility of an Expression
-MaybeExp     : MExpression                                                             { $1 }
-             | {- empty -}                                                             { [] }  
-MExpression  : "=" Expression                                                          { $2 }
+MExpression  :: {Expression}
+             : "=" Expression                                                          { $2 }
 
 -- Expression list
 -- ExpressionList = Expression ( ',' Expression )*
-ExpressionList
+ExpressionList :: { [Expression] }
              : Expression list(ExprList)                                               { $1:$2 }
-ExprList     : "," Expression                                                          { $2 }
+ExprList     :: { Expression }
+             : "," Expression                                                          { $2 }
 
 -- The basic Expression type
 Expression   :: { Expression }
@@ -297,9 +312,20 @@ Expression   :: { Expression }
              | Expression "<=" Expression                                              { LThanEqExp $1 $3 }
              | Expression ">=" Expression                                              { GThanEqExp $1 $3 }
              | Expression "==" Expression                                              { EqualExp $1 $3 }
-             | Expression "!=" Expression                                              { NotEqualExp $1 $3 }
+             -- | Expression "!=" Expression                                              { NotEqualExp $1 $3 }
              | Expression "&&" Expression                                              { AndExp $1 $3 }
              | Expression "||" Expression                                              { OrExp $1 $3 }
+             | Expression "=" Expression                                               { LValEqual $1 $3 }
+             | Expression "|=" Expression                                              { LValOr $1 $3 }
+             | Expression "^=" Expression                                              { LValXOr $1 $3 }
+             | Expression "&=" Expression                                              { LValAnd $1 $3 }
+             | Expression "<<=" Expression                                             { LValLeftShift $1 $3 }
+             | Expression ">>=" Expression                                             { LValRightShift $1 $3 }
+             | Expression "+=" Expression                                              { LValIncr $1 $3 }
+             | Expression "-=" Expression                                              { LValDecr $1 $3 }
+             | Expression "*=" Expression                                              { LValMult $1 $3 }
+             | Expression "/=" Expression                                              { LValDivis $1 $3 }
+             | Expression "%=" Expression                                              { LValMod $1 $3 }
              | PrimaryExpression                                                       { $1 }
 
 NewExpression

@@ -24,7 +24,7 @@ data PragmaValue = PragmaValue Dnum
                    deriving(Show, Eq)
 -- File imports/Contract Imports
 data ImportDirective = ImportDir String
-                     | ImportMulti Ident Ident Ident Ident
+                     | ImportMulti Identifier Identifier Identifier String 
                        deriving (Show, Eq)
 
 -- The definition of an actual Contract Code Block
@@ -53,6 +53,9 @@ data FuncMods = ModifierInvs [[Expression]]
               | StateMutability PublicKeyword
               | FuncVars PublicKeyword
                 deriving (Show, Eq)
+
+data ReturnParam = ReturnParam [[Parameter]]
+                   deriving (Show, Eq)
 
 data EventDefinition = EventDefinition Ident [[[EParameters]]]
                        deriving (Show, Eq)
@@ -88,13 +91,6 @@ data StateMutability = StateMutability PublicKeyword
 data EParameters = EParameters TypeName Ident
                    deriving (Show, Eq)
 
-
-data ParameterList = ParameterList Parameters
-                   deriving (Show, Eq)
-
-data Parameters = Parameters Ident TypeName
-                 deriving (Show, Eq)
-
 data Parameter = Parameter TypeName [StorageLocation] Ident
                  deriving(Show, Eq)
 
@@ -108,14 +104,11 @@ data FuncVar = FuncVar PublicKeyword
 data StateVarDec = StateVariableDeclaration TypeName [PublicKeyword] Identifier [Expression]
                    deriving (Show, Eq)
 
-data UsingForDec = UsingForDeclaration Ident Ident Ident TypeName
+data UsingForDec = UsingForDeclaration Ident Identifier Ident TypeName
                    deriving (Show, Eq)
 
 data StorageLocation = StorageLocation Ident
                        deriving (Show, Eq)
-
-data ReturnParam = ReturnParam [[Parameter]]
-                      deriving (Show, Eq)
 
 data Identifier = Identifier String
                   deriving(Show, Eq)    
@@ -185,6 +178,17 @@ data Expression = BoolExpression BooleanLiteral
                 -- | MemberExp MemberAccess
                 | MemberAccess Expression String Identifier
                 | FunctionCall Expression FunctionCallArgsLst
+                | LValEqual Expression Expression
+                | LValOr Expression Expression
+                | LValXOr Expression Expression
+                | LValAnd Expression Expression
+                | LValLeftShift Expression Expression
+                | LValRightShift Expression Expression
+                | LValIncr Expression Expression
+                | LValDecr Expression Expression
+                | LValMult Expression Expression
+                | LValDivis Expression Expression
+                | LValMod Expression Expression
                   deriving (Show, Eq)
 {-
 data MemberAccess = MemberAccess Expression String Identifier
@@ -200,7 +204,6 @@ data FunctionCallArgs = FunctionCallArgs FunctionCallArgsLst
 data FunctionCallArgsLst = NameValues [NameValueList]
                          | ExpLst [[Expression]]
                            deriving (Show, Eq)
-
 
 data NameValueList = NameValueList NameValue [NameValue]
                      deriving (Show, Eq)
