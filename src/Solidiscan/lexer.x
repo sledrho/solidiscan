@@ -55,7 +55,7 @@ tokens :-
     | @decimalnum @exponent                { \p s -> TExp p (read s) }
     @reservedid                            { \p s -> TReservedOp p }
     @int                                   { \p s -> TIntLit p (read s) }
-    @numberunit                            { \p s -> TNumUnit p }
+    @numberunit                            { \p s -> TNumUnit p s}
     $digit+                                { \p s -> TInt p (read s) }
     "pragma"                               { \p s -> TPragma p }
     "import"                               { \p s -> TImport p }
@@ -64,14 +64,6 @@ tokens :-
     "interface"                            { \p s -> TInterface p }
     function                               { \p s -> TFuncDef p }
     "external"                             { \p s -> TExternal p s }
-    "public"                               { \p s -> TPublic p s }
-    "internal"                             { \p s -> TIntern p s }
-    "private"                              { \p s -> TPriv p s }
-    "constant"                             { \p s -> TConst p s }
-    "string"                               { \p s -> TStringAs p s }
-    "address"                              { \p s -> TAddr p s }
-    "bool"                                 { \p s -> TBooleanLit p s }
-    "var"                                  { \p s -> TVar p s }
     "using"                                { \p s -> TUsing p s }
     "for"                                  { \p s -> TFor p s }
     "true"                                 { \p s -> TTrue p s }
@@ -79,19 +71,38 @@ tokens :-
     "as"                                   { \p s -> TAs p }
     "is"                                   { \p s -> TIs p }
     "from"                                 { \p s -> TFrom p s }
-    "pure"                                 { \p s -> TPure p s }
-    "view"                                 { \p s -> TView p s }
-    "payable"                              { \p s -> TPayable p s }
     "returns"                              { \p s -> TReturns p }
     "if"                                   { \p s -> TIf p }
     "else"                                 { \p s -> TElse p }
     "event"                                { \p s -> TEvent p }
     "anonymous"                            { \p s -> TAnon p }
     "modifier"                             { \p s -> TModi p }
-    "memory"                               { \p s -> TMem p s }
-    "storage"                              { \p s -> TStorage p s }
     "enum"                                 { \p s -> TEnum p }
     "new"                                  { \p s -> TNew p }
+
+    -- ElementaryTypeNames
+    "string"                               { \p s -> TStringAs p s }
+    "address"                              { \p s -> TAddr p s }
+    "bool"                                 { \p s -> TBooleanLit p s }
+    "var"                                  { \p s -> TVar p s }
+    "uint"                                 { \p s -> TUInt p s }
+
+    -- AssignmentVariables
+    "public"                               { \p s -> TPublic p s }
+    "internal"                             { \p s -> TIntern p s }
+    "private"                              { \p s -> TPriv p s }
+    "constant"                             { \p s -> TConst p s }
+
+    -- Storage keywords
+    "memory"                               { \p s -> TMem p s }
+    "storage"                              { \p s -> TStorage p s }
+
+    -- Statemutability Keywords
+    "pure"                                 { \p s -> TPure p s }
+    "view"                                 { \p s -> TView p s }
+    "payable"                              { \p s -> TPayable p s }
+
+    -- Expression Tokens 
     "++"                                   { \p s -> TIncr p }
     "<<"                                   { \p s -> TLShift p }
     ">>"                                   { \p s -> TRShift p }
@@ -133,11 +144,13 @@ tokens :-
     "/="                                   { \p s -> TLVDiv p }
     "%="                                   { \p s -> TLVMod p }
     "."                                    { \p s -> TPeriod p s } 
+
+
+    --$byte                                { \p s -> TByte p (read s) }
     $alpha[$alpha $digit \_ \' \$]*        { \p s -> TIdent p s }                       -- The lexical token for an identifier 
     @string                                { \p s -> TStringLiteral p (init (tail s)) } -- Lexical token for a string, (init(tail s)) removes leading and trailing "
     "("                                    { \p s -> TLeftParen p }
     ")"                                    { \p s -> TRightParen p }
-    --$byte                                { \p s -> TByte p (read s) }
 
 {
 
@@ -150,7 +163,8 @@ data Token =
         | TExp AlexPosn Int
         | TIntLit AlexPosn Int
         | TInt AlexPosn Int
-        | TNumUnit AlexPosn
+        | TUInt AlexPosn String
+        | TNumUnit AlexPosn String
         | TDec AlexPosn Int
         | TStringLiteral AlexPosn String
         | TPragma AlexPosn
@@ -242,7 +256,8 @@ tokenPosn (THexNum p) = p
 tokenPosn (TExp p f) = p 
 tokenPosn (TIntLit p i) = p 
 tokenPosn (TInt p i) = p 
-tokenPosn (TNumUnit p) = p
+tokenPosn (TUInt p str) = p 
+tokenPosn (TNumUnit p str) = p
 tokenPosn (TDec p i) = p 
 tokenPosn (TStringLiteral p str) = p 
 tokenPosn (TPragma p) = p 

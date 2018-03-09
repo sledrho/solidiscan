@@ -46,7 +46,7 @@ data ContractConts = ContractContents StateVarDec
                    | EnumDef EnumDefinition
                      deriving (Show, Eq)
 
-data FunctionContents = FunctionDef FuncName [[Parameter]] [FuncMods] [ReturnParam] [Expression]
+data FunctionContents = FunctionDef Identifier [[Parameter]] [FuncMods] [ReturnParam] [Expression]
                         deriving (Show, Eq)
 
 data FuncMods = ModifierInvs [[Expression]]
@@ -57,7 +57,7 @@ data FuncMods = ModifierInvs [[Expression]]
 data ReturnParam = ReturnParam [[Parameter]]
                    deriving (Show, Eq)
 
-data EventDefinition = EventDefinition Ident [[[EParameters]]]
+data EventDefinition = EventDefinition Identifier [[[EParameters]]]
                        deriving (Show, Eq)
 {-
 data Statements = Statements [Statement]
@@ -74,13 +74,13 @@ data ElseState = ElseState Statement
                  deriving (Show, Eq)
 -}
 
-data ModifierDefinition = ModifierDefinition Ident [[[Parameter]]] [Expression]
+data ModifierDefinition = ModifierDefinition Identifier [[[Parameter]]] [Expression]
                           deriving (Show, Eq)
 
-data EnumDefinition = EnumDefinition Ident [EnumValue]
+data EnumDefinition = EnumDefinition Identifier [EnumValue]
                       deriving (Show, Eq)
 
-data EnumValue = EnumValue Ident
+data EnumValue = EnumValue Identifier
                  deriving (Show, Eq)
 
 {- 
@@ -88,7 +88,7 @@ data StateMutability = StateMutability PublicKeyword
                        deriving (Show, Eq)
 -}
 
-data EParameters = EParameters TypeName Ident
+data EParameters = EParameters TypeName Identifier
                    deriving (Show, Eq)
 
 data Parameter = Parameter TypeName [StorageLocation] Ident
@@ -131,6 +131,7 @@ data ElemType = AddrType Ident
               | BoolType Ident
               | StringType Ident
               | VarType Ident
+              | UIntType Ident
                 deriving(Show, Eq)
 
 -- Elementary types e.g address/bool/string/var etc etc
@@ -147,7 +148,7 @@ data TypeIdent = TypeIdent Ident
                  deriving (Show, Eq)
 
 data Expression = BoolExpression BooleanLiteral
-                | NumExpression Int
+                | NumExpression NumberLiteral
                 | IdentExpression Ident
                 | StringExpression Ident 
                 | VariableDeclaration TypeName [StorageLocation] Ident 
@@ -197,6 +198,8 @@ data FunctionCall = FunctionCall Expression FunctionCallArgs
                     deriving (Show, Eq)
 -}
 
+data NumberLiteral = NumberLiteral Int [Ident]
+               deriving (Show, Eq)
 
 data FunctionCallArgs = FunctionCallArgs FunctionCallArgsLst
                         deriving (Show, Eq)
@@ -213,6 +216,7 @@ data NameValue = NameValue Identifier Expression
 
 data NewExp = NewExp TypeName
               deriving (Show, Eq)
+
 data ElseState = ElseState Expression
                  deriving (Show, Eq)
 
@@ -221,6 +225,5 @@ data BooleanLiteral = BooleanLiteral Ident
 
 -- Basic Identifier type :: String
 type Ident = String
-type FuncName = Ident
 type Dnum = Double
 --type AssVar = String

@@ -14,7 +14,8 @@ import Solidiscan.AST
     "decimalnum"                           { TDec _ $$ }            -- $$ allows us to pass through the value of the token
     "exponent"                             { TExp _ $$ }            -- Can be seen in Int/Op/StringLiteral tokens also
     "int"                                  { TInt _ $$ }
-    numberunit                             { TNumUnit _ }
+    "uint"                                 { TUInt _ $$ }
+    numberunit                             { TNumUnit _ $$ }
     "pragma"                               { TPragma _ }
     "import"                               { TImport _ }
     "external"                             { TExternal _ $$ }
@@ -178,15 +179,15 @@ ContractPart :: { ContractConts }
              
 
 FunctionDefinition :: { FunctionContents } 
-             : function ident ParameterList list(FuncMods) zero(ReturnParam) TermBlock { FunctionDef $2 $3 $4 $5 $6 }
+             : function ident ParameterList list(FuncMods) zero(ReturnParam) TermBlock { FunctionDef (Identifier $2) $3 $4 $5 $6 }
 
 -- Eventdefinition grammar production
 EventDefinition :: { EventDefinition }
-             : "event" ident zero(EventParamList) zero(AnonList) ";"                    { EventDefinition $2 $3 }
+             : "event" ident zero(EventParamList) zero(AnonList) ";"                    { EventDefinition (Identifier $2) $3 }
 
 -- Production rules for modifier definitions + invocations
 ModifierDefinition :: { ModifierDefinition }
-             : "modifier" ident zero(ParameterList) TermBlock                           { ModifierDefinition $2 $3 $4 }
+             : "modifier" ident zero(ParameterList) TermBlock                           { ModifierDefinition (Identifier $2) $3 $4 }
 ModifierInvocation 
              : ident "(" list(ModExpList) ")"                                           { $3 }
 ModExpList   : ExpressionList                                                           { $1 }
@@ -194,9 +195,9 @@ ModExpList   : ExpressionList                                                   
 -- Enum Definition follows the following grammar production
 --             'enum' Identifier '{' EnumValue? (',' EnumValue)* '}'
 EnumDefinition :: { EnumDefinition }
-             : "enum" ident "{" EnumValList "}"                                         { EnumDefinition $2 $4 }
+             : "enum" ident "{" EnumValList "}"                                         { EnumDefinition (Identifier $2) $4 }
 EnumValue :: { EnumValue }
-             : ident                                                                    { EnumValue $1 }
+             : ident                                                                    { EnumValue (Identifier $1) }
 EnumValList  : EnumValue list(MultiEnumValue)                                           { $2 }
 MultiEnumValue 
              : "," EnumValue                                                            { $2 }
@@ -209,7 +210,7 @@ EventParamList
 EventParams  : EParameters list(EParamList)                                             { $1:$2 }
 EParamList   : "," EParameters                                                          { $2 }
 EParameters :: { EParameters }
-             : TypeName ident                                                           { EParameters $1 $2 }
+             : TypeName ident                                                           { EParameters $1 (Identifier $2) }
 AnonList     : "anonymous"                                                              { $1 }
 
 
@@ -269,7 +270,7 @@ MTypeName    : "*"                                                              
              | TypeName                                                                { $1}
 -}
 TypeName     : ElementaryTypeName                                                      { ElementaryTypeName $1 }
-             | UserDefinedTypeName                                                     { $1 }
+             -- | UserDefinedTypeName                                                     { $1 }
 
 AssVar       : "public"                                                                { PublicKeyword $1 }       
              | "private"                                                               { PrivateKeyword $1 }
@@ -294,7 +295,7 @@ Expression   :: { Expression }
              | NewExpression                                                           { NewExpression $1 }
              -- | IndexAccess                                                             { IndexAccess $1 }
              | MemberAccess                                                            { $1 }
-             | Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 }
+             --| Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 }
              | "(" Expression ")"                                                      { BracketsExp $2 }
              | Expression "**" Expression                                              { ExponentExp $1 $3 }
              | Expression "*" Expression                                               { MultiExp $1 $3 }
@@ -380,16 +381,18 @@ BooleanLiteral :: {BooleanLiteral}
                : "true"                                                                { BooleanLiteral $1 }
                | "false"                                                               { BooleanLiteral $1 }
 
-NumberLiteral  : "decimalnum" numberunit                                               { $1 }
+NumberLiteral  :: { NumberLiteral }
+               : "decimalnum" zero(numberunit)                                         { NumberLiteral $1 $2 }
                
 UserDefinedTypeName : ident                                                            {UserDefinedTypeName $1}
 
-ElementaryTypeName : "address"                                                         { AddrType $1 }                                     
+ElementaryTypeName :: { ElemType }
+                   : "address"                                                         { AddrType $1 }                                     
                    | "bool"                                                            { BoolType $1 }
                    | "var"                                                             { VarType $1 }
                    | "string"                                                          { StringType $1 }
-                   -- | Int                                                               { $1 }
-                   -- | Uint                                                              { $1}
+                   | "uint"                                                            { UIntType $1}
+                   -- | "int"                                                               { $1 }
 
 -- The following allows the parser to create lists of one or more or zero or more lists.
 -- one or more
