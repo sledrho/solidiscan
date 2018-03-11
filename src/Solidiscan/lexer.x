@@ -19,20 +19,18 @@ $alpha = [a-zA-Z]                                  -- alphabetic characters
 $hexit = [0-9A-Fa-f]
 --$version = [\^\;]
 $graphic  = $printable # $white
-$int = [8-16]
+-- $int = [8-16]
 -- for comments
 @comment = \/\/ [^\r\n]* | \/\*[^\*]
 -- Char Sets for Specific Number combinations
-@string         = \" ($graphic # \")* \"k
+@string         = \" ($graphic # \")* \"
 @decimalnum     = $digit+
 @hexadecimal    = $hexit+
 -- Version info to parse pragma version
 @version        = \^ @decimalnum \. @decimalnum \. @decimalnum
 @exponent       = [eE] [\-\+] @decimalnum
 
-@int = int (8 | 16 | 24 | 32 | 40 | 48 | 56 | 64 | 72 | 80 | 88 | 96 | 104 | 112 | 120 
-              | 128 | 136 | 144 | 152 | 160 | 168 | 176 | 184 | 192 | 200 | 208 | 216 
-              | 224 | 232 | 240 | 248 | 256 )?
+-- @int = int
 
 -- List of reserved words used by Solidity
 @reservedid = abstract| case| catch| default| final| in| inline| match| null| of|
@@ -54,7 +52,6 @@ tokens :-
 <0> @decimalnum \. @decimalnum @exponent?
     | @decimalnum @exponent                { \p s -> TExp p (read s) }
     @reservedid                            { \p s -> TReservedOp p }
-    @int                                   { \p s -> TIntLit p (read s) }
     @numberunit                            { \p s -> TNumUnit p s}
     $digit+                                { \p s -> TInt p (read s) }
     "pragma"                               { \p s -> TPragma p }
@@ -63,6 +60,7 @@ tokens :-
     "library"                              { \p s -> TLibrary p }
     "interface"                            { \p s -> TInterface p }
     function                               { \p s -> TFuncDef p }
+    "struct"                               { \p s -> TStruct p }
     "external"                             { \p s -> TExternal p s }
     "using"                                { \p s -> TUsing p s }
     "for"                                  { \p s -> TFor p s }
@@ -73,7 +71,10 @@ tokens :-
     "from"                                 { \p s -> TFrom p s }
     "returns"                              { \p s -> TReturns p }
     "if"                                   { \p s -> TIf p }
+    "while"                                { \p s -> TWhile p }
     "else"                                 { \p s -> TElse p }
+    "assembly"                             { \p s -> TAssem p }
+    "let"                                  { \p s -> TLet p }
     "event"                                { \p s -> TEvent p }
     "anonymous"                            { \p s -> TAnon p }
     "modifier"                             { \p s -> TModi p }
@@ -86,6 +87,7 @@ tokens :-
     "bool"                                 { \p s -> TBooleanLit p s }
     "var"                                  { \p s -> TVar p s }
     "uint"                                 { \p s -> TUInt p s }
+    "int"                                  { \p s -> TIntLit p s }
 
     -- AssignmentVariables
     "public"                               { \p s -> TPublic p s }
@@ -133,6 +135,7 @@ tokens :-
     ";"                                    { \p s -> TSemiCol p }
     ":"                                    { \p s -> TCol p }
     ","                                    { \p s -> TComma p }
+    ":="                                   { \p s -> TAssign p }
     "|="                                   { \p s -> TLVOr p }
     "^="                                   { \p s -> TLVXor p}
     "&="                                   { \p s -> TLVAnd p }
@@ -161,7 +164,7 @@ data Token =
         | TReservedOp AlexPosn
         | THexNum AlexPosn
         | TExp AlexPosn Int
-        | TIntLit AlexPosn Int
+        | TIntLit AlexPosn String
         | TInt AlexPosn Int
         | TUInt AlexPosn String
         | TNumUnit AlexPosn String
@@ -173,6 +176,7 @@ data Token =
         | TLibrary AlexPosn
         | TInterface AlexPosn
         | TFuncDef AlexPosn
+        | TStruct AlexPosn
         | TExternal AlexPosn String
         | TPublic AlexPosn String                   -- In order to pass through the value of the token, as opposed to the token position.
         | TIntern AlexPosn String
@@ -199,6 +203,9 @@ data Token =
         | TNew AlexPosn
         | TIf AlexPosn
         | TElse AlexPosn
+        | TWhile AlexPosn
+        | TAssem AlexPosn
+        | TLet AlexPosn
         | TEvent AlexPosn
         | TAnon AlexPosn
         | TModi AlexPosn
@@ -236,6 +243,7 @@ data Token =
         | TSemiCol AlexPosn
         | TCol AlexPosn
         | TComma AlexPosn
+        | TAssign AlexPosn
         | TLVOr AlexPosn
         | TLVXor AlexPosn
         | TLVAnd AlexPosn
@@ -254,7 +262,7 @@ tokenPosn (TIdent p id) = p
 tokenPosn (TReservedOp p) = p 
 tokenPosn (THexNum p) = p
 tokenPosn (TExp p f) = p 
-tokenPosn (TIntLit p i) = p 
+tokenPosn (TIntLit p str) = p 
 tokenPosn (TInt p i) = p 
 tokenPosn (TUInt p str) = p 
 tokenPosn (TNumUnit p str) = p
@@ -272,6 +280,8 @@ tokenPosn (TIntern p str) = p
 tokenPosn (TConst p str) = p
 tokenPosn (TStringAs p str) = p
 tokenPosn (TAddr p str) = p
+tokenPosn (TFuncDef p) = p 
+tokenPosn (TStruct p) = p 
 tokenPosn (TBooleanLit p str) = p
 tokenPosn (TVar p str) = p 
 tokenPosn (TUsing p str) = p
@@ -291,6 +301,9 @@ tokenPosn (TNew p) = p
 tokenPosn (TView p str) = p
 tokenPosn (TIf p ) = p
 tokenPosn (TElse p) = p
+tokenPosn (TWhile p ) = p
+tokenPosn (TAssem p ) = p
+tokenPosn (TLet p ) = p
 tokenPosn (TEvent p) = p
 tokenPosn (TAnon p) = p
 tokenPosn (TModi p) = p
@@ -327,6 +340,7 @@ tokenPosn (TSub p) = p
 tokenPosn (TSemiCol p) = p  
 tokenPosn (TCol p) = p  
 tokenPosn (TComma p) = p 
+tokenPosn (TAssign p) = p
 tokenPosn (TLVAnd p) = p 
 tokenPosn (TLVOr p) = p 
 tokenPosn (TLVXor p) = p 

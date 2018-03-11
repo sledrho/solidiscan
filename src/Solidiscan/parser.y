@@ -11,9 +11,10 @@ import Solidiscan.AST
 %token
     "reservedid"                           { TReservedOp _ }
     version                                { TVers _ }
-    "decimalnum"                           { TDec _ $$ }            -- $$ allows us to pass through the value of the token
+    decimalnum                             { TDec _ $$ }            -- $$ allows us to pass through the value of the token
     "exponent"                             { TExp _ $$ }            -- Can be seen in Int/Op/StringLiteral tokens also
-    "int"                                  { TInt _ $$ }
+    digit                                  { TInt _ $$ }
+    "int"                                  { TIntLit _ $$ }
     "uint"                                 { TUInt _ $$ }
     numberunit                             { TNumUnit _ $$ }
     "pragma"                               { TPragma _ }
@@ -28,6 +29,7 @@ import Solidiscan.AST
     "library"                              { TLibrary _ }
     "interface"                            { TInterface _ }
     function                               { TFuncDef _ }
+    "struct"                               { TStruct _ }
     "address"                              { TAddr _ $$ }
     "bool"                                 { TBooleanLit _ $$ }
     "var"                                  { TVar _ $$ }
@@ -43,6 +45,9 @@ import Solidiscan.AST
     "payable"                              { TPayable _ $$ }
     "returns"                              { TReturns _ }
     "if"                                   { TIf _ }
+    "while"                                { TWhile _ }
+    "assembly"                             { TAssem _ }
+    "let"                                  { TLet _ }
     "else"                                 { TElse _ }
     "event"                                { TEvent _ }
     "anonymous"                            { TAnon _ }
@@ -82,6 +87,7 @@ import Solidiscan.AST
     ";"                                    { TSemiCol _ }
     ":"                                    { TCol _ }
     ","                                    { TComma _ }
+    ":="                                   { TAssign _ }
     "|="                                   { TLVOr _}
     "^="                                   { TLVXor _}
     "&="                                   { TLVAnd _}
@@ -115,6 +121,7 @@ import Solidiscan.AST
 %left "*" "/" "%"
 %left "**"
 %left "++" "--"
+%right "[" "("
 %left "."
 
 -- Tells happy to expect at least 22 shift reduce conflict (at current this is within the if-else block and function-call methods)
@@ -172,9 +179,10 @@ CSExpList : "," Expression                                                      
 ContractPart :: { ContractConts }
              : StateVarDec                                                             { ContractContents $1 }
              | UsingForDec                                                             { UsingFor $1 }
+             | StructDefinition                                                        { StructDef $1 }
+             | ModifierDefinition                                                      { ModDef $1 }
              | FunctionDefinition                                                      { FunctionDefinition $1 }
              | EventDefinition                                                         { EventDef $1 }
-             | ModifierDefinition                                                      { ModDef $1 }
              | EnumDefinition                                                          { EnumDef $1 }
              
 
@@ -184,6 +192,14 @@ FunctionDefinition :: { FunctionContents }
 -- Eventdefinition grammar production
 EventDefinition :: { EventDefinition }
              : "event" ident zero(EventParamList) zero(AnonList) ";"                    { EventDefinition (Identifier $2) $3 }
+
+-- StructDefinition follows this grammar:
+--      StructDefinition = 'struct' Identifier '{' ( VariableDeclaration ';' (VariableDeclaration ';')* )* '}'
+StructDefinition :: { StructDefinition }
+             : "struct" ident "{" zero(StructVarDecList) "}"                            { StructDefinition (Identifier $2) $4 }
+StructVarDecList 
+             : StructValue list(StructValue)                                            { $1:$2 }
+StructValue : VariableDeclaration ";"                                                   { $1 }
 
 -- Production rules for modifier definitions + invocations
 ModifierDefinition :: { ModifierDefinition }
@@ -198,6 +214,7 @@ EnumDefinition :: { EnumDefinition }
              : "enum" ident "{" EnumValList "}"                                         { EnumDefinition (Identifier $2) $4 }
 EnumValue :: { EnumValue }
              : ident                                                                    { EnumValue (Identifier $1) }
+             -- ! This isn't correct!
 EnumValList  : EnumValue list(MultiEnumValue)                                           { $2 }
 MultiEnumValue 
              : "," EnumValue                                                            { $2 }
@@ -270,7 +287,7 @@ MTypeName    : "*"                                                              
              | TypeName                                                                { $1}
 -}
 TypeName     : ElementaryTypeName                                                      { ElementaryTypeName $1 }
-             -- | UserDefinedTypeName                                                     { $1 }
+             | UserDefinedTypeName                                                     { $1 }
 
 AssVar       : "public"                                                                { PublicKeyword $1 }       
              | "private"                                                               { PrivateKeyword $1 }
@@ -293,9 +310,9 @@ Expression   :: { Expression }
              : Expression "++"                                                         { IncrExp $1 }
              | Expression "--"                                                         { DecrExp $1 }                      
              | NewExpression                                                           { NewExpression $1 }
-             -- | IndexAccess                                                             { IndexAccess $1 }
+             | IndexAccess                                                             { IndexAccess $1 }
              | MemberAccess                                                            { $1 }
-             --| Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 }
+             | Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 }
              | "(" Expression ")"                                                      { BracketsExp $2 }
              | Expression "**" Expression                                              { ExponentExp $1 $3 }
              | Expression "*" Expression                                               { MultiExp $1 $3 }
@@ -313,7 +330,7 @@ Expression   :: { Expression }
              | Expression "<=" Expression                                              { LThanEqExp $1 $3 }
              | Expression ">=" Expression                                              { GThanEqExp $1 $3 }
              | Expression "==" Expression                                              { EqualExp $1 $3 }
-             -- | Expression "!=" Expression                                              { NotEqualExp $1 $3 }
+             | Expression "!=" Expression                                              { NotEqualExp $1 $3 }
              | Expression "&&" Expression                                              { AndExp $1 $3 }
              | Expression "||" Expression                                              { OrExp $1 $3 }
              | Expression "=" Expression                                               { LValEqual $1 $3 }
@@ -329,15 +346,18 @@ Expression   :: { Expression }
              | Expression "%=" Expression                                              { LValMod $1 $3 }
              | PrimaryExpression                                                       { $1 }
 
-NewExpression
+NewExpression :: { TypeName }
              : "new" TypeName                                                          { $2 }
 
-IndexAccess  : Expression "[" zero(Expression) "]"                                     { $3 }
+IndexAccess  :: { [Expression] }
+             : Expression "[" zero(Expression) "]"                                     { $1:$3 }
 
 -- To handle member access e.g test.Test
-MemberAccess : Expression "." ident                                                    { MemberAccess $1 $2 (Identifier $3) }
+MemberAccess :: { Expression }
+             : Expression "." ident                                                    { MemberAccess $1 $2 (Identifier $3) }
 
-FunctionCall : Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 }
+FunctionCall :: { Expression }
+             : Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 }
 FunctionCallArgs
              : "{" zero(NameValueList) "}"                                             { NameValues $2 }
              | zero(ExpressionList)                                                    { ExpLst $1}
@@ -345,30 +365,86 @@ FunctionCallArgs
 -- Production rules to do the following grammar rule
 --             Identifier : Expression ( , Identifier : Expression )*
 -- This is for named function calls see - http://solidity.readthedocs.io/en/develop/control-structures.html#function-calls
-NameValueList
+NameValueList :: { NameValueList }
              : NameVal list(NameValueList_Lst)                                         { NameValueList $1 $2}
-NameValueList_Lst
+NameValueList_Lst :: { NameValue }
              : "," NameVal                                                             { $2 }
-NameVal      : ident ":" Expression                                                    { NameValue (Identifier $1) $3}
+NameVal      :: { NameValue }
+             : ident ":" Expression                                                    { NameValue (Identifier $1) $3}
 
 
-Statement    : IfStatement                                                             { $1 }
+Statement    :: { Expression }
+             : IfStatement                                                             { $1 }
+             | WhileStatement                                                          { $1 }
+             | ForStatement                                                            { $1 }
+             | Block                                                                   { $1 }
+             | InlineAssemblyStatement                                                 { $1 }
              | SimpleStatement ";"                                                     { $1 }
+             
+IfStatement  :: { Expression }
+                : "if" "(" Expression ")" Statement zero(ElseState)                    { IfStatement $3 $5 $6  }
+ElseState    :: { ElseState }
+             : "else" Statement                                                        { ElseState $2 }
+
+WhileStatement :: { Expression }
+             : "while" "(" Expression ")" Statement                                    { WhileStatement $3 $5 }
+
+ForStatement :: { Expression }
+             : "for" "(" ForParams ")" Statement                                       { ForStatement $3 $5 }
+ForParams    :: { ForParams }
+             : zero(SimpleStatement) ";" zero(Expression) ";" zero(ExpressionStatement) { ForParams $1 $3 $5 }
+
+Block        :: { Expression }
+             : "{" list(Statement) "}"                                                 { BlockStatements $2 }
+
+
+-- The following is for Solidity's inline assembly expressions.
+
+InlineAssemblyStatement :: { Expression }
+             : "assembly" zero(stringLiteral) InlineAssemblyBlock                      { InlineAssemblyStatement $2 $3 }
+InlineAssemblyBlock
+             : "{" list(AssemblyItem) "}"                                              { AssemblyBlock $2 }
+AssemblyItem 
+             : ident                                                                  { AssemblyId $1 }
+             --| FunctionalAssemblyExpression                                         { $1 }
+             | InlineAssemblyBlock                                                    { InlineAssemblyBlock $1 }
+             | AssemblyLocalBinding                                                   { AssemblyLocal $1 }                                             
+             --| AssemblyAssignment                                                   { $1 }
+             --| AssemblyLabel                                                        { $1 }
+             | NumberLiteral                                                          { AssemblyNum (NumExpression $1) }
+             | stringLiteral                                                          { AssemblyString (StringExpression $1) }
+             -- | HexLiteral                                                           { $1 }       
+AssemblyLocalBinding :: { AssemblyLocalBinding }
+             : "let" ident ":=" FunctionalAssemblyExpression                          { AssemblyLocalBinding (Identifier $2) $4 }
+FunctionalAssemblyExpression :: { AssemblyExpression }
+             : ident "(" zero(AssemblyItem) list(MAssemblyItem) ")"                   { AssemblyExpression $1 $3 $4 }        
+MAssemblyItem :: { AssemblyItem }
+             : "," AssemblyItem                                                       { $2 }
+
+
 
 SimpleStatement  
              : VariableDefinition                                                      { $1 }
              | ExpressionStatement                                                     { $1 }
 VariableDefinition 
              : "var" VariableDeclaration                                               { $2 } 
+             | "var" IdentifierList                                                    { $2 }
+
 VariableDeclaration :: { Expression }
-             : TypeName zero(StorageLocation) ident                                    { VariableDeclaration $1 $2 $3 }
-ExpressionStatement 
+             : TypeName zero(StorageLocation) ident zero(VarMExp)                      { VariableDeclaration $1 $2 (Identifier $3) (VarDecExp $4) }
+VarMExp      : "=" Expression                                                          { $2 }
+
+-- IdentifierList follows the following grammar rule
+--              "(" ( Identifier? "," )* Identifier? ")"
+IdentifierList :: { Expression }
+             : "(" list(IdentList) zero(IdentVar) ")" zero(VarMExp)                    { IdentifierList $2 $3 (VarDecExp $5) }
+IdentList    : zero(IdentVar) ","                                                      { $1 }
+IdentVar     : ident                                                                   { $1 }
+
+ExpressionStatement
              : Expression                                                              { $1 } 
 
 -- Production rule for an if-else statement, currently contains a shift reduce conflict
-IfStatement  :: { Expression }
-             : "if" "(" Expression ")" Statement zero(ElseState)                       { IfStatement $3 $5 $6  }
-ElseState    : "else" Statement                                                        { ElseState $2 }
 
 -- Nums/Bools/Strings
 PrimaryExpression :: { Expression }
@@ -382,9 +458,11 @@ BooleanLiteral :: {BooleanLiteral}
                | "false"                                                               { BooleanLiteral $1 }
 
 NumberLiteral  :: { NumberLiteral }
-               : "decimalnum" zero(numberunit)                                         { NumberLiteral $1 $2 }
+               : decimalnum zero(numberunit)                                           { NumberLiteral $1 $2 }
                
-UserDefinedTypeName : ident                                                            {UserDefinedTypeName $1}
+UserDefinedTypeName :: { TypeName }
+               : ident list(OMUDTypename)                                              { UserDefinedTypeName (Identifier $1) $2}
+OMUDTypename   : "." ident                                                             { (Identifier $2) }
 
 ElementaryTypeName :: { ElemType }
                    : "address"                                                         { AddrType $1 }                                     
@@ -392,7 +470,7 @@ ElementaryTypeName :: { ElemType }
                    | "var"                                                             { VarType $1 }
                    | "string"                                                          { StringType $1 }
                    | "uint"                                                            { UIntType $1}
-                   -- | "int"                                                               { $1 }
+                   | "int"                                                             { IntType $1 }
 
 -- The following allows the parser to create lists of one or more or zero or more lists.
 -- one or more

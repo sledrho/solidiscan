@@ -41,6 +41,7 @@ data InheritanceSpecifier = InheritanceSpecifier TypeName [[Expression]]
 data ContractConts = ContractContents StateVarDec
                    | FunctionDefinition FunctionContents
                    | UsingFor UsingForDec
+                   | StructDef StructDefinition
                    | EventDef EventDefinition
                    | ModDef ModifierDefinition
                    | EnumDef EnumDefinition
@@ -56,6 +57,9 @@ data FuncMods = ModifierInvs [[Expression]]
 
 data ReturnParam = ReturnParam [[Parameter]]
                    deriving (Show, Eq)
+
+data StructDefinition = StructDefinition Identifier [[Expression]]
+                        deriving (Show, Eq) 
 
 data EventDefinition = EventDefinition Identifier [[[EParameters]]]
                        deriving (Show, Eq)
@@ -132,12 +136,13 @@ data ElemType = AddrType Ident
               | StringType Ident
               | VarType Ident
               | UIntType Ident
+              | IntType Ident
                 deriving(Show, Eq)
 
 -- Elementary types e.g address/bool/string/var etc etc
 data TypeName = TypeName Ident
               | ElementaryTypeName ElemType
-              | UserDefinedTypeName Ident         
+              | UserDefinedTypeName Identifier [Identifier]     
                 deriving (Show, Eq)
 
 data Exp = Exp String
@@ -146,13 +151,21 @@ data Exp = Exp String
 
 data TypeIdent = TypeIdent Ident
                  deriving (Show, Eq)
-
+{-
+data BlockStatements = BlockStatements [Expression]
+                       deriving (Show, Eq)
+-}
 data Expression = BoolExpression BooleanLiteral
                 | NumExpression NumberLiteral
                 | IdentExpression Ident
                 | StringExpression Ident 
-                | VariableDeclaration TypeName [StorageLocation] Ident 
+                | VariableDeclaration TypeName [StorageLocation] Identifier VarDecExp
+                | IdentifierList [[String]] [String] VarDecExp
                 | IfStatement Expression Expression [ElseState]
+                | WhileStatement Expression Expression
+                | ForStatement ForParams Expression
+                | BlockStatements [Expression]
+                | InlineAssemblyStatement [Ident] AssemblyBlock
                 | AdditionExp Expression Expression
                 | SubtractionExp Expression Expression
                 | ExponentExp Expression Expression
@@ -178,6 +191,7 @@ data Expression = BoolExpression BooleanLiteral
                 | NewExpression TypeName
                 -- | MemberExp MemberAccess
                 | MemberAccess Expression String Identifier
+                | IndexAccess [Expression]
                 | FunctionCall Expression FunctionCallArgsLst
                 | LValEqual Expression Expression
                 | LValOr Expression Expression
@@ -191,6 +205,31 @@ data Expression = BoolExpression BooleanLiteral
                 | LValDivis Expression Expression
                 | LValMod Expression Expression
                   deriving (Show, Eq)
+
+data VarDecExp = VarDecExp [Expression]
+                 deriving (Show, Eq)
+
+data ForParams = ForParams [Expression] [Expression] [Expression]
+                 deriving (Show, Eq)
+{-
+data InlineAssemblyStatement = InlineAssemblyStatement Ident [AssemblyBlock]
+                               deriving (Show, Eq)
+-}                             
+data AssemblyBlock = AssemblyBlock [AssemblyItem]
+                     deriving (Show, Eq)
+
+data AssemblyItem = AssemblyId Ident
+                   | InlineAssemblyBlock AssemblyBlock 
+                   | AssemblyLocal AssemblyLocalBinding
+                   | AssemblyString Expression
+                   | AssemblyNum Expression
+                     deriving (Show, Eq)
+
+data AssemblyLocalBinding = AssemblyLocalBinding Identifier AssemblyExpression
+                            deriving (Show, Eq)
+
+data AssemblyExpression = AssemblyExpression Ident [AssemblyItem] [AssemblyItem] 
+                          deriving (Show, Eq)
 {-
 data MemberAccess = MemberAccess Expression String Identifier
                     deriving (Show, Eq)
