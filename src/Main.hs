@@ -1,5 +1,6 @@
 module Main where
 import Test
+import Analyzer
 import Test.HUnit
 import Solidiscan.Lexer
 import Solidiscan.Parser
@@ -17,5 +18,3 @@ main :: IO ()
 main = do
   runTestTT test1
   putStrLn "Finished."
-
-runTest n = (reverse(solidiscan(alexScanTokens2 n)))
