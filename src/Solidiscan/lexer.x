@@ -27,7 +27,7 @@ $graphic  = $printable # $white
 @decimalnum     = $digit+
 @hexadecimal    = $hexit+
 -- Version info to parse pragma version
-@version        = \^ @decimalnum \. @decimalnum \. @decimalnum
+@version        = @decimalnum \. @decimalnum \. @decimalnum
 @exponent       = [eE] [\-\+] @decimalnum
 
 -- @int = int
@@ -44,7 +44,7 @@ tokens :-
 
     $white+                                ;
     @comment                               ;
-<0> @version                               { \p s -> TVers p }
+<0> @version                               { \p s -> TVers p s }
 <0> @decimalnum
     | 0[xX] @hexadecimal+                  { \p s -> TDec p (read s) }
 
@@ -121,6 +121,7 @@ tokens :-
     "<="                                   { \p s -> TLTEq p }
     ">="                                   { \p s -> TGTEq p }
     "=="                                   { \p s -> TEquality p }
+    "=>"                                   { \p s -> TRef p }
     "{"                                    { \p s -> TLCurl p }
     "}"                                    { \p s -> TRCurl p }
     "["                                    { \p s -> TLBrack p }
@@ -209,7 +210,7 @@ data Token =
         | TEvent AlexPosn
         | TAnon AlexPosn
         | TModi AlexPosn
-        | TVers AlexPosn
+        | TVers AlexPosn String
         | THat AlexPosn
         | TIncr AlexPosn
         | TDecr AlexPosn
@@ -226,6 +227,7 @@ data Token =
         | TLTEq AlexPosn
         | TGTEq  AlexPosn
         | TEquality AlexPosn
+        | TRef AlexPosn
         | TLCurl AlexPosn
         | TRCurl AlexPosn
         | TLBrack AlexPosn
@@ -257,7 +259,7 @@ data Token =
         | TPeriod AlexPosn String
         deriving (Eq, Show)
 
-tokenPosn (TVers p) = p
+tokenPosn (TVers p str) = p
 tokenPosn (TIdent p id) = p
 tokenPosn (TReservedOp p) = p 
 tokenPosn (THexNum p) = p
@@ -323,6 +325,7 @@ tokenPosn (TGThan p) = p
 tokenPosn (TLTEq p) = p 
 tokenPosn (TGTEq p) = p 
 tokenPosn (TEquality p) = p 
+tokenPosn (TRef p) = p 
 tokenPosn (TLCurl p) = p  
 tokenPosn (TRCurl p) = p  
 tokenPosn (TLBrack p) = p  
