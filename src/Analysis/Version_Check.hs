@@ -1,7 +1,7 @@
 module Analysis.Version_Check where 
 import Solidiscan.AST
 
-{- 
+
 -- version check passes in the first part of an AST source
 versionCheck :: [SourceUnit] -> [Char]
 versionCheck (x:xs)
@@ -22,5 +22,3 @@ version :: Version -> Bool
 version r | r == z = True
           | r /= z = False
             where z = (Version "0.4.20")
-
--}

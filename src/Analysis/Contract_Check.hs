@@ -7,7 +7,6 @@ contractCheck (x:xs)
     | x:xs == [] = "No Contract Detected"
     | x == y = "Contract Detected"
       where y = (ContractDef, ContractDef (Contract (Identifier "") [] []))
--}
 
 contractCheck :: [SourceUnit] -> [Char]
 contractCheck (x:xs)
@@ -20,3 +19,5 @@ contractTest (SourceUnit _, ContractDef r) = test (r)
 test :: ContractDefinition -> Bool
 test x | x == Contract = True
        | x /= Contract = False
+       
+-}
