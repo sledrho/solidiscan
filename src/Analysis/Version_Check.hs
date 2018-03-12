@@ -1,12 +1,7 @@
-module Analyzer where
+module Analysis.Version_Check where 
 import Solidiscan.AST
 
-contractCheck :: [SourceUnit] -> String
-contractCheck (x:xs)
-    | x:xs == [] = "No Contract Detected"
-    | x == y = "Contract Detected"
-      where y = contract_check
-
+{- 
 -- version check passes in the first part of an AST source
 versionCheck :: [SourceUnit] -> [Char]
 versionCheck (x:xs)
@@ -27,6 +22,5 @@ version :: Version -> Bool
 version r | r == z = True
           | r /= z = False
             where z = (Version "0.4.20")
-            
 
-contract_check = (SourceUnit (PragmaDirective (PragmaName "solidity") (Version "0.4.20")))
+-}

@@ -1,6 +1,7 @@
 module Main where
 import Test
-import Analyzer
+import Analysis.Contract_Check
+import Analysis.Version_Check
 import Test.HUnit
 import Solidiscan.Lexer
 import Solidiscan.Parser
