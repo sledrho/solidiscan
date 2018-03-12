@@ -14,8 +14,11 @@ data SourceUnit = SourceUnit PragmaDirective
                 deriving (Show, Eq)
               
 -- Version Information
-data PragmaDirective = PragmaDirective PragmaName
+data PragmaDirective = PragmaDirective PragmaName Version
                        deriving(Show, Eq)
+
+data Version = Version String 
+               deriving (Show, Eq)
 
 data PragmaName = PragmaName Ident
                   deriving(Show, Eq)
@@ -50,7 +53,7 @@ data ContractConts = ContractContents StateVarDec
 data FunctionContents = FunctionDef Identifier [[Parameter]] [FuncMods] [ReturnParam] [Expression]
                         deriving (Show, Eq)
 
-data FuncMods = ModifierInvs [[Expression]]
+data FuncMods = ModifierInvs [[[Expression]]]
               | StateMutability PublicKeyword
               | FuncVars PublicKeyword
                 deriving (Show, Eq)
@@ -142,7 +145,8 @@ data ElemType = AddrType Ident
 -- Elementary types e.g address/bool/string/var etc etc
 data TypeName = TypeName Ident
               | ElementaryTypeName ElemType
-              | UserDefinedTypeName Identifier [Identifier]     
+              | UserDefinedTypeName Identifier [Identifier] 
+              | Mapping Identifier ElemType TypeName  
                 deriving (Show, Eq)
 
 data Exp = Exp String

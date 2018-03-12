@@ -10,7 +10,7 @@ import Solidiscan.AST
 
 %token
     "reservedid"                           { TReservedOp _ }
-    version                                { TVers _ }
+    version                                { TVers _ $$ }
     decimalnum                             { TDec _ $$ }            -- $$ allows us to pass through the value of the token
     "exponent"                             { TExp _ $$ }            -- Can be seen in Int/Op/StringLiteral tokens also
     digit                                  { TInt _ $$ }
@@ -72,6 +72,7 @@ import Solidiscan.AST
     "<="                                   { TLTEq _ }
     ">="                                   { TGTEq _ }
     "=="                                   { TEquality _ }
+    "=>"                                   { TRef _ } 
     "{"                                    { TLCurl _ }
     "}"                                    { TRCurl _ }
     "["                                    { TLBrack _ }
@@ -136,13 +137,13 @@ SourceUnitSol : PragmaDirective                                                 
               | ContractDefinition                                                     { ContractDef $1 }
 
 PragmaDirective :: { PragmaDirective } 
-             : "pragma" PragmaName version ";"                                         { PragmaDirective $2 }
+             : "pragma" PragmaName "^" version ";"                                     { PragmaDirective $2 (Version $4) }
 
 PragmaName :: { PragmaName }
              : ident                                                                   { PragmaName $1 }
 
 ImportDirective :: { ImportDirective } 
-             : "import" stringLiteral ImportAs ";"                                     { ImportDir $2 }
+             : "import" stringLiteral zero(ImportAs) ";"                                     { ImportDir $2 }
              | "import" ImportAster ImportAs "from" stringLiteral ";"                  { ImportMulti $2 $3 (Identifier $4) $5}
 
 ImportAs
@@ -205,7 +206,8 @@ StructValue : VariableDeclaration ";"                                           
 ModifierDefinition :: { ModifierDefinition }
              : "modifier" ident zero(ParameterList) TermBlock                           { ModifierDefinition (Identifier $2) $3 $4 }
 ModifierInvocation 
-             : ident "(" list(ModExpList) ")"                                           { $3 }
+             : ident zero(ZOModExpList)                                                 { $2 }
+ZOModExpList : "(" zero(ModExpList) ")"                                                 { $2 }
 ModExpList   : ExpressionList                                                           { $1 }
 
 -- Enum Definition follows the following grammar production
@@ -288,6 +290,7 @@ MTypeName    : "*"                                                              
 -}
 TypeName     : ElementaryTypeName                                                      { ElementaryTypeName $1 }
              | UserDefinedTypeName                                                     { $1 }
+             | Mapping                                                                 { $1 }
 
 AssVar       : "public"                                                                { PublicKeyword $1 }       
              | "private"                                                               { PrivateKeyword $1 }
@@ -471,6 +474,8 @@ ElementaryTypeName :: { ElemType }
                    | "string"                                                          { StringType $1 }
                    | "uint"                                                            { UIntType $1}
                    | "int"                                                             { IntType $1 }
+
+Mapping        : ident "(" ElementaryTypeName "=>" TypeName ")"                        { Mapping (Identifier $1) $3 $5}
 
 -- The following allows the parser to create lists of one or more or zero or more lists.
 -- one or more
