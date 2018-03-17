@@ -1,6 +1,6 @@
 module Analysis.Version_Check where 
 import Solidiscan.AST
-
+{-# LANGUAGE ScopedTypeVariables #-}
 
 -- version check passes in the first part of an AST source
 versionCheck :: [SourceUnit] -> [Char]
@@ -11,7 +11,7 @@ versionCheck (x:xs)
 -- VersionTest takes the first element of the AST source and passes the version info
 -- into the Version function
 versionTest :: SourceUnit -> Bool
-versionTest (SourceUnit (PragmaDirective _ r)) = version (r)
+versionTest (SourceUnit (PragmaDirective _ r x)) = version (r)
 versionTest (_) = undefined
 
 -- Version takes a Version data type and checks if it is equal to the most up-to-date version
@@ -19,6 +19,8 @@ versionTest (_) = undefined
 -- if not returns False  
 -- TODO: Rethink this as it's not very good.
 version :: Version -> Bool
-version r | r == z = True
-          | r /= z = False
-            where z = (Version "0.4.20")
+version r | r == (Version "0.4.20") = True
+          | otherwise = False
+
+lineNumber :: Int -> String
+lineNumber x = "Located at Line:" ++ show(x) 
