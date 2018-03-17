@@ -1,12 +1,13 @@
-pragma solidity;
-contract this_is_a_contract1 {
-  address public bank_account1;
-}
+pragma solidity ^0.4.0;
 
-contract this_is_a_contract2 {
-  string  public string_1;
-}
+contract SimpleStorage {
+    uint storedData;
 
-contract this_is_a_contract3 {
-  var public variable_1;
+    function set(uint x) public {
+        storedData = x;
+    }
+
+    function get() public constant returns (uint) {
+        return storedData;
+    }
 }
