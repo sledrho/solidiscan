@@ -33,6 +33,7 @@ import Solidiscan.AST
     "address"                              { TAddr _ $$ }
     "bool"                                 { TBooleanLit _ $$ }
     "var"                                  { TVar _ $$ }
+    "mapping"                              { TMap _ $$ }
     "using"                                { TUsing _ $$ }
     "for"                                  { TFor _ $$ }
     "true"                                 { TTrue _ $$ }
@@ -89,16 +90,16 @@ import Solidiscan.AST
     ":"                                    { TCol _ }
     ","                                    { TComma _ }
     ":="                                   { TAssign _ }
-    "|="                                   { TLVOr _}
-    "^="                                   { TLVXor _}
-    "&="                                   { TLVAnd _}
-    "<<="                                  { TLVLeftShift _}
-    ">>="                                  { TLVRightShift _}
-    "+="                                   { TLVIncr _}
-    "-="                                   { TLVDecr _}
-    "*="                                   { TLVMult _}
-    "/="                                   { TLVDiv _}
-    "%="                                   { TLVMod _}
+    "|="                                   { TLVOr _ }
+    "^="                                   { TLVXor _ }
+    "&="                                   { TLVAnd _ }
+    "<<="                                  { TLVLeftShift _ }
+    ">>="                                  { TLVRightShift _ }
+    "+="                                   { TLVIncr _ }
+    "-="                                   { TLVDecr _ }
+    "*="                                   { TLVMult _ }
+    "/="                                   { TLVDiv _ }
+    "%="                                   { TLVMod _ }
     ident                                  { TIdent _ $$ }                       -- The lexical token for an identifier 
     stringLiteral                          { TStringLiteral _ $$ }
     "("                                    { TLeftParen _ }
@@ -137,19 +138,17 @@ SourceUnitSol : PragmaDirective                                                 
               | ContractDefinition                                                     { ContractDef $1 }
 
 PragmaDirective :: { PragmaDirective } 
-             : "pragma" PragmaName "^" version ";"                                     { PragmaDirective $2 (Version $4) }
+             : "pragma" PragmaName "^" version ";"                                     { PragmaDirective $2 (Version $4) (lineNum $1) }
 
 PragmaName :: { PragmaName }
              : ident                                                                   { PragmaName $1 }
 
 ImportDirective :: { ImportDirective } 
-             : "import" stringLiteral zero(ImportAs) ";"                                     { ImportDir $2 }
+             : "import" stringLiteral zero(ImportAs) ";"                               { ImportDir $2 }
              | "import" ImportAster ImportAs "from" stringLiteral ";"                  { ImportMulti $2 $3 (Identifier $4) $5}
 
 ImportAs
              : "as" ident                                                              { (Identifier $2) } 
-             
-
 ImportAster : "*"                                                                      { (Identifier $1) }
             | ident                                                                    { (Identifier $1)  }
 
@@ -165,20 +164,25 @@ ConLibInt   : contract                                                          
 -- The following is a production group for 
 --          ( 'is' InheritanceSpecifier (',' InheritanceSpecifier )* )?
 --  Where each production is nested below
-InheritanceSpecList : "is" InheritanceSpecifier list(OMInheritanceSpec)                { InheritanceSpec $2 $3 }
+InheritanceSpecList :: { InheritanceSpec }
+                  : "is" InheritanceSpecifier list(OMInheritanceSpec)                  { InheritanceSpec $2 $3 }
 OMInheritanceSpec : "," InheritanceSpecifier                                           { $2 }
 
 -- InheritanceSpecifier Production 
 --       InheritanceSpecifier = UserDefinedTypeName ( '(' Expression ( ',' Expression )* ')' )? 
 --InheritanceSpecifier : UserDefinedTypeName                                              { $1 }
-InheritanceSpecifier : UserDefinedTypeName zero(InhExpList)                             { InheritanceSpecifier $1 $2 }
+InheritanceSpecifier :: { InheritanceSpecifier }
+                     : UserDefinedTypeName zero(InhExpList)                             { InheritanceSpecifier $1 $2 }
 InhExpList :: { [Expression] }
-          : "(" Expression list(CSExpList) ")"                                         { $2:$3 }
+          : "(" Expression list(CSExpList) ")"                                          { $2:$3 }
 CSExpList : "," Expression                                                              { $2 }
 
-
+{-
+ContractParts : ContractPart                     { [$1] }
+              | ContractParts ContractPart       { $1:$2}
+-}
 ContractPart :: { ContractConts }
-             : StateVarDec                                                             { ContractContents $1 }
+             : StateVarDeclaration                                                     { StateVarDec $1 }
              | UsingForDec                                                             { UsingFor $1 }
              | StructDefinition                                                        { StructDef $1 }
              | ModifierDefinition                                                      { ModDef $1 }
@@ -187,7 +191,7 @@ ContractPart :: { ContractConts }
              | EnumDefinition                                                          { EnumDef $1 }
              
 
-FunctionDefinition :: { FunctionContents } 
+FunctionDefinition :: { FunctionDef } 
              : function ident ParameterList list(FuncMods) zero(ReturnParam) TermBlock { FunctionDef (Identifier $2) $3 $4 $5 $6 }
 
 -- Eventdefinition grammar production
@@ -198,7 +202,7 @@ EventDefinition :: { EventDefinition }
 --      StructDefinition = 'struct' Identifier '{' ( VariableDeclaration ';' (VariableDeclaration ';')* )* '}'
 StructDefinition :: { StructDefinition }
              : "struct" ident "{" zero(StructVarDecList) "}"                            { StructDefinition (Identifier $2) $4 }
-StructVarDecList 
+StructVarDecList :: { [Expression]}
              : StructValue list(StructValue)                                            { $1:$2 }
 StructValue : VariableDeclaration ";"                                                   { $1 }
 
@@ -234,7 +238,8 @@ AnonList     : "anonymous"                                                      
 
 
 -- ParameterList = '(' ( Parameter (',' Parameter)* )? ')'
-ParameterList : "(" zero(Parameters) ")"                                                { $2 }
+ParameterList :: { [[Parameter]] }
+              : "(" zero(Parameters) ")"                                                { $2 }
 Parameters    : Parameter list(ParamList)                                               { $1:$2 }
 ParamList     : "," Parameter                                                           { $2 }
 Parameter :: { Parameter }
@@ -276,7 +281,7 @@ FuncVar :: { PublicKeyword }
 
 -- StateVarDec = TypeName ( 'public' | 'internal' | 'private' | 'constant' )? Identifier ('=' Expression)? ';'
 -- Passing the ident into the Ident function to ensure its type is formatted correctly
-StateVarDec :: { StateVarDec }                                                         -- Passing $3 token into Identifier to return the appropriate data type
+StateVarDeclaration :: { StateVarDeclaration }                                                         -- Passing $3 token into Identifier to return the appropriate data type
              : TypeName zero(AssVar) ident zero(MExpression) ";"                       { StateVariableDeclaration $1 $2 (Identifier $3) $4 }
 
 
@@ -475,7 +480,7 @@ ElementaryTypeName :: { ElemType }
                    | "uint"                                                            { UIntType $1}
                    | "int"                                                             { IntType $1 }
 
-Mapping        : ident "(" ElementaryTypeName "=>" TypeName ")"                        { Mapping (Identifier $1) $3 $5}
+Mapping        : "mapping" "(" ElementaryTypeName "=>" TypeName ")"                    { Mapping $3 $5}
 
 -- The following allows the parser to create lists of one or more or zero or more lists.
 -- one or more
@@ -494,6 +499,10 @@ zero(q) : q                                                                     
 --Expression : Expression op Expression                                                { ExpOp $1 $2 $3 }
 --Type: ident                                                                          { TypeIdent $1}
 {
+
+-- helper function for line number
+lineNum :: Token -> Int
+lineNum x = getLineNum $ tokenPosn x
 -- The following grabs a token from the token list
 parseError :: [Token] -> a
 parseError tokenList = let pos = tokenPosn(head(tokenList)) 

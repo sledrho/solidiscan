@@ -80,6 +80,7 @@ tokens :-
     "modifier"                             { \p s -> TModi p }
     "enum"                                 { \p s -> TEnum p }
     "new"                                  { \p s -> TNew p }
+    "mapping"                              { \p s -> TMap p s }
 
     -- ElementaryTypeNames
     "string"                               { \p s -> TStringAs p s }
@@ -179,6 +180,7 @@ data Token =
         | TFuncDef AlexPosn
         | TStruct AlexPosn
         | TExternal AlexPosn String
+        | TMap AlexPosn String
         | TPublic AlexPosn String                   -- In order to pass through the value of the token, as opposed to the token position.
         | TIntern AlexPosn String
         | TPriv AlexPosn String
@@ -285,6 +287,7 @@ tokenPosn (TAddr p str) = p
 tokenPosn (TFuncDef p) = p 
 tokenPosn (TStruct p) = p 
 tokenPosn (TBooleanLit p str) = p
+tokenPosn (TMap p str) = p
 tokenPosn (TVar p str) = p 
 tokenPosn (TUsing p str) = p
 tokenPosn (TFor p str) = p
