@@ -1,16 +1,16 @@
 module Analysis.Version_Check where 
 import Solidiscan.AST
-{-# LANGUAGE ScopedTypeVariables #-}
+
 
 -- version check passes in the first part of an AST source
-versionCheck :: [SourceUnit] -> [Char]
+versionCheck :: [ProgSource] -> [Char]
 versionCheck (x:xs)
     | versionTest(x) == False = "Possible Insecure Version"
     | versionTest(x) == True = "Most up-to-date version"
 
 -- VersionTest takes the first element of the AST source and passes the version info
 -- into the Version function
-versionTest :: SourceUnit -> Bool
+versionTest :: ProgSource -> Bool
 versionTest (SourceUnit (PragmaDirective _ r x)) = version (r)
 versionTest (_) = undefined
 
