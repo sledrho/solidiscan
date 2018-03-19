@@ -17,13 +17,14 @@ cabal-version:       >=1.10
 
 executable solidiscan
   main-is:             Main.hs
-  other-modules:       Solidiscan.Lexer, Solidiscan.Parser, Solidiscan.AST, Test
+  other-modules:       Solidiscan.Lexer, Solidiscan.Parser, Solidiscan.AST, Analysis.Function_Check, 
+                       Analysis.Version_Check, Test
   -- other-extensions:    
   build-depends:       base >=4.10 && <4.11
   hs-source-dirs:      src
   default-language:    Haskell2010
   Build-tools: happy, alex
-  Build-depends:       array, HUnit, syb
+  Build-depends:       array, HUnit, syb, base, containers, pretty-show
 
 Test-Suite solidiscan-testsuite
   Type:               exitcode-stdio-1.0
