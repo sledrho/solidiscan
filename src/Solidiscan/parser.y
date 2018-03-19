@@ -133,7 +133,8 @@ import Solidiscan.AST
 SourceUnit    : {- empty -}                                                            { [] }
               | SourceUnit SourceUnitSol                                               { $2 : $1 }
 
-SourceUnitSol : PragmaDirective                                                        { SourceUnit $1 }
+SourceUnitSol :: { ProgSource }
+              : PragmaDirective                                                        { SourceUnit $1 }
               | ImportDirective                                                        { ImportUnit $1 }
               | ContractDefinition                                                     { ContractDef $1 }
 

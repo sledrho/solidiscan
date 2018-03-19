@@ -15,7 +15,7 @@ SourceUnit is the overall program source consists of 3 main data values:
     3. ContractDef (A definition of an actual contract.)
 -}
 
-data SourceUnit = SourceUnit PragmaDirective
+data ProgSource = SourceUnit PragmaDirective
                 | ImportUnit ImportDirective 
                 | ContractDef ContractDefinition
                 deriving (Show, Eq, Data, Typeable, Ord)
