@@ -4,6 +4,7 @@ import Solidiscan.AST
 
 -- version check passes in the first part of an AST source
 versionCheck :: [ProgSource] -> [Char]
+versionCheck [] = []
 versionCheck (x:xs)
     | versionTest(x) == False = "Possible Insecure Version"
     | versionTest(x) == True = "Most up-to-date version"
