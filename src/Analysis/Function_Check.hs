@@ -27,18 +27,85 @@ stateVarCheck :: [ContractConts] -> [StateVarDeclaration]
 stateVarCheck [] = []
 stateVarCheck (x:xs) = case x of
     (StateVarDec a) -> a : stateVarCheck xs
-    (_) -> undefined
+    (_) -> []
 
-mapGet :: [[StateVarDeclaration]] -> [TypeName]
+mapGet :: [[StateVarDeclaration]] -> [[StateVarDeclaration]]
 mapGet [] = []
 mapGet [[]] = []
+-- mapGet [[x]] = [[x]]
+--mapGet (x:xs) = x : mapGet xs
 mapGet (x:xs) = case x of 
-    [(StateVariableDeclaration a _ _ _)] -> a : mapGet xs
+    [(StateVariableDeclaration _ _ _ _)] -> x : mapGet xs
 
-ifCheck :: [FunctionDef] -> [[Expression]]
-ifCheck [] = []
-ifCheck (x:xs) = case x of
-    (FunctionDef _ _ _ _ a) -> a : ifCheck xs
+mapCheck :: [[StateVarDeclaration]] -> Bool
+mapCheck [] = False
+mapCheck [[]] = False
+mapCheck (x:xs) 
+    | [(StateVariableDeclaration (Mapping _ _ ) _ _ _ )] <- x = True
+    | [(StateVariableDeclaration _ _ _ _)] <- x = False
+
+
+
+-- getIf pulls the contract data from the program source
+-- passing it into getContsContsIf
+ifGetter :: [ProgSource] -> [[[Expression]]] --[[ContractConts]]
+ifGetter [] = []
+ifGetter (x:xs) = case x of
+    (SourceUnit y) -> ifGetter xs
+    (ContractDef y) -> ifGetterContents y : (ifGetter xs)
+    (ImportUnit y) -> ifGetter xs
+
+-- ifGetterContents pulls the contract contents, which is then passed into funcCheck
+-- to check for the functions
+ifGetterContents :: ContractDefinition -> [[Expression]]
+ifGetterContents (Contract _ _ []) = []
+ifGetterContents (Contract _ _ x) = funcCheck x  
+
+-- FuncCheck is a helper function to obtain the function declarations
+-- within a contracts contents, it will then call funcConts
+funcCheck :: [ContractConts] -> [[Expression]]
+funcCheck [] = []
+funcCheck (x:xs) = case x of
+    (StateVarDec _ ) -> [] : (funcCheck xs)
+    (FunctionDefinition a) -> funcConts [a] : (funcCheck xs)
+
+-- funcConts is a getter for the contents of a function, 
+funcConts :: [FunctionDef] -> [Expression]
+funcConts []  = []
+funcConts (x:xs) = case x of
+    (FunctionDef _ _ _ _ a) -> a
+
+
+
+-- ifCheck :: [[[Expression]]] -> [[Expression]]
+{- ifCheck (x) 
+    | [[[IfStatement _ _ _]]] <- x = [x]
+    | [] <- x = [x]
+ -}
+-- ifCheck y = [x | x <- y, [IfStatement _ _ _]]
+{- ifCheck ((x:y):xs)
+    | [] <- x = ifCheck [y]   
+    | [IfStatement _ _ _] <- x = [[x]] : ifCheck xs
+    | [[IfStatement _ _ _]] <- y = [y] : ifCheck xs
+ -}
+{- ifCheck (x)
+    | [[[IfStatement _ _ _]]] <- x = x
+    | [[_]] <- x = [] 
+ifCheck (x:xs)
+    | [[IfStatement _ _ _]] <- x = x : ifCheck xs
+    | [[_]] <- x = [] : ifCheck xs
+    | [[]] <- x = x : ifCheck xs -}
+
+
+
+{- reentrancyRule :: String -> IO ()
+reentrancyRule inp = do
+    let x = mapGet $ getCont $ runTest(inp)
+    if mapCheck(x) 
+        then do
+            let y = ifCheck $ ifGetter $ runTest(inp)
+            print(y)
+        else print("No Mapping Found") -}
 
 
 -- OlD Functions Need Removed
