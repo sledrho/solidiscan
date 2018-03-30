@@ -155,7 +155,12 @@ data TypeName = TypeName Ident
               | ElementaryTypeName ElemType
               | UserDefinedTypeName Identifier [Identifier] 
               | Mapping ElemType TypeName  
+              | ArrayType TypeName [Expression]
+              | FunctionTypeName [[FParam]] [PublicKeyword] [[[FParam]]]
                 deriving (Show, Eq, Data, Typeable, Ord)
+
+data FParam = FParam TypeName [StorageLocation] 
+              deriving (Show, Eq, Data, Typeable, Ord)
 
 data Exp = Exp String
          | ExpOp Exp Char Exp
@@ -178,6 +183,13 @@ data Expression = BoolExpression BooleanLiteral
                 | ForStatement ForParams Expression
                 | BlockStatements [Expression]
                 | InlineAssemblyStatement [Ident] AssemblyBlock
+                | DoWhile Expression Expression
+                | PlaceholderStatement String
+                | ContinueStatement String
+                | BreakStatement String
+                | ReturnStatement [Expression]
+                | ThrowStatement String
+                | NotExpression Expression
                 | AdditionExp Expression Expression
                 | SubtractionExp Expression Expression
                 | ExponentExp Expression Expression

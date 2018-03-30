@@ -32,6 +32,12 @@ import Solidiscan.AST
     "struct"                               { TStruct _ }
     "address"                              { TAddr _ $$ }
     "bool"                                 { TBooleanLit _ $$ }
+    "do"                                   { TDo _ $$ }
+    "_"                                    { TPlaceHold _ $$ }
+    "continue"                             { TCont _ $$ }
+    "break"                                { TBreak _ $$ }
+    "return"                               { TRetState _ $$ }
+    "throw"                                { TThrow _ $$ }
     "var"                                  { TVar _ $$ }
     "mapping"                              { TMap _ $$ }
     "using"                                { TUsing _ $$ }
@@ -105,12 +111,13 @@ import Solidiscan.AST
     "("                                    { TLeftParen _ }
     ")"                                    { TRightParen _ }
 
+-- %left ")"
 -- To prevent shift reduce by these keywords
 %left "constant" "internal" 
 -- Added to prevent dangling else issue
 %right "else"
+%left ","
 %right "=" "|=" "^=" "&=" "<<=" ">>=" "+=" "-=" "*=" "/=" "%="
-
 %left "||"
 %left "&&"
 %left "==" "!="
@@ -121,8 +128,9 @@ import Solidiscan.AST
 %left "<<" ">>"
 %left "+" "-"
 %left "*" "/" "%"
-%left "**"
+%right "**"
 %left "++" "--"
+%right "!"
 %right "[" "("
 %left "."
 
@@ -297,6 +305,8 @@ MTypeName    : "*"                                                              
 TypeName     : ElementaryTypeName                                                      { ElementaryTypeName $1 }
              | UserDefinedTypeName                                                     { $1 }
              | Mapping                                                                 { $1 }
+             | ArrayTypeName                                                           { $1 }
+             | FunctionTypeName                                                        { $1 }
 
 AssVar       : "public"                                                                { PublicKeyword $1 }       
              | "private"                                                               { PrivateKeyword $1 }
@@ -323,6 +333,7 @@ Expression   :: { Expression }
              | MemberAccess                                                            { $1 }
              | Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 }
              | "(" Expression ")"                                                      { BracketsExp $2 }
+             | "!" Expression                                                          { NotExpression $2 }
              | Expression "**" Expression                                              { ExponentExp $1 $3 }
              | Expression "*" Expression                                               { MultiExp $1 $3 }
              | Expression "/" Expression                                               { DivisionExp $1 $3 }
@@ -388,6 +399,12 @@ Statement    :: { Expression }
              | ForStatement                                                            { $1 }
              | Block                                                                   { $1 }
              | InlineAssemblyStatement                                                 { $1 }
+             | DoWhileStatement ";"                                                    { $1 }
+             | PlaceholderStatement ";"                                                { $1 } 
+             | Continue ";"                                                            { $1 }
+             | Break ";"                                                               { $1 }
+             | Return ";"                                                              { $1 }
+             | Throw ";"                                                               { $1 }
              | SimpleStatement ";"                                                     { $1 }
              
 IfStatement  :: { Expression }
@@ -406,9 +423,7 @@ ForParams    :: { ForParams }
 Block        :: { Expression }
              : "{" list(Statement) "}"                                                 { BlockStatements $2 }
 
-
 -- The following is for Solidity's inline assembly expressions.
-
 InlineAssemblyStatement :: { Expression }
              : "assembly" zero(stringLiteral) InlineAssemblyBlock                      { InlineAssemblyStatement $2 $3 }
 InlineAssemblyBlock
@@ -430,7 +445,23 @@ FunctionalAssemblyExpression :: { AssemblyExpression }
 MAssemblyItem :: { AssemblyItem }
              : "," AssemblyItem                                                       { $2 }
 
+DoWhileStatement :: { Expression }
+             : "do" Statement "while" "(" Expression ")"                              { DoWhile $2 $5}
 
+PlaceholderStatement :: { Expression }                          
+             : "_"                                                                    { PlaceholderStatement $1 }
+
+Continue     :: { Expression }
+             : "continue"                                                             { ContinueStatement $1 }
+
+Break        :: { Expression }
+             : "break"                                                                { BreakStatement $1 }
+
+Return     :: { Expression }
+             : "return" zero(Expression)                                              { ReturnStatement $2 }
+
+Throw        :: { Expression }
+             : "throw"                                                                { ThrowStatement $1 }
 
 SimpleStatement  
              : VariableDefinition                                                      { $1 }
@@ -457,10 +488,10 @@ ExpressionStatement
 
 -- Nums/Bools/Strings
 PrimaryExpression :: { Expression }
-                  : BooleanLiteral                                                     { BoolExpression $1 }
-                  | NumberLiteral                                                      { NumExpression $1 }
-                  | stringLiteral                                                      { StringExpression $1 }
-                  | ident                                                              { IdentExpression $1 }
+               : BooleanLiteral                                                     { BoolExpression $1 }
+               | NumberLiteral                                                      { NumExpression $1 }
+               | stringLiteral                                                      { StringExpression $1 }
+               | ident                                                              { IdentExpression $1 }
 
 BooleanLiteral :: {BooleanLiteral}
                : "true"                                                                { BooleanLiteral $1 }
@@ -474,14 +505,32 @@ UserDefinedTypeName :: { TypeName }
 OMUDTypename   : "." ident                                                             { (Identifier $2) }
 
 ElementaryTypeName :: { ElemType }
-                   : "address"                                                         { AddrType $1 }                                     
-                   | "bool"                                                            { BoolType $1 }
-                   | "var"                                                             { VarType $1 }
-                   | "string"                                                          { StringType $1 }
-                   | "uint"                                                            { UIntType $1}
-                   | "int"                                                             { IntType $1 }
+               : "address"                                                         { AddrType $1 }                                     
+               | "bool"                                                            { BoolType $1 }
+               | "var"                                                             { VarType $1 }
+               | "string"                                                          { StringType $1 }
+               | "uint"                                                            { UIntType $1}
+               | "int"                                                             { IntType $1 }
 
-Mapping        : "mapping" "(" ElementaryTypeName "=>" TypeName ")"                    { Mapping $3 $5}
+Mapping        :: { TypeName }
+              :  "mapping" "(" ElementaryTypeName "=>" TypeName ")"                    { Mapping $3 $5}
+
+ArrayTypeName :: { TypeName }
+              : TypeName "[" zero(Expression) "]"                                      { ArrayType $1 $3}
+
+FunctionTypeName :: { TypeName }
+              : function "(" zero(FParameters) ")" list(FTNParams) zero(FTNReturn)     { FunctionTypeName $3 $5 $6 }
+FTParamList : "(" zero(FParameters) ")"                                                { $2 }
+FTNParams : "internal"                                                                 { InternalKeyword $1 }
+          | "external"                                                                 { ExternalKeyword $1 }
+          | StateMutability                                                            { $1 }
+FTNReturn : "returns" "(" list(FParameters) ")"                                        { $3 }
+
+FParameters
+          : FParam list(FParamList)                                                    { $1:$2}
+FParamList 
+          : "," FParam                                                                 { $2 }
+FParam    : TypeName zero(StorageLocation)                                             { FParam $1 $2 }
 
 -- The following allows the parser to create lists of one or more or zero or more lists.
 -- one or more
