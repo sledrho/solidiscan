@@ -15,7 +15,7 @@ module Solidiscan.Lexer where
 
 -- For basic Digit/Alpha numeric characters
 $digit = 0-9                                       -- digits
-$alpha = [a-zA-Z]                                  -- alphabetic characters
+$alpha = [a-zA-Z\_\$]                                 -- alphabetic characters
 $hexit = [0-9A-Fa-f]
 --$version = [\^\;]
 $graphic  = $printable # $white
@@ -69,7 +69,6 @@ tokens :-
     "as"                                   { \p s -> TAs p }
     "is"                                   { \p s -> TIs p }
     "from"                                 { \p s -> TFrom p s }
-    "returns"                              { \p s -> TReturns p }
     "if"                                   { \p s -> TIf p }
     "while"                                { \p s -> TWhile p }
     "else"                                 { \p s -> TElse p }
@@ -81,6 +80,16 @@ tokens :-
     "enum"                                 { \p s -> TEnum p }
     "new"                                  { \p s -> TNew p }
     "mapping"                              { \p s -> TMap p s }
+
+    -- Statement Tokens
+    "do"                                   { \p s -> TDo p s }
+    "continue"                             { \p s -> TCont p s }
+    "break"                                { \p s -> TBreak p s }
+    "return"                               { \p s -> TRetState p s }
+    "throw"                                { \p s -> TThrow p s }  
+
+    -- Returns needs to go here because of precedence
+    "returns"                              { \p s -> TReturns p }
 
     -- ElementaryTypeNames
     "string"                               { \p s -> TStringAs p s }
@@ -150,9 +159,11 @@ tokens :-
     "%="                                   { \p s -> TLVMod p }
     "."                                    { \p s -> TPeriod p s } 
 
+    "_"                                    { \p s -> TPlaceHold p s }
 
     --$byte                                { \p s -> TByte p (read s) }
     $alpha[$alpha $digit \_ \' \$]*        { \p s -> TIdent p s }                       -- The lexical token for an identifier 
+
     @string                                { \p s -> TStringLiteral p (init (tail s)) } -- Lexical token for a string, (init(tail s)) removes leading and trailing "
     "("                                    { \p s -> TLeftParen p }
     ")"                                    { \p s -> TRightParen p }
@@ -259,6 +270,12 @@ data Token =
         | TLVDiv AlexPosn
         | TLVMod AlexPosn
         | TPeriod AlexPosn String
+        | TDo AlexPosn String
+        | TPlaceHold AlexPosn String
+        | TCont AlexPosn String
+        | TBreak AlexPosn String
+        | TRetState AlexPosn String
+        | TThrow AlexPosn String
         deriving (Eq, Show)
 
 tokenPosn (TVers p str) = p
@@ -357,8 +374,13 @@ tokenPosn (TLVDecr p) = p
 tokenPosn (TLVMult p) = p 
 tokenPosn (TLVDiv p) = p 
 tokenPosn (TLVMod p) = p 
-
 tokenPosn (TPeriod p str) = p 
+tokenPosn (TDo p str) = p 
+tokenPosn (TPlaceHold p str) = p 
+tokenPosn (TCont p str) = p 
+tokenPosn (TRetState p str) = p 
+tokenPosn (TBreak p str) = p 
+tokenPosn (TThrow p str) = p 
 
 -- In order to get position information a new alexScanTokens must be created
 
