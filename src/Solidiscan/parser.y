@@ -269,7 +269,7 @@ ReturnParam  :: { ReturnParam }
 -- Or a Block
 -- ( ';' | Block )
 TermBlock    : ";"                                                                       { [] }
-             | "{" list(Statement) "}"                                                   { $2 }
+             | Block                                                   { [$1] }
 
 
 StateMutability :: { PublicKeyword } 
@@ -420,7 +420,7 @@ ForStatement :: { Expression }
 ForParams    :: { ForParams }
              : zero(SimpleStatement) ";" zero(Expression) ";" zero(ExpressionStatement) { ForParams $1 $3 $5 }
 
-Block        :: { Expression }
+Block        --:: { Expression }
              : "{" list(Statement) "}"                                                 { BlockStatements $2 }
 
 -- The following is for Solidity's inline assembly expressions.

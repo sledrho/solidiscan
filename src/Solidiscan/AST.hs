@@ -3,7 +3,7 @@ module Solidiscan.AST where
 import Solidiscan.Lexer
 import Data.Typeable
 import Data.Data
-import Data.Generics (Data, Typeable, mkQ, mkT, everything, everywhere)
+-- import Data.Generics (Data, Typeable, mkQ, mkT, everything, everywhere)
 
 -- The following module is the AST data type for the parser.
 
