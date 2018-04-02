@@ -5,15 +5,18 @@ import Solidiscan.Lexer
 import Solidiscan.AST
 
 -- Run parse allows the ability to run the parser from within GHCI, passing in the test case that failed
-runTest n = (reverse(solidiscan(alexScanTokens2 n)))
+-- runTest n = (reverse(solidiscan(alexScanTokens2 n)))
 
---filtEmpty :: [Solidiscan.AST.SourceUnit] -> [Solidiscan.AST.SourceUnit] 
+-- Using function composition it is possible to remove the 'n' from both
+-- sides of the function
+runTest = reverse . solidiscan . alexScanTokens2 
 
---filtEmpty p (SourceUnit lol) = SourceUnit (filter p lol)
-filterEmpt lst n = filter (not . n) lst
+-- filtEmpty :: [Solidiscan.AST.SourceUnit] -> [Solidiscan.AST.SourceUnit] 
+-- filtEmpty p (SourceUnit lol) = SourceUnit (filter p lol)
+-- ilterEmpt lst n = filter (not . n) lst
 
 -- Creating a list of unit tests for each element.
-test1 = TestList [ "Test 1: Pragma Directive Parsing Version" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\"))]" ~=? (show(reverse(solidiscan(alexScanTokens2 "pragma solidity ^0.1.0;")))),
+test1 = TestList [ "Test 1: Pragma Directive Parsing Version" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\"))]" ~=? (show $ runTest "pragma solidity ^0.1.0;"),
                    "Test 2: Contract Def [Empty Contract]" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\")),ContractDef (Contract (Identifier \"this_is_a_contract1\") [])]" ~=? (show(reverse(solidiscan(alexScanTokens2 test2)))),
                    "Test 3: Multiple Empty Contract Assignments" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\")),ContractDef (Contract (Identifier \"contract1\") []),ContractDef (Contract (Identifier \"contract2\") []),ContractDef (Contract (Identifier \"contract3\") []),ContractDef (Contract (Identifier \"contract4\") []),ContractDef (Contract (Identifier \"contract5\") []),ContractDef (Contract (Identifier \"contract6\") [])]" ~=? (show(reverse(solidiscan(alexScanTokens2 test3)))),
                    "Test 4: Var/Func/Contract Assignments" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\")),ContractDef(Contract (Identifier \"this_is_a_contract1\") [ContractContents (StateVariableDeclaration (ElemType \"address\") (Identifier \"bank_account1\"))]),ContractDef (Contract \"this_is_a_contract2\" [ContractContents (StateVariableDeclaration (ElemType \"var\") \"bank_account2\")])]" ~=? (show(reverse(solidiscan(alexScanTokens2 test4)))),
