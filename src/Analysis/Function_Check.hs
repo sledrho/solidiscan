@@ -4,7 +4,12 @@ import Solidiscan.AST
 -- import Data.Generics (Data, Typeable, mkQ, mkT, everything, everythingBut, everywhere)
 import Data.Set as Set
 import Test
+import Debug.Trace
 
+type Definition = String
+type Location = Int
+data RuleError = RuleError Definition Location
+                 deriving(Show, Eq)
 
 -- getCont uses recursion to pattern match the different data constructors within the program source
 -- If a contract definition is found it is passed to getContractConts
@@ -17,121 +22,126 @@ getCont (x:xs) = case x of
 
 -- getContractConts searches for the contents block within a contract and then
 -- calls stateVarCheck
-getContractConts :: [ContractDefinition] -> [[ContractConts]]
+--getContractConts :: [ContractDefinition] -> [ContractConts]
 getContractConts [] = []
 getContractConts (x:xs) = case x of 
-    (Contract _ _ x) -> x : getContractConts xs
+    (Contract _ _ x) -> x -- : getContractConts xs
 
 -- stateVarCheck checks the contents of ContractConts for state variable declarations and returns 
 -- them within a list, it acts recursively to handle multiple declarations
-stateVarCheck :: [[ContractConts]] -> [StateVarDeclaration]
+stateVarCheck :: [ContractConts] -> [StateVarDeclaration]
 stateVarCheck [] = []
 stateVarCheck (x:xs) = case x of
-    [(StateVarDec a)] -> a : stateVarCheck xs
+    (StateVarDec a) -> a : stateVarCheck xs
     (_) -> stateVarCheck xs
 
-
-
-mapGet :: [[StateVarDeclaration]] -> [[StateVarDeclaration]]
-mapGet [] = []
-mapGet [[]] = []
+mapGet :: [StateVarDeclaration] -> StateVarDeclaration
+mapGet [] = undefined
+-- mapGet [[]] = []
 -- mapGet [[x]] = [[x]]
 --mapGet (x:xs) = x : mapGet xs
 mapGet (x:xs) = case x of 
-    [(StateVariableDeclaration _ _ _ _)] -> x : mapGet xs
+    (StateVariableDeclaration _ _ _ _) -> x -- : mapGet xs
 
-mapCheck :: [[StateVarDeclaration]] -> Bool
-mapCheck [] = False
-mapCheck [[]] = False
-mapCheck (x:xs) 
-    | [(StateVariableDeclaration (Mapping _ _ ) _ _ _ )] <- x = True
-    | [(StateVariableDeclaration _ _ _ _)] <- x = False
+-- mapIdentGetter pulls the identifier of the state variable declaration
+mapIdentGetter :: StateVarDeclaration -> Identifier
+mapIdentGetter inp = case inp of
+    (StateVariableDeclaration (Mapping _ _) _ a _) -> a
 
-bundleContGet =  getContractConts . getCont
+-- contractgetter combines getContractConts and getCont using function composition
+contractGetter =  getContractConts . getCont
 
--- getIf pulls the contract data from the program source
--- passing it into getContsContsIf
-ifGetter :: [ProgSource] -> [ContractDefinition] --[[[Expression]]]
-ifGetter [] = []
-ifGetter (x:xs) = case x of
-    (SourceUnit y) -> ifGetter xs
-    (ContractDef y) -> y : (ifGetter xs)
-    (ImportUnit y) -> ifGetter xs
-
--- ifGetterContents pulls the contract contents, which is then passed into funcCheck
--- to check for the functions
---ifGetterContents :: ContractDefinition -> [[Expression]]
---ifGetterContents :: [ProgSource] -> [ContractDefinition]
-ifGetterContents [(Contract _ _ [])] = []
-ifGetterContents [(Contract _ _ x)] = x  
-
--- FuncCheck is a helper function to obtain the function declarations
--- within a contracts contents, it will then call funcConts
--- funcCheck :: [ContractConts] -> [[Expression]]
-funcCheck [] = []
-funcCheck (x:xs) = case x of
-    (StateVarDec _ ) -> [] : (funcCheck xs)
-    (FunctionDefinition a) -> funcConts [a] : (funcCheck xs)
-
--- funcConts is a getter for the contents of a function, 
--- funcConts :: [FunctionDef] -> [Expression]
-funcConts []  = []
-funcConts (x:xs) = case x of
-    (FunctionDef _ _ _ _ a) -> a
-
--- blockFunc :: [[[Expression]]] -> [[[[Expression]]]]
-blockFunc (x:xs)
-    | [BlockStatements [IfStatement _ _ _ ]] <- x = [x] : blockFunc xs
-    | [BlockStatements [IfStatement _ _ _, IfStatement _ _ _]] <- x = [x] : blockFunc xs
-    | _ <- x = blockFunc xs
-blockFunc [] = []
-
---blockConts :: [[Expression]] -> [[Expression]]
-blockConts (x:xs)
-    | [BlockStatements _ ] <- x = x : blockConts xs
-    | [BlockStatements []] <- x = []
-    | [] <- x = [] : blockConts xs
--- blockConts (_:_:_) = []
--- blockConts [(BoolExpression _:_)] = []
-
-
-ifCheck (x:xs) = case x of
-    (IfStatement _ _ _) -> x : ifCheck xs
-
-
-ifCont = funcCheck . ifGetterContents . ifGetter
-testFunc = blockFunc . ifCont
-
-
--- ifCheck :: [[[Expression]]] -> [[Expression]]
-{- ifCheck (x) 
-    | [[[IfStatement _ _ _]]] <- x = [x]
-    | [] <- x = [x]
- -}
--- ifCheck y = [x | x <- y, [IfStatement _ _ _]]
-{- ifCheck ((x:y):xs)
-    | [] <- x = ifCheck [y]   
-    | [IfStatement _ _ _] <- x = [[x]] : ifCheck xs
-    | [[IfStatement _ _ _]] <- y = [y] : ifCheck xs
- -}
-{- ifCheck (x)
-    | [[[IfStatement _ _ _]]] <- x = x
-    | [[_]] <- x = [] 
-ifCheck (x:xs)
-    | [[IfStatement _ _ _]] <- x = x : ifCheck xs
-    | [[_]] <- x = [] : ifCheck xs
-    | [[]] <- x = x : ifCheck xs -}
-
-
-
-{- reentrancyRule :: String -> IO ()
+-- Reentrancy rule will use some basic getter functions to build an image of the contract
+-- It will first check if the contract contains a state variable declaration of type mapping
+-- this will then grab the identifier of the stateVar
+--
+-- The next check is to check if there is an if statement within the contracts functions
+reentrancyRule :: String -> IO ()
 reentrancyRule inp = do
-    let x = mapGet $ getCont $ runTest(inp)
-    if mapCheck(x) 
+    let x = mapGet . stateVarCheck . contractGetter $ runTest(inp)
+    if mapCheck(x)
+        then do
+            print("Mapping found")
+            let mappingIdent = mapIdentGetter(x)
+            let ifContents = testIf $ runTest(inp)
+            print(mappingIdent)
+            if (funcExist ifContents)
+                then print("If statment found")
+                else print("No if statement detected.")
+        else print("No mapping found")
+    {- if mapCheck(x) 
         then do
             let y = ifCheck $ ifGetter $ runTest(inp)
             print(y)
         else print("No Mapping Found") -}
+
+
+-- ifGetterContents pulls the contract contents, which is then passed into funcCheck
+-- to check for the functions
+ifGetterContents :: [ContractDefinition] -> [ContractConts]
+ifGetterContents [] = []
+-- ifGetterContents [(Contract _ _ [])] = []
+ifGetterContents (x:xs) = case x of
+    (Contract _ _ x) -> x -- : ifGetterContents xs
+
+-- FuncCheck is a helper function to obtain the function declarations
+-- within a contracts contents
+funcCheck :: [ContractConts] -> [ContractConts]
+funcCheck [] = []
+funcCheck (x:xs) = case x of
+    (StateVarDec _ ) -> (funcCheck xs)
+    (FunctionDefinition _) -> x : (funcCheck xs)
+    undefined -> funcCheck xs
+
+funcDefCont :: [ContractConts] -> [[Expression]]
+funcDefCont [] = []
+funcDefCont (x:xs) = case x of
+    (FunctionDefinition a) -> funcConts [a] : (funcDefCont xs)
+    _ -> funcDefCont xs
+
+-- funcConts is a getter for the contents of a function, 
+funcConts :: [FunctionDef] -> [Expression]
+funcConts []  = []
+funcConts (x:xs) = case x of
+    (FunctionDef _ _ _ _ a) -> a
+
+-- BlockFunc takes a list of expression lists, and returns the contents of the first Block of statements
+blockFunc :: [[Expression]] -> [Expression]
+blockFunc (x:xs)
+    | [BlockStatements a] <- x = a
+    | _ <- x = blockFunc xs
+blockFunc [] = []
+
+-- ifCheck pulls out the ifstatement from a list of expressions
+ifCheck :: [Expression] -> [Expression]
+ifCheck [] = []
+ifCheck (x:xs)
+    | (IfStatement _ _ _) <- x = x : ifCheck xs
+    | undefined <- x = ifCheck xs
+
+ifCont = ifGetterContents . getCont
+testIf = ifCheck . blockFunc . funcDefCont . funcCheck . ifCont
+
+-- TODO: sort this so that the statevar name can be detected within an if statement
+-- stateVarName  :: [Expression] -> Expression
+stateVarName x s = case x of
+    [(IfStatement a _ _ )] -> y
+    where y = s == x
+
+-- Boolean Checks
+
+-- FuncExist is used as a simple boolean check
+funcExist :: [Expression] -> Bool
+funcExist inp
+    | [(IfStatement _ _ _)]<- inp = True
+    | otherwise = False
+
+-- MapCheck checks if a state var dec is there
+mapCheck :: StateVarDeclaration -> Bool
+mapCheck (x) 
+    | (StateVariableDeclaration (Mapping _ _ ) _ _ _ ) <- x = True
+    | (StateVariableDeclaration _ _ _ _) <- x = False
+    
 
 {- 
 -- OlD Functions Need Removed
