@@ -107,15 +107,19 @@ import Solidiscan.AST
     "/="                                   { TLVDiv _ }
     "%="                                   { TLVMod _ }
     ident                                  { TIdent _ $$ }                       -- The lexical token for an identifier 
+    nestedids                              { TNestedIds _ $$ }                   -- Used to prevent shift/reduce errors with user defined typenames
     stringLiteral                          { TStringLiteral _ $$ }
     "("                                    { TLeftParen _ }
     ")"                                    { TRightParen _ }
 
--- %left ")"
+
 -- To prevent shift reduce by these keywords
 %left "constant" "internal" 
+%left ")"
 -- Added to prevent dangling else issue
 %right "else"
+
+-- Expression Operators, lowest precedence is first
 %left ","
 %right "=" "|=" "^=" "&=" "<<=" ">>=" "+=" "-=" "*=" "/=" "%="
 %left "||"
@@ -147,10 +151,8 @@ SourceUnitSol :: { ProgSource }
               | ContractDefinition                                                     { ContractDef $1 }
 
 PragmaDirective :: { PragmaDirective } 
-             : "pragma" PragmaName "^" version ";"                                     { PragmaDirective $2 (Version $4) (lineNum $1) }
+             : "pragma" ident "^" version ";"                                     { PragmaDirective (PragmaName $2) (Version $4) (lineNum $1) }
 
-PragmaName :: { PragmaName }
-             : ident                                                                   { PragmaName $1 }
 
 ImportDirective :: { ImportDirective } 
              : "import" stringLiteral zero(ImportAs) ";"                               { ImportDir $2 }
@@ -163,7 +165,7 @@ ImportAster : "*"                                                               
 
 -- Production for the Contract Definition
 ContractDefinition :: { ContractDefinition }                                                       -- Passing the $2 token to Identifier to return the appropriate data type
-             : ConLibInt ident zero(InheritanceSpecList) "{" list(ContractPart) "}"    { Contract (Identifier $2) $3 $5 }
+             : ConLibInt ident zero(InheritanceSpecList) "{" list(ContractContents) "}"    { Contract (Identifier $2) $3 $5 }
 
 -- Production for (Contract | Library | Interface)
 ConLibInt   : contract                                                                 { $1 }
@@ -190,7 +192,7 @@ CSExpList : "," Expression                                                      
 ContractParts : ContractPart                     { [$1] }
               | ContractParts ContractPart       { $1:$2}
 -}
-ContractPart :: { ContractConts }
+ContractContents :: { ContractConts }
              : StateVarDeclaration                                                     { StateVarDec $1 }
              | UsingForDec                                                             { UsingFor $1 }
              | StructDefinition                                                        { StructDef $1 }
@@ -199,9 +201,39 @@ ContractPart :: { ContractConts }
              | EventDefinition                                                         { EventDef $1 }
              | EnumDefinition                                                          { EnumDef $1 }
              
-
+-- The following rules are for the function definition production.
+-- ---------------------------------------------------------------
+-- Function definition, function modifiers have been put into their own rule in order to handle
+-- the fallback function within the solidity language docs.
 FunctionDefinition :: { FunctionDef } 
-             : function ident ParameterList list(FuncMods) zero(ReturnParam) TermBlock { FunctionDef (Identifier $2) $3 $4 $5 $6 }
+             : function ident ParameterList list(FuncMods) zero(ReturnParam) TermBlock  { FunctionDef (Identifier $2) $3 $4 $5 $6 }
+             | function "(" ")" list(FuncMods) zero(ReturnParam) TermBlock              { FallBackFunc $4 $5 $6}
+
+-- ParameterList = '(' ( Parameter (',' Parameter)* )? ')'
+ParameterList :: { [[Parameter]] }
+              : "(" zero(Parameters) ")"                                                { $2 }
+Parameters    : Parameter list(ParamList)                                               { $1:$2 }
+ParamList     : "," Parameter                                                           { $2 }
+Parameter :: { Parameter }
+              : TypeName zero(StorageLocation) ident                                    { Parameter $1 $2 $3 }
+
+-- Func mods allow the use of any ModifierInvocation | StateMutability | FuncVar
+FuncMods :: { FuncMods }
+             : ModifierInvocation                                                       { ModifierInvs $1 }
+             | StateMutability                                                          { StateMutability $1 }
+             | FuncVar                                                                  { FuncVars $1 }
+
+-- Either 'return' | ParamaterList
+--  ( 'returns' ParameterList )? 
+ReturnParam  :: { ReturnParam } 
+             : "returns" ParameterList                                                   { ReturnParam $2 }
+
+-- Either terminates the function declaration with ';'
+-- Or a Block
+-- ( ';' | Block )
+TermBlock    : ";"                                                                       { [] }
+             | Block                                                                     { [$1] }
+-- ---------------------------------------------------------------
 
 -- Eventdefinition grammar production
 EventDefinition :: { EventDefinition }
@@ -245,31 +277,6 @@ EParameters :: { EParameters }
              : TypeName ident                                                           { EParameters $1 (Identifier $2) }
 AnonList     : "anonymous"                                                              { $1 }
 
-
--- ParameterList = '(' ( Parameter (',' Parameter)* )? ')'
-ParameterList :: { [[Parameter]] }
-              : "(" zero(Parameters) ")"                                                { $2 }
-Parameters    : Parameter list(ParamList)                                               { $1:$2 }
-ParamList     : "," Parameter                                                           { $2 }
-Parameter :: { Parameter }
-              : TypeName zero(StorageLocation) ident                                    { Parameter $1 $2 $3 }
-
--- Func mods allow the use of any ModifierInvocation | StateMutability | FuncVar
-FuncMods :: { FuncMods }
-             : ModifierInvocation                                                       { ModifierInvs $1 }
-             | StateMutability                                                          { StateMutability $1 }
-             | FuncVar                                                                  { FuncVars $1 }
-
--- Either 'return' | ParamaterList
---  ( 'returns' ParameterList )? 
-ReturnParam  :: { ReturnParam } 
-             : "returns" ParameterList                                                   { ReturnParam $2 }
-
--- Either terminates the function declaration with ';'
--- Or a Block
--- ( ';' | Block )
-TermBlock    : ";"                                                                       { [] }
-             | Block                                                   { [$1] }
 
 
 StateMutability :: { PublicKeyword } 
@@ -376,8 +383,8 @@ IndexAccess  :: { [Expression] }
 MemberAccess :: { Expression }
              : Expression "." ident                                                    { MemberAccess $1 $2 (Identifier $3) }
 
-FunctionCall :: { Expression }
-             : Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 }
+{- FunctionCall :: { Expression }
+             : Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 } -}
 FunctionCallArgs
              : "{" zero(NameValueList) "}"                                             { NameValues $2 }
              | zero(ExpressionList)                                                    { ExpLst $1}
@@ -420,7 +427,7 @@ ForStatement :: { Expression }
 ForParams    :: { ForParams }
              : zero(SimpleStatement) ";" zero(Expression) ";" zero(ExpressionStatement) { ForParams $1 $3 $5 }
 
-Block        --:: { Expression }
+Block        :: { Expression }
              : "{" list(Statement) "}"                                                 { BlockStatements $2 }
 
 -- The following is for Solidity's inline assembly expressions.
@@ -500,9 +507,13 @@ BooleanLiteral :: {BooleanLiteral}
 NumberLiteral  :: { NumberLiteral }
                : decimalnum zero(numberunit)                                           { NumberLiteral $1 $2 }
                
-UserDefinedTypeName :: { TypeName }
+{- UserDefinedTypeName :: { TypeName }
                : ident list(OMUDTypename)                                              { UserDefinedTypeName (Identifier $1) $2}
-OMUDTypename   : "." ident                                                             { (Identifier $2) }
+OMUDTypename   : "." ident                                                             { (Identifier $2) } -}
+
+UserDefinedTypeName :: {TypeName}
+               : nestedids                                                         { UserDefinedTypeName (Identifier $1) }
+               | ident                                                             { UserDefinedTypeName (Identifier $1) }
 
 ElementaryTypeName :: { ElemType }
                : "address"                                                         { AddrType $1 }                                     
@@ -520,7 +531,7 @@ ArrayTypeName :: { TypeName }
 
 FunctionTypeName :: { TypeName }
               : function "(" zero(FParameters) ")" list(FTNParams) zero(FTNReturn)     { FunctionTypeName $3 $5 $6 }
-FTParamList : "(" zero(FParameters) ")"                                                { $2 }
+{- FTParamList : "(" zero(FParameters) ")"                                                { $2 } -}
 FTNParams : "internal"                                                                 { InternalKeyword $1 }
           | "external"                                                                 { ExternalKeyword $1 }
           | StateMutability                                                            { $1 }

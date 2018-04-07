@@ -30,6 +30,12 @@ $graphic  = $printable # $white
 @version        = @decimalnum \. @decimalnum \. @decimalnum
 @exponent       = [eE] [\-\+] @decimalnum
 
+-- Lexical production for an identifier
+@identifier = $alpha[$alpha $digit \_ \' \$]*
+
+-- Lexical production for nestedids
+@nestedids = identifier (\. identifier)+
+
 -- @int = int
 
 -- List of reserved words used by Solidity
@@ -162,8 +168,8 @@ tokens :-
     "_"                                    { \p s -> TPlaceHold p s }
 
     --$byte                                { \p s -> TByte p (read s) }
-    $alpha[$alpha $digit \_ \' \$]*        { \p s -> TIdent p s }                       -- The lexical token for an identifier 
-
+    @identifier                            { \p s -> TIdent p s }                       -- The lexical token for an identifier 
+    @nestedids                             { \p s -> TNestedIds p s}
     @string                                { \p s -> TStringLiteral p (init (tail s)) } -- Lexical token for a string, (init(tail s)) removes leading and trailing "
     "("                                    { \p s -> TLeftParen p }
     ")"                                    { \p s -> TRightParen p }
@@ -174,6 +180,7 @@ tokens :-
 -- The token type
 data Token = 
         TIdent AlexPosn String
+        | TNestedIds AlexPosn String
         | TReservedOp AlexPosn
         | THexNum AlexPosn
         | TExp AlexPosn Int
@@ -280,6 +287,7 @@ data Token =
 
 tokenPosn (TVers p str) = p
 tokenPosn (TIdent p id) = p
+tokenPosn (TNestedIds p str) = p
 tokenPosn (TReservedOp p) = p 
 tokenPosn (THexNum p) = p
 tokenPosn (TExp p f) = p 
