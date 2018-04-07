@@ -59,7 +59,10 @@ data ContractConts = StateVarDec StateVarDeclaration
                      deriving (Show, Eq, Data, Typeable, Ord)
 
 data FunctionDef = FunctionDef Identifier [[Parameter]] [FuncMods] [ReturnParam] [Expression]
+                 | FallBackFunc [FuncMods] [ReturnParam] [Expression]
                         deriving (Show, Eq, Data, Typeable, Ord)
+data FuncIdent = FuncIdent [String]
+                 deriving (Show, Eq, Data, Typeable, Ord)
 
 data FuncMods = ModifierInvs [[[Expression]]]
               | StateMutability PublicKeyword
@@ -153,7 +156,7 @@ data ElemType = AddrType Ident
 -- Elementary types e.g address/bool/string/var etc etc
 data TypeName = TypeName Ident
               | ElementaryTypeName ElemType
-              | UserDefinedTypeName Identifier [Identifier] 
+              | UserDefinedTypeName Identifier
               | Mapping ElemType TypeName  
               | ArrayType TypeName [Expression]
               | FunctionTypeName [[FParam]] [PublicKeyword] [[[FParam]]]
@@ -168,10 +171,10 @@ data Exp = Exp String
 
 data TypeIdent = TypeIdent Ident
                  deriving (Show, Eq, Data, Typeable, Ord)
-{-
-data BlockStatements = BlockStatements [Expression]
+
+{- data BlockStatements = BlockStatements [Expression]
                        deriving (Show, Eq, Data, Typeable, Ord)
--}
+ -}
 data Expression = BoolExpression BooleanLiteral
                 | NumExpression NumberLiteral
                 | IdentExpression Ident
@@ -181,12 +184,12 @@ data Expression = BoolExpression BooleanLiteral
                 | IfStatement Expression Expression [ElseState]
                 | WhileStatement Expression Expression
                 | ForStatement ForParams Expression
-                | BlockStatements [Expression]
                 | InlineAssemblyStatement [Ident] AssemblyBlock
                 | DoWhile Expression Expression
                 | PlaceholderStatement String
                 | ContinueStatement String
                 | BreakStatement String
+                | BlockStatements [Expression]
                 | ReturnStatement [Expression]
                 | ThrowStatement String
                 | NotExpression Expression
