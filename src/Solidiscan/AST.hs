@@ -42,7 +42,6 @@ data ContractDefinition = Contract Identifier [InheritanceSpec] [ContractConts]
                           deriving (Show, Eq, Data, Typeable, Ord)
 
 -- Data for the iheritance specifications
--- ? 
 data InheritanceSpec = InheritanceSpec InheritanceSpecifier [InheritanceSpecifier]
                   deriving (Show, Eq, Data, Typeable, Ord)
 
@@ -80,14 +79,11 @@ data EventDefinition = EventDefinition Identifier [[[EParameters]]]
 {-
 data Statements = Statements [Statement]
                   deriving (Show, Eq, Data, Typeable, Ord)
-
 data Statement = IfStatement Expression
                | SimpleStatement Expression
                  deriving (Show, Eq, Data, Typeable, Ord)
-
 data IfState = IfState ElseState
                deriving (Show, Eq, Data, Typeable, Ord)
-
 data ElseState = ElseState Statement
                  deriving (Show, Eq, Data, Typeable, Ord)
 -}
@@ -109,7 +105,7 @@ data StateMutability = StateMutability PublicKeyword
 data EParameters = EParameters TypeName Identifier
                    deriving (Show, Eq, Data, Typeable, Ord)
 
-data Parameter = Parameter TypeName [StorageLocation] Ident
+data Parameter = Parameter TypeName [StorageLocation] [Identifier]
                  deriving(Show, Eq, Data, Typeable, Ord)
 
 data ParamName = ParamName Ident
@@ -151,6 +147,9 @@ data ElemType = AddrType Ident
               | VarType Ident
               | UIntType Ident
               | IntType Ident
+              | ByteType Ident
+              | FixedType Ident
+              | UFixedType Ident
                 deriving(Show, Eq, Data, Typeable, Ord)
 
 -- Elementary types e.g address/bool/string/var etc etc
@@ -179,6 +178,8 @@ data Expression = BoolExpression BooleanLiteral
                 | NumExpression NumberLiteral
                 | IdentExpression Ident
                 | StringExpression Ident 
+                | ElemTypeExpression ElemType
+                | TupleExpression [Expression]
                 | VariableDeclaration TypeName [StorageLocation] Identifier VarDecExp
                 | IdentifierList [[String]] [String] VarDecExp
                 | IfStatement Expression Expression [ElseState]

@@ -2,7 +2,6 @@
 module Solidiscan.Lexer where
 }
 
--- Attempting to make a Monadic lexer
 %wrapper "posn"
 
 -- The following are un-working lexemes
@@ -15,17 +14,20 @@ module Solidiscan.Lexer where
 
 -- For basic Digit/Alpha numeric characters
 $digit = 0-9                                       -- digits
-$alpha = [a-zA-Z\_\$]                                 -- alphabetic characters
+$alpha = [a-zA-Z\_\$]                              -- alphabetic characters
 $hexit = [0-9A-Fa-f]
---$version = [\^\;]
+
+-- Alex's default for handling whitespace
 $graphic  = $printable # $white
--- $int = [8-16]
+
 -- for comments
 @comment = \/\/ [^\r\n]* | \/\*[^\*]
+
 -- Char Sets for Specific Number combinations
 @string         = \" ($graphic # \")* \"
 @decimalnum     = $digit+
 @hexadecimal    = $hexit+
+
 -- Version info to parse pragma version
 @version        = @decimalnum \. @decimalnum \. @decimalnum
 @exponent       = [eE] [\-\+] @decimalnum
@@ -36,7 +38,12 @@ $graphic  = $printable # $white
 -- Lexical production for nestedids
 @nestedids = identifier (\. identifier)+
 
--- @int = int
+-- To handle the int/uint type within solidity.
+@int = int | int8 | int16 | int24 | int32 | int40 | int48 | int56 | int64 | int72 | int80 | int88 | int96 | int104 | int112 | int120 | int128 | int136 | int144 | int152 | int160 | int168 | int176 | int184 | int192 | int200 | int208 | int216 | int224 | int232 | int240 | int248 | int256
+@uint = u @int
+@bytes = bytes | bytes1 | bytes2 | bytes3 | bytes4 | bytes5 | bytes6 | bytes7 | bytes8 | bytes9 | bytes10 | bytes11 | bytes12 | bytes13 | bytes14 | bytes15 | bytes16 | bytes17 | bytes18 | bytes19 | bytes20 | bytes21 | bytes22 | bytes23 | bytes24 | bytes25 | bytes26 | bytes27 | bytes28 | bytes29 | bytes30 | bytes31 | bytes32
+@fixed = fixed | ( fixed [0-9]+ x [0-9]+ )
+@ufixed = ufixed | ( ufixed [0-9]+ x [0-9]+ )
 
 -- List of reserved words used by Solidity
 @reservedid = abstract| case| catch| default| final| in| inline| match| null| of|
@@ -74,7 +81,6 @@ tokens :-
     "false"                                { \p s -> TFalse p s }
     "as"                                   { \p s -> TAs p }
     "is"                                   { \p s -> TIs p }
-    "from"                                 { \p s -> TFrom p s }
     "if"                                   { \p s -> TIf p }
     "while"                                { \p s -> TWhile p }
     "else"                                 { \p s -> TElse p }
@@ -86,6 +92,7 @@ tokens :-
     "enum"                                 { \p s -> TEnum p }
     "new"                                  { \p s -> TNew p }
     "mapping"                              { \p s -> TMap p s }
+    "indexed"                              { \p s -> TIndex p }
 
     -- Statement Tokens
     "do"                                   { \p s -> TDo p s }
@@ -102,8 +109,11 @@ tokens :-
     "address"                              { \p s -> TAddr p s }
     "bool"                                 { \p s -> TBooleanLit p s }
     "var"                                  { \p s -> TVar p s }
-    "uint"                                 { \p s -> TUInt p s }
-    "int"                                  { \p s -> TIntLit p s }
+    @uint                                  { \p s -> TUInt p s }
+    @int                                   { \p s -> TIntLit p s }
+    @bytes                                 { \p s -> TBytes p s }
+    @fixed                                 { \p s -> TFixed p s }
+    @ufixed                                { \p s -> TUFixed p s }
 
     -- AssignmentVariables
     "public"                               { \p s -> TPublic p s }
@@ -167,8 +177,8 @@ tokens :-
 
     "_"                                    { \p s -> TPlaceHold p s }
 
-    --$byte                                { \p s -> TByte p (read s) }
     @identifier                            { \p s -> TIdent p s }                       -- The lexical token for an identifier 
+    "from"                                 { \p s -> TFrom p s }
     @nestedids                             { \p s -> TNestedIds p s}
     @string                                { \p s -> TStringLiteral p (init (tail s)) } -- Lexical token for a string, (init(tail s)) removes leading and trailing "
     "("                                    { \p s -> TLeftParen p }
@@ -187,6 +197,9 @@ data Token =
         | TIntLit AlexPosn String
         | TInt AlexPosn Int
         | TUInt AlexPosn String
+        | TBytes AlexPosn String
+        | TFixed AlexPosn String
+        | TUFixed AlexPosn String
         | TNumUnit AlexPosn String
         | TDec AlexPosn Int
         | TStringLiteral AlexPosn String
@@ -213,6 +226,7 @@ data Token =
         | TFalse AlexPosn String
         | TAs AlexPosn
         | TIs AlexPosn
+        | TIndex AlexPosn
         | TFrom AlexPosn String
         | TView AlexPosn String
         | TPure AlexPosn String
@@ -252,7 +266,6 @@ data Token =
         | TRCurl AlexPosn
         | TLBrack AlexPosn
         | TRBrack AlexPosn
-        | TBytes AlexPosn
         | TLeftParen AlexPosn
         | TRightParen AlexPosn
         | TEquals AlexPosn
@@ -294,6 +307,8 @@ tokenPosn (TExp p f) = p
 tokenPosn (TIntLit p str) = p 
 tokenPosn (TInt p i) = p 
 tokenPosn (TUInt p str) = p 
+tokenPosn (TFixed p str) = p 
+tokenPosn (TUFixed p str) = p 
 tokenPosn (TNumUnit p str) = p
 tokenPosn (TDec p i) = p 
 tokenPosn (TStringLiteral p str) = p 
@@ -320,6 +335,7 @@ tokenPosn (TTrue p str) = p
 tokenPosn (TFalse p str) = p
 tokenPosn (TAs p) = p
 tokenPosn (TIs p) = p
+tokenPosn (TIndex p) = p
 tokenPosn (TFrom p str) = p
 tokenPosn (TPure p str) = p
 tokenPosn (TPayable p str) = p
@@ -358,7 +374,6 @@ tokenPosn (TLCurl p) = p
 tokenPosn (TRCurl p) = p  
 tokenPosn (TLBrack p) = p  
 tokenPosn (TRBrack p) = p  
-tokenPosn (TBytes p) = p  
 tokenPosn (TLeftParen p) = p  
 tokenPosn (TRightParen p) = p  
 tokenPosn (TEquals p) = p  

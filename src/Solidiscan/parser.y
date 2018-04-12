@@ -14,8 +14,11 @@ import Solidiscan.AST
     decimalnum                             { TDec _ $$ }            -- $$ allows us to pass through the value of the token
     "exponent"                             { TExp _ $$ }            -- Can be seen in Int/Op/StringLiteral tokens also
     digit                                  { TInt _ $$ }
-    "int"                                  { TIntLit _ $$ }
-    "uint"                                 { TUInt _ $$ }
+    int                                    { TIntLit _ $$ }
+    uint                                   { TUInt _ $$ }
+    bytes                                  { TBytes _ $$ }
+    fixed                                  { TFixed _ $$ }
+    ufixed                                 { TUFixed _ $$ }
     numberunit                             { TNumUnit _ $$ }
     "pragma"                               { TPragma _ }
     "import"                               { TImport _ }
@@ -46,7 +49,7 @@ import Solidiscan.AST
     "false"                                { TFalse _ $$ }
     "as"                                   { TAs _ }
     "is"                                   { TIs _ }
-    "from"                                 { TFrom _ $$ }
+    "indexed"                              { TIndex _ }
     "view"                                 { TView _ $$ }
     "pure"                                 { TPure _ $$ }
     "payable"                              { TPayable _ $$ }
@@ -107,6 +110,7 @@ import Solidiscan.AST
     "/="                                   { TLVDiv _ }
     "%="                                   { TLVMod _ }
     ident                                  { TIdent _ $$ }                       -- The lexical token for an identifier 
+    "from"                                 { TFrom _ $$ }
     nestedids                              { TNestedIds _ $$ }                   -- Used to prevent shift/reduce errors with user defined typenames
     stringLiteral                          { TStringLiteral _ $$ }
     "("                                    { TLeftParen _ }
@@ -215,7 +219,8 @@ ParameterList :: { [[Parameter]] }
 Parameters    : Parameter list(ParamList)                                               { $1:$2 }
 ParamList     : "," Parameter                                                           { $2 }
 Parameter :: { Parameter }
-              : TypeName zero(StorageLocation) ident                                    { Parameter $1 $2 $3 }
+              : TypeName zero(StorageLocation) zero(ParamIdent)                                    { Parameter $1 $2 $3 }
+ParamIdent : ident                                                                      { (Identifier $1)}
 
 -- Func mods allow the use of any ModifierInvocation | StateMutability | FuncVar
 FuncMods :: { FuncMods }
@@ -238,6 +243,16 @@ TermBlock    : ";"                                                              
 -- Eventdefinition grammar production
 EventDefinition :: { EventDefinition }
              : "event" ident zero(EventParamList) zero(AnonList) ";"                    { EventDefinition (Identifier $2) $3 }
+-- Production rules for the Event definition and it's parameters
+-- Setup is very similar to the FunctionDefinition paramater list
+EventParamList
+             : "(" zero(EventParams) ")"                                                { $2 }
+EventParams  : EParameters list(EParamList)                                             { $1:$2 }
+EParamList   : "," EParameters                                                          { $2 }
+EParameters :: { EParameters }
+             : TypeName zero(Indexed) ident                                             { EParameters $1 (Identifier $3) }
+Indexed      : "indexed"                                                                { $1 }
+
 
 -- StructDefinition follows this grammar:
 --      StructDefinition = 'struct' Identifier '{' ( VariableDeclaration ';' (VariableDeclaration ';')* )* '}'
@@ -266,15 +281,6 @@ EnumValList  : EnumValue list(MultiEnumValue)                                   
 MultiEnumValue 
              : "," EnumValue                                                            { $2 }
 
-
--- Production rules for the Event definition and it's parameters
--- Setup is very similar to the FunctionDefinition paramater list
-EventParamList
-             : "(" zero(EventParams) ")"                                                { $2 }
-EventParams  : EParameters list(EParamList)                                             { $1:$2 }
-EParamList   : "," EParameters                                                          { $2 }
-EParameters :: { EParameters }
-             : TypeName ident                                                           { EParameters $1 (Identifier $2) }
 AnonList     : "anonymous"                                                              { $1 }
 
 
@@ -473,9 +479,10 @@ Throw        :: { Expression }
 SimpleStatement  
              : VariableDefinition                                                      { $1 }
              | ExpressionStatement                                                     { $1 }
+             
 VariableDefinition 
-             : "var" VariableDeclaration                                               { $2 } 
-             | "var" IdentifierList                                                    { $2 }
+             : "var" IdentifierList                                                    { $2 }
+             | "var" VariableDeclaration                                               { $2 } 
 
 VariableDeclaration :: { Expression }
              : TypeName zero(StorageLocation) ident zero(VarMExp)                      { VariableDeclaration $1 $2 (Identifier $3) (VarDecExp $4) }
@@ -498,7 +505,9 @@ PrimaryExpression :: { Expression }
                : BooleanLiteral                                                     { BoolExpression $1 }
                | NumberLiteral                                                      { NumExpression $1 }
                | stringLiteral                                                      { StringExpression $1 }
+              -- | TupleExpression                                                    { TupleExpression $1 }
                | ident                                                              { IdentExpression $1 }
+               | ElementaryTypeNameExpression                                       { ElemTypeExpression $1}
 
 BooleanLiteral :: {BooleanLiteral}
                : "true"                                                                { BooleanLiteral $1 }
@@ -506,7 +515,17 @@ BooleanLiteral :: {BooleanLiteral}
 
 NumberLiteral  :: { NumberLiteral }
                : decimalnum zero(numberunit)                                           { NumberLiteral $1 $2 }
-               
+
+{- TupleExpression 
+               : "(" zero(TupleEx) ")"                                              { TupleExpression $2 }
+               -- | "[" zero(TupleEx) "]"                                              { TupleExpression $2 }
+TupleEx        : zero(Expression) list(MaybeTupleEx)                                { $1 $2 }
+MaybeTupleEx   : "," zero(Expression)                                               { $2 }
+-}    
+
+ElementaryTypeNameExpression
+               : ElementaryTypeName                                                    { $1 }
+
 {- UserDefinedTypeName :: { TypeName }
                : ident list(OMUDTypename)                                              { UserDefinedTypeName (Identifier $1) $2}
 OMUDTypename   : "." ident                                                             { (Identifier $2) } -}
@@ -520,8 +539,11 @@ ElementaryTypeName :: { ElemType }
                | "bool"                                                            { BoolType $1 }
                | "var"                                                             { VarType $1 }
                | "string"                                                          { StringType $1 }
-               | "uint"                                                            { UIntType $1}
-               | "int"                                                             { IntType $1 }
+               | uint                                                              { UIntType $1}
+               | int                                                               { IntType $1 }
+               | bytes                                                             { ByteType $1 }
+               | fixed                                                             { FixedType $1 }
+               | ufixed                                                            { UFixedType $1 }
 
 Mapping        :: { TypeName }
               :  "mapping" "(" ElementaryTypeName "=>" TypeName ")"                    { Mapping $3 $5}
