@@ -1,7 +1,81 @@
 module Analysis.Version_Check where 
 import Solidiscan.AST
+import Analysis.Info_Data
+import Helper_Functions
+import qualified GitHub.Endpoints.Repos.Releases as GitHub
 
+-- Previous version getter and tester implemented with the maybe data type
+versionGetter :: [ProgSource] -> Maybe Version
+versionGetter [] = Nothing
+versionGetter (x:xs) = case x of
+    (SourceUnit (PragmaDirective _ r _)) -> Just r
+    _ -> Nothing
 
+-- versionTester takes a maybe version and returns a maybe Tuple containing the Info
+-- and the version information
+versionTester :: Maybe Version -> Maybe (Info, Version)
+versionTester v 
+    | v == Just (Version "0.4.2") = Nothing
+    | v == Just (Version "0.4.20") = Nothing
+    | v == Nothing = Just ((Warning "Version Info" "No version information supplied"), (versionPull v))
+    | v == Just (Version "0.4.1") = Just ((High "Version Info" "Outdated compiler version used"), (versionPull v))
+    | (v `elem` outDatedVersions) == True = Just ((High "Version Info" "Outdated compiler version used"), (versionPull v))
+    
+-- List containing outdated solidity versions
+-- ! Refactor into a smarter version
+outDatedVersions = [(Just (Version "0.4.19")),(Just (Version "0.4.18")),(Just (Version "0.4.17")),(Just (Version "0.4.16")),(Just (Version "0.4.15")),(Just (Version "0.4.14")),(Just (Version "0.4.13")),(Just (Version "0.4.12")),(Just (Version "0.4.11")),(Just (Version "0.4.10")),(Just (Version "0.4.9")),(Just (Version "0.4.8")),(Just (Version "0.4.4"))]
+
+-- versionPull turns a Maybe version into a version
+versionPull :: Maybe Version -> Version
+versionPull x 
+    | Just (Version a) <- x = maybe (Version "Broken") id x
+    | Nothing  <- x = (Version "Not Supplied")
+
+-- resultClean is used to remove the maybe info from the result of funcVisCheck
+-- returning a list of tuples of (Info, Identifier)
+-- ? Needs rethought as essentially does the same as resultCleaner
+resultClean :: Maybe (Info, Version) -> (Info, Version)
+resultClean x = case x of
+    Just (Info _ _, Version _) -> maybe (Info "Broken" "Broken", Version "Broken") id x 
+    Just (Warning _ _, Version _) -> maybe (Info "Broken" "Broken", Version "Broken") id x 
+    Just (High _ _, Version _) -> maybe (Info "Broken" "Broken", Version "Broken") id x 
+    Nothing -> (Blank, Version "") -- this is how to handle if the version is up to date
+
+-- Pulls the information from the (Info, Version) tuple and returns a string
+resultPrint :: (Info, Version) -> String
+resultPrint inp = case inp of
+    (Info loc det, Version ver) -> "[!] Info: " ++ loc ++ "\n Details: " ++ det
+    (Warning loc det, Version ver) -> "[!] Warning: " ++ loc ++ "\n Details: " ++ det ++ ". Version: " ++ ver 
+    (High loc det, Version ver) -> "[!] High: " ++ loc ++ "\n Details: " ++ det ++ ". Version: " ++ ver
+    (Blank, Version ver) -> [] -- results in a blank line in the output
+
+-- Version takes a Version data type and checks if it is equal to the most up-to-date version
+-- if so returns True
+-- if not returns False  
+-- TODO: Rethink this as it's not very good.
+version :: Version -> Bool
+version r | r == (Version "0.4.20") = True
+          | otherwise = False
+
+lineNumber :: Int -> String
+lineNumber x = "Located at Line:" ++ show(x) 
+
+{- 
+-- Old version
+-- VersionGetter is a helper function to pull the version from a supplied
+-- program source.
+versionGetter :: [ProgSource] -> Version
+versionGetter (x:xs) = case x of
+    (SourceUnit (PragmaDirective _ r _)) -> r
+    _ -> (Version "Undefined")
+
+versionTester :: Version -> Info
+versionTester v 
+    | v == (Version "0.4.2") = (Info "Version Info" "Version is up to date.")
+    | v == (Version "0.4.20") = (Info "Version Info" "Version is up to date.")
+    | v == (Version "Undefined") = (Warning "Version Info" "No version information supplied!")
+    -- | (v `elem` outDatedVersions) == True = (High "Version Info" "Outdated compiler version used.") 
+    
 -- version check passes in the first part of an AST source
 versionCheck :: [ProgSource] -> [Char]
 versionCheck [] = []
@@ -15,13 +89,8 @@ versionTest :: ProgSource -> Bool
 versionTest (SourceUnit (PragmaDirective _ r x)) = version (r)
 versionTest (_) = undefined
 
--- Version takes a Version data type and checks if it is equal to the most up-to-date version
--- if so returns True
--- if not returns False  
--- TODO: Rethink this as it's not very good.
-version :: Version -> Bool
-version r | r == (Version "0.4.20") = True
-          | otherwise = False
-
-lineNumber :: Int -> String
-lineNumber x = "Located at Line:" ++ show(x) 
+ -- versionTest' :: [ProgSource] -> Info
+versionTest' version = do
+    x <- versionTester' $ versionGetter'(version)
+    return x
+-}
