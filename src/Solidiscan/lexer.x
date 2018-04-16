@@ -6,10 +6,6 @@ module Solidiscan.Lexer where
 
 -- The following are un-working lexemes
 --$byte = (s ([1-9]|[1-2][0-9]|[3][0-2])? )?  -- bytes
---$uint = u $int                                     -- integers
---$decimalnum = [0-9]+([eE][0-9]+)?                  -- decimal numbers
---$hexnum = 0[xX][0-9a-fA-F]+                           -- hexadecimal
---$identifier = [a-zA-Z_$][a-zA-Z_$0-9]*             -- identifiers
 --$comment = \/\/ [^\r\n]* | \/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\/
 
 -- For basic Digit/Alpha numeric characters
@@ -307,6 +303,7 @@ tokenPosn (TExp p f) = p
 tokenPosn (TIntLit p str) = p 
 tokenPosn (TInt p i) = p 
 tokenPosn (TUInt p str) = p 
+tokenPosn (TBytes p str) = p 
 tokenPosn (TFixed p str) = p 
 tokenPosn (TUFixed p str) = p 
 tokenPosn (TNumUnit p str) = p
