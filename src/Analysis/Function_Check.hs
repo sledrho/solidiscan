@@ -3,7 +3,6 @@ module Analysis.Function_Check where
 import Solidiscan.AST
 -- import Data.Generics (Data, Typeable, mkQ, mkT, everything, everythingBut, everywhere)
 import Data.Set as Set
-import Test
 import Debug.Trace
 
 type Definition = String
@@ -56,7 +55,7 @@ contractGetter =  getContractConts . getCont
 -- this will then grab the identifier of the stateVar
 --
 -- The next check is to check if there is an if statement within the contracts functions
-reentrancyRule :: String -> IO ()
+{- reentrancyRule :: String -> IO ()
 reentrancyRule inp = do
     let x = mapGet . stateVarCheck . contractGetter $ runTest(inp)
     if mapCheck(x)
@@ -66,14 +65,19 @@ reentrancyRule inp = do
             let ifContents = testIf $ runTest(inp)
             print(mappingIdent)
             if (funcExist ifContents)
-                then print("If statment found")
+                then do
+                    print("If statment found")
+                    let x = stateVarName $ ifContents
+                    print(x)
+                    -- stateVarCheck x mappingIdent
+
                 else print("No if statement detected.")
         else print("No mapping found")
     {- if mapCheck(x) 
         then do
             let y = ifCheck $ ifGetter $ runTest(inp)
             print(y)
-        else print("No Mapping Found") -}
+        else print("No Mapping Found") -} -}
 
 
 -- ifGetterContents pulls the contract contents, which is then passed into funcCheck
@@ -123,11 +127,14 @@ ifCont = ifGetterContents . getCont
 testIf = ifCheck . blockFunc . funcDefCont . funcCheck . ifCont
 
 -- TODO: sort this so that the statevar name can be detected within an if statement
--- stateVarName  :: [Expression] -> Expression
-stateVarName x s = case x of
-    [(IfStatement a _ _ )] -> y
-    where y = s == x
+stateVarName  :: [Expression] -> Expression
+stateVarName x = case x of
+    [(IfStatement a _ _ )] -> a
 
+-- knownVarCheck :: Expression -> Bool
+knownVarCheck x s
+    | x == s = True
+    | otherwise = False
 -- Boolean Checks
 
 -- FuncExist is used as a simple boolean check
