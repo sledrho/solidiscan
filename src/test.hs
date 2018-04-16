@@ -127,6 +127,8 @@ test13 = "pragma solidity ^1.0.0;\
           \ // another comment \n \
           \}"
 
+testContract1 = "contract Fund { mapping(address => uint) shares; mapping(address => uint) balances; function withdraw() public { if (msg.sender.send(shares[msg.sender])) {shares[msg.sender] = 0;}}}"
+testContract2 = "contract Fund { mapping(address => uint) shares; mapping(address => uint) balances; function withdraw() public { if (msg.sender.send(shares[msg.sender])) {shares[msg.sender] = 0;}}} contract Fund2 { mapping(address => uint) shares2; mapping(address => uint) balances2; function withdraw2() public { if (msg.sender.send(shares[msg.sender])) {shares[msg.sender] = 0;}}}"
 -- TODO Finish the test cases for function visibility
 {- testFunctionViews = TestList ["Test 1: No Function Visibility Specified" ~: "(Info \"Function Visibility\" \"No function visibility specified.\")" ~=? (show(funcVisCheck $ listConts $ runTest "pragma solidity ^0.1.0; contract test {function test() {}}"))]
 

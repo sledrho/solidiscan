@@ -6,6 +6,7 @@ import Analysis.Version_Check
 import Analysis.Visibility_Check
 import Analysis.Info_Data
 import Analysis.Throw_Check
+import Analysis.Reentrancy_Check
 import Helper_Functions
 import Test.HUnit
 import Solidiscan.Lexer

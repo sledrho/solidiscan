@@ -18,7 +18,7 @@ cabal-version:       >=1.10
 executable solidiscan
   main-is:             Solidiscan.hs
   other-modules:       Solidiscan.AST, Solidiscan.Lexer, Solidiscan.Parser, Analysis.Function_Check, 
-                       Analysis.Version_Check, Analysis.Visibility_Check, Analysis.Info_Data, Analysis.Throw_Check, Helper_Functions, Test
+                       Analysis.Version_Check, Analysis.Visibility_Check, Analysis.Info_Data, Analysis.Throw_Check, Analysis.Reentrancy_Check, Helper_Functions, Test
   -- other-extensions:    
   build-depends:       base >=4.10 && <4.11
   hs-source-dirs:      src
