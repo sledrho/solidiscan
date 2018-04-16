@@ -3,12 +3,15 @@ import Test.HUnit
 import Solidiscan.Parser
 import Solidiscan.Lexer
 import Solidiscan.AST
+import Analysis.Visibility_Check
+import Helper_Functions
 
 -- Run parse allows the ability to run the parser from within GHCI, passing in the test case that failed
 -- runTest n = (reverse(solidiscan(alexScanTokens2 n)))
 
 -- Using function composition it is possible to remove the 'n' from both
 -- sides of the function
+runTest :: String -> [ProgSource]
 runTest = reverse . solidiscan . alexScanTokens2 
 
 -- filtEmpty :: [Solidiscan.AST.SourceUnit] -> [Solidiscan.AST.SourceUnit] 
@@ -16,6 +19,7 @@ runTest = reverse . solidiscan . alexScanTokens2
 -- ilterEmpt lst n = filter (not . n) lst
 
 -- Creating a list of unit tests for each element.
+-- TODO: Finish test cases for basic solidity parser
 test1 = TestList [ "Test 1: Pragma Directive Parsing Version" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\"))]" ~=? (show $ runTest "pragma solidity ^0.1.0;"),
                    "Test 2: Contract Def [Empty Contract]" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\")),ContractDef (Contract (Identifier \"this_is_a_contract1\") [])]" ~=? (show(reverse(solidiscan(alexScanTokens2 test2)))),
                    "Test 3: Multiple Empty Contract Assignments" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\")),ContractDef (Contract (Identifier \"contract1\") []),ContractDef (Contract (Identifier \"contract2\") []),ContractDef (Contract (Identifier \"contract3\") []),ContractDef (Contract (Identifier \"contract4\") []),ContractDef (Contract (Identifier \"contract5\") []),ContractDef (Contract (Identifier \"contract6\") [])]" ~=? (show(reverse(solidiscan(alexScanTokens2 test3)))),
@@ -29,7 +33,6 @@ test1 = TestList [ "Test 1: Pragma Directive Parsing Version" ~: "[SourceUnit (P
                    "Test 11: Multiple String Assignment Variable Tests" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\")),ContractDef (Contract (Identifier \"test_con1\") [ContractContents (StateVariableDeclaration (ElementaryTypeName (StringType \"string\")) [PublicKeyword \"public\"] (Identifier \"test\") []),ContractContents (StateVariableDeclaration (ElementaryTypeName (StringType \"string\")) [PrivateKeyword \"private\"] (Identifier \"test\") []),ContractContents (StateVariableDeclaration (ElementaryTypeName (StringType \"string\")) [InternalKeyword \"internal\"] (Identifier \"test\") []),ContractContents (StateVariableDeclaration (ElementaryTypeName (StringType \"string\")) [ConstantKeyword \"constant\"] (Identifier \"test\") [])])]" ~=? (show(reverse(solidiscan(alexScanTokens2 test11)))),
                    "Test 12: Import * As Test" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\")),ImportUnit (ImportMulti \"*\" \"testName\" \"from\" \"filename\"),ContractDef (Contract (Identifier \"test_12\") [])]" ~=? (show(reverse(solidiscan(alexScanTokens2 test12)))),
                    "Test 13: Single Line Comments" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\")),ContractDef (Contract (Identifier \"this_is_a_contract1\") [])]" ~=? (show(reverse(solidiscan(alexScanTokens2 test13))))]
-
 
 test2 = "pragma solidity ^1.0.0;\
           \contract this_is_a_contract1 {\
@@ -124,4 +127,13 @@ test13 = "pragma solidity ^1.0.0;\
           \ // another comment \n \
           \}"
 
+-- TODO Finish the test cases for function visibility
+{- testFunctionViews = TestList ["Test 1: No Function Visibility Specified" ~: "(Info \"Function Visibility\" \"No function visibility specified.\")" ~=? (show(funcVisCheck $ listConts $ runTest "pragma solidity ^0.1.0; contract test {function test() {}}"))]
 
+test1in = contractContentsGetter $ listConts $ runTest "pragma solidity ^0.4.0; contract test1 { function test() private {} }"
+test2in = contractContentsGetter $ listConts $ runTest "pragma solidity ^0.4.0; contract test1 { function test() private {} function test2() public {}}"
+test3in = contractContentsGetter $ listConts $ runTest "pragma solidity ^0.4.0; contract test1 { function test() payable {} function test2() public {}}"
+test4in = contractContentsGetter $ listConts $ runTest "pragma solidity ^0.4.0; contract test1 { function test() pure {} function test2() public {}}"
+test5in = contractContentsGetter $ listConts $ runTest "pragma solidity ^0.4.0; contract test1 { function test() pure {} function test2() private {} function test3() {} function test4() payable{}}"
+test6in = contractContentsGetter $ listConts $ runTest "pragma solidity ^0.4.0; contract test1 { function test() private {} } contract test_con2 { function test3() private{}}"
+test7in = contractContentsGetter $ listConts $ runTest "pragma solidity ^0.4.0; contract test1 { function test() private {} } contract test_con2 { function test3() {}}" -}
