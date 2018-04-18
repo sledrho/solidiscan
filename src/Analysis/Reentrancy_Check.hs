@@ -3,7 +3,7 @@ import Solidiscan.AST
 import Analysis.Info_Data
 import Helper_Functions
 import Analysis.Throw_Check
--- reentCheck takes a contractDefinition and checks for potential re-entrancy
+{- -- reentCheck takes a contractDefinition and checks for potential re-entrancy
 -- returning a tuple containing the Info and Identifier
 reentCheck :: [ContractDefinition] -> IO ()--[Maybe (Info, Identifier)]
 reentCheck inp = do
@@ -21,7 +21,7 @@ reentCheck inp = do
 stateVarCheckRe :: [ContractConts] -> [StateVarDeclaration]
 stateVarCheckRe [] = []
 stateVarCheckRe (x:xs) = case x of
-  (StateVarDec x) -> x : stateVarCheckRe xs
+  --(StateVarDec x) -> x : stateVarCheckRe xs
   (FunctionDefinition _ ) -> stateVarCheckRe xs
   (UsingFor _ ) -> stateVarCheckRe xs
   (StructDef _) -> stateVarCheckRe xs
@@ -45,4 +45,4 @@ ifStateCheck ((x:xs,i)) = case x of
   (IfStatement a b _) -> (a,b,i)
 
 -- ! Currently trying to figure out how to pass the if statement information around and check
--- ! if the state variable identifier is included in the if statement check
+-- ! if the state variable identifier is included in the if statement check -}

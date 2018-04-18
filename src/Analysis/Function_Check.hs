@@ -4,7 +4,7 @@ import Solidiscan.AST
 -- import Data.Generics (Data, Typeable, mkQ, mkT, everything, everythingBut, everywhere)
 import Data.Set as Set
 import Debug.Trace
-
+{-
 type Definition = String
 type Location = Int
 data RuleError = RuleError Definition Location
@@ -176,3 +176,4 @@ findMsgSend code =
         union
         (mkQ empty (\msg@(StateVariableDeclaration _ _ _ ([MemberAccess _ _ _])) -> singleton msg))
         code -}
+-}

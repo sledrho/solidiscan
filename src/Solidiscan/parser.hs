@@ -284,10 +284,10 @@ happyIn47 x = Happy_GHC_Exts.unsafeCoerce# x
 happyOut47 :: (HappyAbsSyn t4 t8 t9 t11 t13 t16 t20 t21 t23 t26 t28 t29 t30 t32 t35 t37 t38 t39 t42 t43 t44 t50 t51 t59 t71 t72 t82 t83 t85 t87 t88 t89 t93 t99 t100 t101 t102 t103 t104 t105 t106 t107 t108 t109 t110 t111 t112 t113 t114 t115 t116 t117 t118 t119 t120 t121 t122 t123 t124 t125 t126 t127 t128 t129 t130 t131 t132 t133 t134 t135 t136 t137 t138 t139 t140 t141 t142 t143 t144 t145 t146 t147 t148 t149 t150 t151 t152 t153 t154 t155 t156 t157 t158 t159 t160 t161 t162 t163 t164 t165 t166 t167) -> (PublicKeyword)
 happyOut47 x = Happy_GHC_Exts.unsafeCoerce# x
 {-# INLINE happyOut47 #-}
-happyIn48 :: (StateVarDeclaration) -> (HappyAbsSyn t4 t8 t9 t11 t13 t16 t20 t21 t23 t26 t28 t29 t30 t32 t35 t37 t38 t39 t42 t43 t44 t50 t51 t59 t71 t72 t82 t83 t85 t87 t88 t89 t93 t99 t100 t101 t102 t103 t104 t105 t106 t107 t108 t109 t110 t111 t112 t113 t114 t115 t116 t117 t118 t119 t120 t121 t122 t123 t124 t125 t126 t127 t128 t129 t130 t131 t132 t133 t134 t135 t136 t137 t138 t139 t140 t141 t142 t143 t144 t145 t146 t147 t148 t149 t150 t151 t152 t153 t154 t155 t156 t157 t158 t159 t160 t161 t162 t163 t164 t165 t166 t167)
+happyIn48 :: (ContractConts) -> (HappyAbsSyn t4 t8 t9 t11 t13 t16 t20 t21 t23 t26 t28 t29 t30 t32 t35 t37 t38 t39 t42 t43 t44 t50 t51 t59 t71 t72 t82 t83 t85 t87 t88 t89 t93 t99 t100 t101 t102 t103 t104 t105 t106 t107 t108 t109 t110 t111 t112 t113 t114 t115 t116 t117 t118 t119 t120 t121 t122 t123 t124 t125 t126 t127 t128 t129 t130 t131 t132 t133 t134 t135 t136 t137 t138 t139 t140 t141 t142 t143 t144 t145 t146 t147 t148 t149 t150 t151 t152 t153 t154 t155 t156 t157 t158 t159 t160 t161 t162 t163 t164 t165 t166 t167)
 happyIn48 x = Happy_GHC_Exts.unsafeCoerce# x
 {-# INLINE happyIn48 #-}
-happyOut48 :: (HappyAbsSyn t4 t8 t9 t11 t13 t16 t20 t21 t23 t26 t28 t29 t30 t32 t35 t37 t38 t39 t42 t43 t44 t50 t51 t59 t71 t72 t82 t83 t85 t87 t88 t89 t93 t99 t100 t101 t102 t103 t104 t105 t106 t107 t108 t109 t110 t111 t112 t113 t114 t115 t116 t117 t118 t119 t120 t121 t122 t123 t124 t125 t126 t127 t128 t129 t130 t131 t132 t133 t134 t135 t136 t137 t138 t139 t140 t141 t142 t143 t144 t145 t146 t147 t148 t149 t150 t151 t152 t153 t154 t155 t156 t157 t158 t159 t160 t161 t162 t163 t164 t165 t166 t167) -> (StateVarDeclaration)
+happyOut48 :: (HappyAbsSyn t4 t8 t9 t11 t13 t16 t20 t21 t23 t26 t28 t29 t30 t32 t35 t37 t38 t39 t42 t43 t44 t50 t51 t59 t71 t72 t82 t83 t85 t87 t88 t89 t93 t99 t100 t101 t102 t103 t104 t105 t106 t107 t108 t109 t110 t111 t112 t113 t114 t115 t116 t117 t118 t119 t120 t121 t122 t123 t124 t125 t126 t127 t128 t129 t130 t131 t132 t133 t134 t135 t136 t137 t138 t139 t140 t141 t142 t143 t144 t145 t146 t147 t148 t149 t150 t151 t152 t153 t154 t155 t156 t157 t158 t159 t160 t161 t162 t163 t164 t165 t166 t167) -> (ContractConts)
 happyOut48 x = Happy_GHC_Exts.unsafeCoerce# x
 {-# INLINE happyOut48 #-}
 happyIn49 :: (UsingForDec) -> (HappyAbsSyn t4 t8 t9 t11 t13 t16 t20 t21 t23 t26 t28 t29 t30 t32 t35 t37 t38 t39 t42 t43 t44 t50 t51 t59 t71 t72 t82 t83 t85 t87 t88 t89 t93 t99 t100 t101 t102 t103 t104 t105 t106 t107 t108 t109 t110 t111 t112 t113 t114 t115 t116 t117 t118 t119 t120 t121 t122 t123 t124 t125 t126 t127 t128 t129 t130 t131 t132 t133 t134 t135 t136 t137 t138 t139 t140 t141 t142 t143 t144 t145 t146 t147 t148 t149 t150 t151 t152 t153 t154 t155 t156 t157 t158 t159 t160 t161 t162 t163 t164 t165 t166 t167)
@@ -1610,7 +1610,7 @@ happyReduce_21 = happySpecReduce_1  13# happyReduction_21
 happyReduction_21 happy_x_1
 	 =  case happyOut48 happy_x_1 of { happy_var_1 -> 
 	happyIn17
-		 (StateVarDec happy_var_1
+		 (happy_var_1
 	)}
 
 #if __GLASGOW_HASKELL__ >= 710
@@ -2117,7 +2117,7 @@ happyReduction_69 (happy_x_5 `HappyStk`
 	case happyOutTok happy_x_3 of { (TIdent _ happy_var_3) -> 
 	case happyOut137 happy_x_4 of { happy_var_4 -> 
 	happyIn48
-		 (StateVariableDeclaration happy_var_1 happy_var_2 (Identifier happy_var_3) happy_var_4
+		 (StateVarDeclaration happy_var_1 happy_var_2 (Identifier happy_var_3) happy_var_4
 	) `HappyStk` happyRest}}}}
 
 #if __GLASGOW_HASKELL__ >= 710

@@ -48,7 +48,7 @@ data InheritanceSpec = InheritanceSpec InheritanceSpecifier [InheritanceSpecifie
 data InheritanceSpecifier = InheritanceSpecifier TypeName [[Expression]]
                             deriving (Show, Eq, Data, Typeable, Ord)
 -- The contents of a Contract
-data ContractConts = StateVarDec StateVarDeclaration
+data ContractConts = StateVarDeclaration TypeName [PublicKeyword] Identifier [Expression]
                    | FunctionDefinition FunctionDef
                    | UsingFor UsingForDec
                    | StructDef StructDefinition
@@ -115,8 +115,8 @@ data FuncVar = FuncVar PublicKeyword
                deriving (Show, Eq, Data, Typeable, Ord)
                  
 -- Declaring a variable, 
-data StateVarDeclaration = StateVariableDeclaration TypeName [PublicKeyword] Identifier [Expression]
-                   deriving (Show, Eq, Data, Typeable, Ord)
+{- data StateVarDeclaration = StateVariableDeclaration TypeName [PublicKeyword] Identifier [Expression]
+                   deriving (Show, Eq, Data, Typeable, Ord) -}
 
 data UsingForDec = UsingForDeclaration Ident Identifier Ident TypeName
                    deriving (Show, Eq, Data, Typeable, Ord)
@@ -288,6 +288,8 @@ data ElseState = ElseState Expression
 
 data BooleanLiteral = BooleanLiteral Ident  
                       deriving (Show, Eq, Data, Typeable, Ord)
+
+
 
 -- Basic Identifier type :: String
 type Ident = String

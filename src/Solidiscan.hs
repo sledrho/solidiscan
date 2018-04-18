@@ -1,7 +1,6 @@
 module Main where
 import Text.Show.Pretty
 import Test
-import Analysis.Function_Check
 import Analysis.Version_Check
 import Analysis.Visibility_Check
 import Analysis.Info_Data
@@ -13,6 +12,7 @@ import Test.HUnit
 import Solidiscan.Lexer
 import Solidiscan.Parser
 import Solidiscan.AST
+import Solidiscan.SymbolTable
 import Control.Monad
 import System.Environment
 import qualified Data.Map as Map

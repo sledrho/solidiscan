@@ -155,8 +155,8 @@ SourceUnitSol :: { ProgSource }
               | ContractDefinition                                                     { ContractDef $1 }
 
 PragmaDirective :: { PragmaDirective } 
-             : "pragma" ident "^" version ";"                                     { PragmaDirective (PragmaName $2) (Version $4) (lineNum $1) }
-
+             : "pragma" ident "^" version ";"                                          { PragmaDirective (PragmaName $2) (Version $4) (lineNum $1) }
+ 
 
 ImportDirective :: { ImportDirective } 
              : "import" stringLiteral zero(ImportAs) ";"                               { ImportDir $2 }
@@ -197,7 +197,7 @@ ContractParts : ContractPart                     { [$1] }
               | ContractParts ContractPart       { $1:$2}
 -}
 ContractContents :: { ContractConts }
-             : StateVarDeclaration                                                     { StateVarDec $1 }
+             : StateVarDeclaration                                                     { $1 }
              | UsingForDec                                                             { UsingFor $1 }
              | StructDefinition                                                        { StructDef $1 }
              | ModifierDefinition                                                      { ModDef $1 }
@@ -303,8 +303,8 @@ FuncVar :: { PublicKeyword }
 
 -- StateVarDec = TypeName ( 'public' | 'internal' | 'private' | 'constant' )? Identifier ('=' Expression)? ';'
 -- Passing the ident into the Ident function to ensure its type is formatted correctly
-StateVarDeclaration :: { StateVarDeclaration }                                                         -- Passing $3 token into Identifier to return the appropriate data type
-             : TypeName zero(AssVar) ident zero(MExpression) ";"                       { StateVariableDeclaration $1 $2 (Identifier $3) $4 }
+StateVarDeclaration :: { ContractConts }                                                         -- Passing $3 token into Identifier to return the appropriate data type
+             : TypeName zero(AssVar) ident zero(MExpression) ";"                       { StateVarDeclaration $1 $2 (Identifier $3) $4 }
 
 
 UsingForDec :: { UsingForDec }
