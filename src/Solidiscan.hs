@@ -7,24 +7,41 @@ import Analysis.Visibility_Check
 import Analysis.Info_Data
 import Analysis.Throw_Check
 import Analysis.Reentrancy_Check
+import Analysis.FallBackFunc_Check
 import Helper_Functions
 import Test.HUnit
 import Solidiscan.Lexer
 import Solidiscan.Parser
 import Solidiscan.AST
 import Control.Monad
+import System.Environment
 import qualified Data.Map as Map
 
 data InfoList = InfoList [Info]
                 deriving (Show)
 type InfoMap = Map.Map InfoList
 
-main :: IO ()
+{- main :: IO ()
 main = do 
   inStr <- getContents
   let parseTree = solidiscan (alexScanTokens2 inStr)
   --putStrLn ("parseTree: " ++ show(reverse(parseTree)))
-  execute(inStr)
+  execute(inStr) -}
+
+-- using getArgs to get the command line arguments
+main :: IO ()
+main = do
+  args <- getArgs
+  case args of
+    []       -> putStrLn "Usage: solidiscan <input file>"
+    [fname] -> do
+      contents <- readFile fname
+      process contents
+
+process :: String -> IO ()
+process input = do
+  let ast = solidiscan (alexScanTokens2 input)
+  execute(input)
 
 -- Execute takes a string (program source) and returns an IO Action
 -- ? Just used for testing at the moment
