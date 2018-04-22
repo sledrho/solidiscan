@@ -41,12 +41,12 @@ main = do
 process :: String -> IO ()
 process input = do
   let ast = solidiscan (alexScanTokens2 input)
-  execute(input)
+  executeAnalysis(input)
 
 -- Execute takes a string (program source) and returns an IO Action
 -- ? Just used for testing at the moment
-execute :: String -> IO ()
-execute source = do
+executeAnalysis :: String -> IO ()
+executeAnalysis source = do
   -- generate the ast from the source
   let ast = runTest(source)
   -- splits the ast into it's contracts
