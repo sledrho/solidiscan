@@ -146,13 +146,13 @@ import Solidiscan.AST
 -- %expect 22
 %%
 
-SourceUnit    : {- empty -}                                                            { [] }
-              | SourceUnit SourceUnitSol                                               { $2 : $1 }
+SourceUnit    : {- empty -}                         { [] }
+              | SourceUnit SourceUnitSol            { $2 : $1 }
 
 SourceUnitSol :: { ProgSource }
-              : PragmaDirective                                                        { SourceUnit $1 }
-              | ImportDirective                                                        { ImportUnit $1 }
-              | ContractDefinition                                                     { ContractDef $1 }
+              : PragmaDirective                     { SourceUnit $1 }
+              | ImportDirective                     { ImportUnit $1 }
+              | ContractDefinition                  { ContractDef $1 }
 
 PragmaDirective :: { PragmaDirective } 
              : "pragma" ident "^" version ";"                                     { PragmaDirective (PragmaName $2) (Version $4) (lineNum $1) }
@@ -160,7 +160,7 @@ PragmaDirective :: { PragmaDirective }
 
 ImportDirective :: { ImportDirective } 
              : "import" stringLiteral zero(ImportAs) ";"                               { ImportDir $2 }
-             | "import" ImportAster ImportAs "from" stringLiteral ";"                  { ImportMulti $2 $3 (Identifier $4) $5}
+             | "import" ImportAster zero(ImportAs) "from" stringLiteral ";"            { ImportMulti $2 $3 (Identifier $4) $5}
 
 ImportAs
              : "as" ident                                                              { (Identifier $2) } 
@@ -170,7 +170,6 @@ ImportAster : "*"                                                               
 -- Production for the Contract Definition
 ContractDefinition :: { ContractDefinition }                                                       -- Passing the $2 token to Identifier to return the appropriate data type
              : ConLibInt ident zero(InheritanceSpecList) "{" list(ContractContents) "}"    { Contract (Identifier $2) $3 $5 }
-
 -- Production for (Contract | Library | Interface)
 ConLibInt   : contract                                                                 { $1 }
             | "library"                                                                { $1 }
@@ -406,7 +405,7 @@ NameVal      :: { NameValue }
              : ident ":" Expression                                                    { NameValue (Identifier $1) $3}
 
 
-Statement    :: { Expression }
+Statement    :: { Statement }
              : IfStatement                                                             { $1 }
              | WhileStatement                                                          { $1 }
              | ForStatement                                                            { $1 }
@@ -420,24 +419,24 @@ Statement    :: { Expression }
              | Throw ";"                                                               { $1 }
              | SimpleStatement ";"                                                     { $1 }
              
-IfStatement  :: { Expression }
+IfStatement  :: { Statement }
                 : "if" "(" Expression ")" Statement zero(ElseState)                    { IfStatement $3 $5 $6  }
 ElseState    :: { ElseState }
              : "else" Statement                                                        { ElseState $2 }
 
-WhileStatement :: { Expression }
+WhileStatement :: { Statement }
              : "while" "(" Expression ")" Statement                                    { WhileStatement $3 $5 }
 
-ForStatement :: { Expression }
+ForStatement :: { Statement }
              : "for" "(" ForParams ")" Statement                                       { ForStatement $3 $5 }
 ForParams    :: { ForParams }
              : zero(SimpleStatement) ";" zero(Expression) ";" zero(ExpressionStatement) { ForParams $1 $3 $5 }
 
-Block        :: { Expression }
+Block        :: { Statement }
              : "{" list(Statement) "}"                                                 { BlockStatements $2 }
 
 -- The following is for Solidity's inline assembly expressions.
-InlineAssemblyStatement :: { Expression }
+InlineAssemblyStatement :: { Statement }
              : "assembly" zero(stringLiteral) InlineAssemblyBlock                      { InlineAssemblyStatement $2 $3 }
 InlineAssemblyBlock
              : "{" list(AssemblyItem) "}"                                              { AssemblyBlock $2 }
@@ -458,22 +457,22 @@ FunctionalAssemblyExpression :: { AssemblyExpression }
 MAssemblyItem :: { AssemblyItem }
              : "," AssemblyItem                                                       { $2 }
 
-DoWhileStatement :: { Expression }
+DoWhileStatement :: { Statement }
              : "do" Statement "while" "(" Expression ")"                              { DoWhile $2 $5}
 
-PlaceholderStatement :: { Expression }                          
+PlaceholderStatement :: { Statement }                          
              : "_"                                                                    { PlaceholderStatement $1 }
 
-Continue     :: { Expression }
+Continue     :: { Statement }
              : "continue"                                                             { ContinueStatement $1 }
 
-Break        :: { Expression }
+Break        :: { Statement }
              : "break"                                                                { BreakStatement $1 }
 
-Return     :: { Expression }
+Return     :: { Statement }
              : "return" zero(Expression)                                              { ReturnStatement $2 }
 
-Throw        :: { Expression }
+Throw        :: { Statement }
              : "throw"                                                                { ThrowStatement $1 }
 
 SimpleStatement  
@@ -567,15 +566,15 @@ FParam    : TypeName zero(StorageLocation)                                      
 
 -- The following allows the parser to create lists of one or more or zero or more lists.
 -- one or more
-list1(p) : p                                                                           { [$1] }
-         | p list1(p)                                                                  { $1 : $2 }
+list1(p) : p                    { [$1] }
+         | p list1(p)           { $1 : $2 }
 -- zero or more 
-list(p) : list1(p)                                                                     { $1 }
-        | {- empty -}                                                                  { [] }
+list(p) : list1(p)              { $1 }
+        | {- empty -}           { [] }
 
 -- Zero or one
-zero(q) : q                                                                            { [$1] }
-        | {- empty -}                                                                  { [] }  
+zero(q) : q                     { [$1] }
+        | {- empty -}           { [] }  
 
 
 -- The following are commented out until they will be used

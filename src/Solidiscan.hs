@@ -1,25 +1,20 @@
 module Main where
 import Text.Show.Pretty
 import Test
-import Analysis.Function_Check
+{- import Analysis.Function_Check
 import Analysis.Version_Check
 import Analysis.Visibility_Check
 import Analysis.Info_Data
 import Analysis.Throw_Check
 import Analysis.Reentrancy_Check
-import Analysis.FallBackFunc_Check
-import Helper_Functions
+import Analysis.FallBackFunc_Check 
+import Helper_Functions -}
 import Test.HUnit
 import Solidiscan.Lexer
 import Solidiscan.Parser
 import Solidiscan.AST
 import Control.Monad
 import System.Environment
-import qualified Data.Map as Map
-
-data InfoList = InfoList [Info]
-                deriving (Show)
-type InfoMap = Map.Map InfoList
 
 {- main :: IO ()
 main = do 
@@ -41,7 +36,8 @@ main = do
 process :: String -> IO ()
 process input = do
   let ast = solidiscan (alexScanTokens2 input)
-  execute(input)
+  print(ast)
+{-   execute(input)
 
 -- Execute takes a string (program source) and returns an IO Action
 -- ? Just used for testing at the moment
@@ -63,7 +59,7 @@ execute source = do
   -- to handle the issue of not printing an empty line to ther terminal
   -- check to see if the result is an empty list, if not then print
   when (versionResult /= []) $ putStrLn versionResult
-  
+   -}
 
 
 {-

@@ -5,7 +5,7 @@ import Analysis.Info_Data
 import Helper_Functions
 -- Throw check is used to check for 'throw' useage within a function's body
 
-funcThrowCheck :: [ContractDefinition] -> [Maybe (Info, Identifier)]
+{- funcThrowCheck :: [ContractDefinition] -> [Maybe (Info, Identifier)]
 funcThrowCheck inp = do
   -- first pull all the functions from the input
   let functions = map funcContInfo $ map functionGetter $ contractContentsGetter inp
@@ -41,3 +41,4 @@ resultCleanThrow x = case x of
 stripBlock :: Expression -> [Expression]
 stripBlock x = case x of
   (BlockStatements x) -> x
+ -}

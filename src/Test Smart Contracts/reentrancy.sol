@@ -52,3 +52,13 @@ contract test2 {
     }
   }
 }
+
+pragma solidity ^0.4.0;
+// ^-- PragmaDirective
+
+import "./test.sol"
+// ^-- ImportDirective
+contract example1 {}
+// ^-- ContractDefinition
+contract example2 {}
+// ^-- Another ContractDEfinition

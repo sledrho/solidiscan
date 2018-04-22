@@ -10,7 +10,7 @@ type Location = Int
 data RuleError = RuleError Definition Location
                  deriving(Show, Eq)
 
--- getCont uses recursion to pattern match the different data constructors within the program source
+{- -- getCont uses recursion to pattern match the different data constructors within the program source
 -- If a contract definition is found it is passed to getContractConts
 getCont :: [ProgSource] -> [ContractDefinition]
 getCont [] = []
@@ -175,4 +175,4 @@ findMsgSend code =
     everything
         union
         (mkQ empty (\msg@(StateVariableDeclaration _ _ _ ([MemberAccess _ _ _])) -> singleton msg))
-        code -}
+        code -} -}

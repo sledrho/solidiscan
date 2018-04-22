@@ -34,7 +34,7 @@ data PragmaValue = PragmaValue Dnum
                    deriving(Show, Eq, Data, Typeable, Ord)
 -- File imports/Contract Imports
 data ImportDirective = ImportDir String
-                     | ImportMulti Identifier Identifier Identifier String 
+                     | ImportMulti Identifier [Identifier] Identifier String 
                        deriving (Show, Eq, Data, Typeable, Ord)
 
 -- The definition of an actual Contract Code Block
@@ -174,6 +174,21 @@ data TypeIdent = TypeIdent Ident
 {- data BlockStatements = BlockStatements [Expression]
                        deriving (Show, Eq, Data, Typeable, Ord)
  -}
+
+data Statement = IfStatement Expression Statement [ElseState]       
+               | WhileStatement Expression Statement 
+               | ForStatement ForParams Statement
+               | BlockStatements [Statement]
+               | InlineAssemblyStatement [Ident] AssemblyBlock
+               | DoWhile Statement Expression
+               | PlaceholderStatement String
+               | ContinueStatement String
+               | BreakStatement String
+               | ReturnStatement String
+               | ThrowStatement String
+               | SimpleStatement Expression
+                deriving (Show, Eq, Data, Typeable, Ord)
+
 data Expression = BoolExpression BooleanLiteral
                 | NumExpression NumberLiteral
                 | IdentExpression Ident
@@ -182,17 +197,17 @@ data Expression = BoolExpression BooleanLiteral
                 | TupleExpression [Expression]
                 | VariableDeclaration TypeName [StorageLocation] Identifier VarDecExp
                 | IdentifierList [[String]] [String] VarDecExp
-                | IfStatement Expression Expression [ElseState]
-                | WhileStatement Expression Expression
+                {- -- | IfStatement Expression Expression [ElseState]
+                -- | WhileStatement Expression Expression
                 | ForStatement ForParams Expression
                 | InlineAssemblyStatement [Ident] AssemblyBlock
                 | DoWhile Expression Expression
                 | PlaceholderStatement String
                 | ContinueStatement String
                 | BreakStatement String
-                | BlockStatements [Expression]
+                -- BlockStatements [Expression]
                 | ReturnStatement [Expression]
-                | ThrowStatement String
+                | ThrowStatement String -}
                 | NotExpression Expression
                 | AdditionExp Expression Expression
                 | SubtractionExp Expression Expression
@@ -283,7 +298,7 @@ data NameValue = NameValue Identifier Expression
 data NewExp = NewExp TypeName
               deriving (Show, Eq, Data, Typeable, Ord)
 
-data ElseState = ElseState Expression
+data ElseState = ElseState Statement
                  deriving (Show, Eq, Data, Typeable, Ord)
 
 data BooleanLiteral = BooleanLiteral Ident  

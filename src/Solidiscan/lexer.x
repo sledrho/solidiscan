@@ -173,8 +173,8 @@ tokens :-
 
     "_"                                    { \p s -> TPlaceHold p s }
 
-    @identifier                            { \p s -> TIdent p s }                       -- The lexical token for an identifier 
     "from"                                 { \p s -> TFrom p s }
+    @identifier                            { \p s -> TIdent p s }                       -- The lexical token for an identifier 
     @nestedids                             { \p s -> TNestedIds p s}
     @string                                { \p s -> TStringLiteral p (init (tail s)) } -- Lexical token for a string, (init(tail s)) removes leading and trailing "
     "("                                    { \p s -> TLeftParen p }
@@ -301,7 +301,7 @@ tokenPosn (TReservedOp p) = p
 tokenPosn (THexNum p) = p
 tokenPosn (TExp p f) = p 
 tokenPosn (TIntLit p str) = p 
-tokenPosn (TInt p i) = p 
+tokenPosn (TInt p i) = p  
 tokenPosn (TUInt p str) = p 
 tokenPosn (TBytes p str) = p 
 tokenPosn (TFixed p str) = p 

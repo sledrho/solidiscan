@@ -11,10 +11,12 @@ reentCheck inp = do
   let stateVars = fmap stateVarMapCheck $ map stateVarCheckRe $ contractContentsGetter inp
   let functions = fmap functionGetter $ contractContentsGetter inp 
   let funcConts = map funcContInfo(functions)
+  -- using infix form of fmap <$> translates to: fmap ifStateCheck funcConts
+  -- let testCheck = ifStateCheck <$> funcConts
   print(stateVars)
-  --print(functions)
   print("Function Contents:")
   print(funcConts)
+  -- print(testCheck)
 
 -- StateVarCheckRe takes a list of contract contents and returns a list of
 -- all possible state variable declarations
@@ -39,10 +41,19 @@ stateVarMapCheck (x:xs) = case x of
 
 -- ifStateCheck pulls the info from the list of expressions and returns the expression if it contains
 -- an if statement, 
-ifStateCheck :: ([Expression], Identifier) -> (Expression, Expression, Identifier)
--- ifStateCheck [] = []
-ifStateCheck ((x:xs,i)) = case x of
-  (IfStatement a b _) -> (a,b,i)
+{- ifStateCheck :: [([Expression], Identifier)] -> [(Expression, Expression, Identifier)]
+ifStateCheck [] = []
+ifStateCheck ((x:xs,i):ys) = case x of
+  (IfStatement a b _) -> (a,b,i) : ifStateCheck ys
+  _ -> ifStateCheck ys -}
+
+{- identCheck :: ([[(Expression, Expression, Identifier)]],[[Maybe Identifier]]) -> Bool 
+identCheck ((x,exp,i),t) = case x of -}
+{- 
+identCheck x y = case x of
+  (StateVariableDeclaration (Mapping _ _) _ a _) ->
+    when (a == (Identifier "balances")) $ putStrLn "bad"
+  _ -> return () -}
 
 -- ! Currently trying to figure out how to pass the if statement information around and check
 -- ! if the state variable identifier is included in the if statement check
