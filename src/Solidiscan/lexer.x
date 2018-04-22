@@ -14,7 +14,8 @@ $hexit = [0-9A-Fa-f]
 $graphic  = $printable # $white
 
 -- for comments
-@comment = \/\/ [^\r\n]* | \/\*[^\*]
+@comment = \/\/ [^\r\n]*
+@commentmulti = \/\*([^\*]|[\r\n]|(\*+([^\*\/]|[\r\n])))*\*\/+
 
 -- Char Sets for Specific Number combinations
 @string         = \" ($graphic # \")* \"
@@ -51,6 +52,7 @@ tokens :-
 
     $white+                                ;
     @comment                               ;
+    @commentmulti                          ;
 <0> @version                               { \p s -> TVers p s }
 <0> @decimalnum
     | 0[xX] @hexadecimal+                  { \p s -> TDec p (read s) }

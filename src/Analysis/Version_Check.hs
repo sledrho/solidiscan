@@ -18,7 +18,6 @@ versionTester v
     | v == Just (Version "0.4.2") = Nothing
     | v == Just (Version "0.4.20") = Nothing
     | v == Nothing = Just ((Warning "Version Info" "No version information supplied"), (versionPull v))
-    | v == Just (Version "0.4.1") = Just ((High "Version Info" "Outdated compiler version used"), (versionPull v))
     | (v `elem` outDatedVersions) == True = Just ((High "Version Info" "Outdated compiler version used"), (versionPull v))
     
 -- List containing outdated solidity versions
@@ -48,17 +47,6 @@ resultPrint inp = case inp of
     (Warning loc det, Version ver) -> "[!] Warning: " ++ loc ++ "\n Details: " ++ det ++ ". Version: " ++ ver 
     (High loc det, Version ver) -> "[!] High: " ++ loc ++ "\n Details: " ++ det ++ ". Version: " ++ ver
     (Blank, Version ver) -> [] -- results in a blank line in the output
-
--- Version takes a Version data type and checks if it is equal to the most up-to-date version
--- if so returns True
--- if not returns False  
--- TODO: Rethink this as it's not very good.
-version :: Version -> Bool
-version r | r == (Version "0.4.20") = True
-          | otherwise = False
-
-lineNumber :: Int -> String
-lineNumber x = "Located at Line:" ++ show(x) 
 
 {- 
 -- Old version
