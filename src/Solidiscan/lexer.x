@@ -4,9 +4,6 @@ module Solidiscan.Lexer where
 
 %wrapper "posn"
 
--- The following are un-working lexemes
---$byte = (s ([1-9]|[1-2][0-9]|[3][0-2])? )?  -- bytes
---$comment = \/\/ [^\r\n]* | \/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\/
 
 -- For basic Digit/Alpha numeric characters
 $digit = 0-9                                       -- digits
@@ -45,6 +42,7 @@ $graphic  = $printable # $white
 @reservedid = abstract| case| catch| default| final| in| inline| match| null| of|
               relocatable| static| switch| try| type| typeof                       -- reserved keywords within the Solidity language
 @numberunit =  wei | szabo | finney | ether | seconds | minutes | hours | days | weeks | years
+
 -- The initial tokens used by the lexer, followed by Haskell code segments
 -- Each token has type String -> Token 
 -- Token being a custom type by Alex, all tokens MUST have the same type.
@@ -173,8 +171,8 @@ tokens :-
 
     "_"                                    { \p s -> TPlaceHold p s }
 
-    @identifier                            { \p s -> TIdent p s }                       -- The lexical token for an identifier 
     "from"                                 { \p s -> TFrom p s }
+    @identifier                            { \p s -> TIdent p s }                       -- The lexical token for an identifier 
     @nestedids                             { \p s -> TNestedIds p s}
     @string                                { \p s -> TStringLiteral p (init (tail s)) } -- Lexical token for a string, (init(tail s)) removes leading and trailing "
     "("                                    { \p s -> TLeftParen p }
@@ -301,7 +299,7 @@ tokenPosn (TReservedOp p) = p
 tokenPosn (THexNum p) = p
 tokenPosn (TExp p f) = p 
 tokenPosn (TIntLit p str) = p 
-tokenPosn (TInt p i) = p 
+tokenPosn (TInt p i) = p  
 tokenPosn (TUInt p str) = p 
 tokenPosn (TBytes p str) = p 
 tokenPosn (TFixed p str) = p 

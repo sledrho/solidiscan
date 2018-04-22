@@ -109,8 +109,8 @@ import Solidiscan.AST
     "*="                                   { TLVMult _ }
     "/="                                   { TLVDiv _ }
     "%="                                   { TLVMod _ }
-    ident                                  { TIdent _ $$ }                       -- The lexical token for an identifier 
     "from"                                 { TFrom _ $$ }
+    ident                                  { TIdent _ $$ }                       -- The lexical token for an identifier 
     nestedids                              { TNestedIds _ $$ }                   -- Used to prevent shift/reduce errors with user defined typenames
     stringLiteral                          { TStringLiteral _ $$ }
     "("                                    { TLeftParen _ }
@@ -160,7 +160,7 @@ PragmaDirective :: { PragmaDirective }
 
 ImportDirective :: { ImportDirective } 
              : "import" stringLiteral zero(ImportAs) ";"                               { ImportDir $2 }
-             | "import" ImportAster ImportAs "from" stringLiteral ";"                  { ImportMulti $2 $3 (Identifier $4) $5}
+             | "import" ImportAster zero(ImportAs) "from" stringLiteral ";"                  { ImportMulti $2 $3 (Identifier $4) $5}
 
 ImportAs
              : "as" ident                                                              { (Identifier $2) } 

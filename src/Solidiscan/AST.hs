@@ -34,7 +34,7 @@ data PragmaValue = PragmaValue Dnum
                    deriving(Show, Eq, Data, Typeable, Ord)
 -- File imports/Contract Imports
 data ImportDirective = ImportDir String
-                     | ImportMulti Identifier Identifier Identifier String 
+                     | ImportMulti Identifier [Identifier] Identifier String 
                        deriving (Show, Eq, Data, Typeable, Ord)
 
 -- The definition of an actual Contract Code Block
