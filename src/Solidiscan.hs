@@ -48,7 +48,7 @@ process input = do
 executeAnalysis :: String -> IO ()
 executeAnalysis source = do
   -- generate the ast from the source
-  let ast =runTest(source)
+  let ast = runTest(source)
   -- splits the ast into it's contracts
   let contracts = listContracts(ast)
   let contractContents = contractContentsGetter(contracts)
