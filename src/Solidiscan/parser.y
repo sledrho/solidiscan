@@ -156,6 +156,7 @@ SourceUnitSol :: { ProgSource }
 
 PragmaDirective :: { PragmaDirective } 
              : "pragma" ident "^" version ";"                                     { PragmaDirective (PragmaName $2) (Version $4) (lineNum $1) }
+             | "pragma" ident version ";"                                         { PragmaDirective (PragmaName $2) (Version $3) (lineNum $1) }
 
 
 ImportDirective :: { ImportDirective } 
@@ -221,6 +222,7 @@ ParamList     : "," Parameter                                                   
 Parameter :: { Parameter }
               : TypeName zero(StorageLocation) zero(ParamIdent)                                    { Parameter $1 $2 $3 }
 ParamIdent : ident                                                                      { (Identifier $1)}
+           | "from"                                                                     { (Identifier $1)}
 
 -- Func mods allow the use of any ModifierInvocation | StateMutability | FuncVar
 FuncMods :: { FuncMods }
@@ -251,6 +253,7 @@ EventParams  : EParameters list(EParamList)                                     
 EParamList   : "," EParameters                                                          { $2 }
 EParameters :: { EParameters }
              : TypeName zero(Indexed) ident                                             { EParameters $1 (Identifier $3) }
+             | TypeName zero(Indexed) "from"                                              { EParameters $1 (Identifier $3)}
 Indexed      : "indexed"                                                                { $1 }
 
 
@@ -304,7 +307,7 @@ FuncVar :: { PublicKeyword }
 -- StateVarDec = TypeName ( 'public' | 'internal' | 'private' | 'constant' )? Identifier ('=' Expression)? ';'
 -- Passing the ident into the Ident function to ensure its type is formatted correctly
 StateVarDeclaration :: { StateVarDeclaration }                                                         -- Passing $3 token into Identifier to return the appropriate data type
-             : TypeName zero(AssVar) ident zero(MExpression) ";"                       { StateVariableDeclaration $1 $2 (Identifier $3) $4 }
+             : TypeName list(AssVar) ident zero(MExpression) ";"                       { StateVariableDeclaration $1 $2 (Identifier $3) $4 }
 
 
 UsingForDec :: { UsingForDec }
@@ -418,7 +421,7 @@ Statement    :: { Expression }
              | Break ";"                                                               { $1 }
              | Return ";"                                                              { $1 }
              | Throw ";"                                                               { $1 }
-             | SimpleStatement ";"                                                     { $1 }
+             | Expression ";"                                                     { $1 }
              
 IfStatement  :: { Expression }
                 : "if" "(" Expression ")" Statement zero(ElseState)                    { IfStatement $3 $5 $6  }
@@ -515,6 +518,8 @@ BooleanLiteral :: {BooleanLiteral}
 
 NumberLiteral  :: { NumberLiteral }
                : decimalnum zero(numberunit)                                           { NumberLiteral $1 $2 }
+               | "exponent" zero(numberunit)                                           { ExponLiteral $1 $2}
+
 
 {- TupleExpression 
                : "(" zero(TupleEx) ")"                                              { TupleExpression $2 }
