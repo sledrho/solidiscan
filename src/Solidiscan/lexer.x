@@ -11,7 +11,7 @@ $alpha = [a-zA-Z\_\$]                              -- alphabetic characters
 $hexit = [0-9A-Fa-f]
 
 -- Alex's default for handling whitespace
-$graphic  = $printable # $white
+$graphic  = $printable --# $white
 
 -- for comments
 @comment = \/\/ [^\r\n]*
@@ -24,8 +24,8 @@ $graphic  = $printable # $white
 
 -- Version info to parse pragma version
 @version        = @decimalnum \. @decimalnum \. @decimalnum
-@exponent       = [eE] [\-\+] @decimalnum
-
+@exponent       = [eE] @decimalnum
+@decimalnumber = $digit+ ( \. digit* )? ( [eE] digit+ )?
 -- Lexical production for an identifier
 @identifier = $alpha[$alpha $digit \_ \' \$]*
 
@@ -35,7 +35,7 @@ $graphic  = $printable # $white
 -- To handle the int/uint type within solidity.
 @int = int | int8 | int16 | int24 | int32 | int40 | int48 | int56 | int64 | int72 | int80 | int88 | int96 | int104 | int112 | int120 | int128 | int136 | int144 | int152 | int160 | int168 | int176 | int184 | int192 | int200 | int208 | int216 | int224 | int232 | int240 | int248 | int256
 @uint = u @int
-@bytes = bytes | bytes1 | bytes2 | bytes3 | bytes4 | bytes5 | bytes6 | bytes7 | bytes8 | bytes9 | bytes10 | bytes11 | bytes12 | bytes13 | bytes14 | bytes15 | bytes16 | bytes17 | bytes18 | bytes19 | bytes20 | bytes21 | bytes22 | bytes23 | bytes24 | bytes25 | bytes26 | bytes27 | bytes28 | bytes29 | bytes30 | bytes31 | bytes32
+@bytes = byte | bytes | bytes1 | bytes2 | bytes3 | bytes4 | bytes5 | bytes6 | bytes7 | bytes8 | bytes9 | bytes10 | bytes11 | bytes12 | bytes13 | bytes14 | bytes15 | bytes16 | bytes17 | bytes18 | bytes19 | bytes20 | bytes21 | bytes22 | bytes23 | bytes24 | bytes25 | bytes26 | bytes27 | bytes28 | bytes29 | bytes30 | bytes31 | bytes32
 @fixed = fixed | ( fixed [0-9]+ x [0-9]+ )
 @ufixed = ufixed | ( ufixed [0-9]+ x [0-9]+ )
 
@@ -54,12 +54,13 @@ tokens :-
     @comment                               ;
     @commentmulti                          ;
 <0> @version                               { \p s -> TVers p s }
+    @decimalnumber                         { \p s -> TDec p (read s)}
 <0> @decimalnum
     | 0[xX] @hexadecimal+                  { \p s -> TDec p (read s) }
 
 -- Because of the way Int's are bound, they will overflow and wrap around - Limitations of Haskell Int datatype.
 <0> @decimalnum \. @decimalnum @exponent?
-    | @decimalnum @exponent                { \p s -> TExp p (read s) }
+    | @decimalnum @exponent                { \p s -> TExp p s }
     @reservedid                            { \p s -> TReservedOp p }
     @numberunit                            { \p s -> TNumUnit p s}
     $digit+                                { \p s -> TInt p (read s) }
@@ -189,7 +190,7 @@ data Token =
         | TNestedIds AlexPosn String
         | TReservedOp AlexPosn
         | THexNum AlexPosn
-        | TExp AlexPosn Int
+        | TExp AlexPosn String
         | TIntLit AlexPosn String
         | TInt AlexPosn Int
         | TUInt AlexPosn String
