@@ -36,6 +36,7 @@ resultCleanThrow x = case x of
     Just (Info _ _, Identifier _) -> maybe (Info "Broken" "Broken", Identifier "Broken") id x 
     Just (Warning _ _, Identifier _) -> maybe (Info "Broken" "Broken", Identifier "Broken") id x 
     Just (High _ _, Identifier _) -> maybe (Info "Broken" "Broken", Identifier "Broken") id x 
+    Nothing -> (Blank, Identifier "")
 
 -- StripBlock removes the blockStatements expresion from the list of expressions
 stripBlock :: Expression -> [Expression]

@@ -48,7 +48,7 @@ process input = do
 executeAnalysis :: String -> IO ()
 executeAnalysis source = do
   -- generate the ast from the source
-  let ast = runTest(source)
+  let ast =runTest(source)
   -- splits the ast into it's contracts
   let contracts = listContracts(ast)
   let contractContents = contractContentsGetter(contracts)
@@ -58,11 +58,13 @@ executeAnalysis source = do
   let versionResult = resultPrint $ resultClean $ versionTester $ versionGetter(ast)
   -- performing the throw check on the inputted contract
   let throwCheckResult = map resultPrinter $ resultCleaner $ funcThrowCheck(contracts)
+  let reentResult = reentPrint $ reentClean $ reentCheck contracts
   printElements(cleanResult)
   printElements(throwCheckResult)
   -- to handle the issue of not printing an empty line to ther terminal
   -- check to see if the result is an empty list, if not then print
   when (versionResult /= []) $ putStrLn versionResult
+  putStrLn(reentResult)
   
 
 
