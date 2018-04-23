@@ -265,6 +265,7 @@ data FunctionCall = FunctionCall Expression FunctionCallArgs
 -}
 
 data NumberLiteral = NumberLiteral Int [Ident]
+                   | ExponLiteral String [Ident]
                deriving (Show, Eq, Data, Typeable, Ord)
 
 data FunctionCallArgs = FunctionCallArgs FunctionCallArgsLst

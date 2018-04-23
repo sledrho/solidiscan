@@ -33,7 +33,7 @@ resultCleaner (x:xs) = case x of
     Just (Info _ _, Identifier _ ) -> maybe (Info "Broken" "Broken", Identifier "Broken") id x : resultCleaner xs
     Just (Warning _ _, Identifier _ ) -> maybe (Info "Broken" "Broken", Identifier "Broken") id x : resultCleaner xs
     Just (High _ _, Identifier _ ) -> maybe (Info "Broken" "Broken", Identifier "Broken") id x : resultCleaner xs
-    Nothing -> []
+    Nothing -> resultCleaner xs
 
 -- resultPrinter takes a tuple of type (Info, Identifier) and returns a string built from
 -- the information provided in the tuple
