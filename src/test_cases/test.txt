@@ -1,1 +1,0 @@
-pragma solidity; contract this_is_a_contract1 {"address" public bank_account1;}
