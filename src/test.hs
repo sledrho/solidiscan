@@ -4,6 +4,7 @@ import Solidiscan.Parser
 import Solidiscan.Lexer
 import Solidiscan.AST
 import Analysis.Visibility_Check
+import Analysis.Version_Check
 import Helper_Functions
 
 -- Run parse allows the ability to run the parser from within GHCI, passing in the test case that failed
@@ -17,7 +18,8 @@ runTest = reverse . solidiscan . alexScanTokens2
 -- filtEmpty :: [Solidiscan.AST.SourceUnit] -> [Solidiscan.AST.SourceUnit] 
 -- filtEmpty p (SourceUnit lol) = SourceUnit (filter p lol)
 -- ilterEmpt lst n = filter (not . n) lst
-
+allTests = TestList [parserTests,
+            analaysisTests]
 -- Creating a list of unit tests for each element.
 -- TODO: Finish test cases for basic solidity parser
 parserTests = TestList [ "Pragma Directive Parsing Version" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\") (Version \"0.1.0\") 1)]" ~=? (show(reverse(solidiscan(alexScanTokens2 "pragma solidity ^0.1.0;")))),
@@ -40,6 +42,7 @@ parserTests = TestList [ "Pragma Directive Parsing Version" ~: "[SourceUnit (Pra
                                 functionDefTests,
                                 functionContentsTest]
                                 
+analaysisTests = TestList [vulnerableVersionTests, visibilityAnalysisTest, reentrancyAnalysisTest]
 
                         {- "Test 2: Contract Def [Empty Contract]" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\")),ContractDef (Contract (Identifier \"this_is_a_contract1\") [])]" ~=? (show(reverse(solidiscan(alexScanTokens2 test2)))),
                         "Test 3: Multiple Empty Contract Assignments" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\")),ContractDef (Contract (Identifier \"contract1\") []),ContractDef (Contract (Identifier \"contract2\") []),ContractDef (Contract (Identifier \"contract3\") []),ContractDef (Contract (Identifier \"contract4\") []),ContractDef (Contract (Identifier \"contract5\") []),ContractDef (Contract (Identifier \"contract6\") [])]" ~=? (show(reverse(solidiscan(alexScanTokens2 test3)))),
@@ -149,7 +152,57 @@ functionContentsTest = TestList ["Function Contents Test: Basic Statements" ~:[C
                                         --"Function Contents Test: Basic Statements" ~: ~=? (),
                                         --"Function Contents Test: Basic Statements" ~: ~=? (),]
 
--- vulnerableVersionTests = TestList ["Up To Date Version Test" ~: ~=? ]
+vulnerableVersionTests = TestList ["Up To Date Version Test" ~: "" ~=? (versionTest "pragma solidity ^0.4.20; contract test {}"),
+                                   "No Version Supplied Test" ~: "[!] Warning: Version Info\n Details: No version information supplied. Version: Not Supplied" ~=? (versionTest "contract test {}" ),
+                                   "Out of Date Version Test 1" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.19" ~=? (versionTest "pragma solidity ^0.4.19;"),
+                                   "Out of Date Version Test 2" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.18"~=? (versionTest "pragma solidity ^0.4.18;"),
+                                   "Out of Date Version Test 3" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.17"~=? (versionTest "pragma solidity ^0.4.17;"),
+                                   "Out of Date Version Test 4" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.16"~=? (versionTest "pragma solidity ^0.4.16;"),
+                                   "Out of Date Version Test 5" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.15" ~=? (versionTest "pragma solidity ^0.4.15;"),
+                                   "Out of Date Version Test 6" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.14"~=? (versionTest "pragma solidity ^0.4.14;"),
+                                   "Out of Date Version Test 7" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.13"~=? (versionTest "pragma solidity ^0.4.13;"),
+                                   "Out of Date Version Test 8" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.12"~=? (versionTest "pragma solidity ^0.4.12;"),
+                                   "Out of Date Version Test 9" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.11"~=? (versionTest "pragma solidity ^0.4.11;"),
+                                   "Out of Date Version Test 10" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.10"~=? (versionTest "pragma solidity ^0.4.10;"),
+                                   "Out of Date Version Test 11" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.9"~=? (versionTest "pragma solidity ^0.4.9;"),
+                                   "Out of Date Version Test 12" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.8"~=? (versionTest "pragma solidity ^0.4.8;"),
+                                   "Out of Date Version Test 13" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.7"~=? (versionTest "pragma solidity ^0.4.7;"),
+                                   "Out of Date Version Test 14" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.6"~=? (versionTest "pragma solidity ^0.4.6;"),
+                                   "Out of Date Version Test 15" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.5"~=? (versionTest "pragma solidity ^0.4.5;"),
+                                   "Out of Date Version Test 16" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.4"~=? (versionTest "pragma solidity ^0.4.4;"),
+                                   "Out of Date Version Test 17" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.3"~=? (versionTest "pragma solidity ^0.4.3;"),
+                                   "Out of Date Version Test 18" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.2"~=? (versionTest "pragma solidity ^0.4.2;"),
+                                   "Out of Date Version Test 19" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.1"~=? (versionTest "pragma solidity ^0.4.1;"),
+                                   "Out of Date Version Test 20" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.4.0"~=? (versionTest "pragma solidity ^0.4.0;"),
+                                   "Out of Date Version Test 21" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.3.6"~=? (versionTest "pragma solidity ^0.3.6;"),
+                                   "Out of Date Version Test 22" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.3.5"~=? (versionTest "pragma solidity ^0.3.5;"),
+                                   "Out of Date Version Test 23" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.3.4"~=? (versionTest "pragma solidity ^0.3.4;"),
+                                   "Out of Date Version Test 24" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.3.3"~=? (versionTest "pragma solidity ^0.3.3;"),
+                                   "Out of Date Version Test 25" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.3.2" ~=? (versionTest "pragma solidity ^0.3.2;"),
+                                   "Out of Date Version Test 26" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.3.1"~=? (versionTest "pragma solidity ^0.3.1;"),
+                                   "Out of Date Version Test 27" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.3.0"~=? (versionTest "pragma solidity ^0.3.0;"),
+                                   "Out of Date Version Test 28" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.2.2"~=? (versionTest "pragma solidity ^0.2.2;"),
+                                   "Out of Date Version Test" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.2.1"~=? (versionTest "pragma solidity ^0.2.1;"),
+                                   "Out of Date Version Test" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.2.0"~=? (versionTest "pragma solidity ^0.2.0;"),
+                                   "Out of Date Version Test" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.1.7"~=? (versionTest "pragma solidity ^0.1.7;"),
+                                   "Out of Date Version Test" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.1.6"~=? (versionTest "pragma solidity ^0.1.6;"),
+                                   "Out of Date Version Test" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.1.5"~=? (versionTest "pragma solidity ^0.1.5;"),
+                                   "Out of Date Version Test" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.1.4"~=? (versionTest "pragma solidity ^0.1.4;"),
+                                   "Out of Date Version Test" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.1.3"~=? (versionTest "pragma solidity ^0.1.3;"),
+                                   "Out of Date Version Test" ~: "[!] High: Version Info\n Details: Outdated compiler version used. Version: 0.1.2"~=? (versionTest "pragma solidity ^0.1.2;")]
+                                
+visibilityAnalysisTest = TestList ["No Visibility Specified 1 Function" ~: ["[!] Info: Function Visibility\n Details: No visibility specified in Function: test"] ~=? (visibilityTest . contractContentsGetter . listContracts $ parseAst "contract test { function test() {}}"), 
+                                   "No Visibility Specified 1 Function" ~: ["[!] Info: Function Visibility\n Details: No visibility specified in Function: test"] ~=? (visibilityTest . contractContentsGetter . listContracts $ parseAst "contract test { function test() {} function test2() private {}}"),
+                                   "No Visibility Specified 1 Function" ~: ["[!] Info: Function Visibility\n Details: No visibility specified in Function: test","[!] Info: Function Visibility\n Details: No visibility specified in Function: test3"] ~=? (visibilityTest . contractContentsGetter . listContracts $ parseAst "contract test { function test() {} function test2() private {} function test3() {}}"),
+                                   "No Visibility Specified 1 Function" ~: ["[!] Info: Function Visibility\n Details: No visibility specified in Function: test","[!] Info: Function Visibility\n Details: No visibility specified in Function: test3","[!] Info: Function Visibility\n Details: No visibility specified in Function: testb1"] ~=? (visibilityTest . contractContentsGetter . listContracts $ parseAst "contract test { function test() {} function test2() private {} function test3() {}} contract testb { function testb1() {}}"),
+                                   "No Visibility Specified 1 Function" ~: ["[!] Info: Function Visibility\n Details: No visibility specified in Function: test","[!] Info: Function Visibility\n Details: No visibility specified in Function: test3","[!] Info: Function Visibility\n Details: No visibility specified in Function: testb1"] ~=? (visibilityTest . contractContentsGetter . listContracts $ parseAst "contract test { function test() {} function test2() private {} function test3() {}} contract testb { function testb1() {} function testb () public payable {}}"),
+                                   "No Visibility Specified 1 Function" ~: ["[!] Info: Function Visibility\n Details: No visibility specified in Function: testb1","[!] Info: Function Visibility\n Details: No visibility specified in Function: testb"] ~=? (visibilityTest . contractContentsGetter . listContracts $ parseAst "contract test { function test() public {} function test2() private {} function test3() internal {}} contract testb { function testb1() {} function testb () {}}"),
+                                   "No Visibility Specified 1 Function" ~: [] ~=? (visibilityTest . contractContentsGetter . listContracts $ parseAst "contract test { function test() public {} function test2() private {} function test3() public {}} contract testb { function testb1() private {} function testb () public payable {}}"),
+                                   "No Visibility Specified 1 Function" ~: ["[!] Info: Function Visibility\n Details: No visibility specified in Function: test","[!] Info: Function Visibility\n Details: No visibility specified in Function: testb1","[!] Info: Function Visibility\n Details: No visibility specified in Function: testc","[!] Info: Function Visibility\n Details: No visibility specified in Function: testd"] ~=? (visibilityTest . contractContentsGetter . listContracts $ parseAst "contract test { function test() {} } contract testb {function testb1() {}} contract testc {function testc() {}} contract testd {function testd() {}}")]
+
+reentrancyAnalysisTest = TestList ["Re-Entrancy Check" ~: "[!] High: Possible Re-Entrancy\n Details: The function contains a possible re-entrancy vulnerability in Function: get_func" ~=? (reentPrint $ reentClean $ reentCheck $ listContracts $ parseAst("contract re_entrancy {mapping (address => uint) public balances; function get_func() {if (!msg.sender.call.value(balances[msg.sender])()) {throw;}balances[msg.sender] = 0;}}"))]
+
+reentPrint $ reentClean $ reentCheck contracts
 -- TODO Finish the test cases for function visibility
 {- testFunctionViews = TestList ["Test 1: No Function Visibility Specified" ~: "(Info \"Function Visibility\" \"No function visibility specified.\")" ~=? (show(funcVisCheck $ listConts $ runTest "pragma solidity ^0.1.0; contract test {function test() {}}"))]
 
