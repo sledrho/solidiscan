@@ -7,7 +7,8 @@ import Data.Maybe
 
 -- Visibility check is to check for the functions visibility within a contract
 -- Functions should be defined either private or public but not left blank.
-
+visibilityTest :: [[ContractConts]] -> [String]
+visibilityTest = map resultPrinter . resultCleaner . funcVisCheck
 -- funCVisCheck takes a list of contract defintions and returns a list of Maybe Info/Ident tuples
 funcVisCheck :: [[ContractConts]] -> [Maybe (Info, Identifier)]
 funcVisCheck contractConts = do
@@ -30,5 +31,7 @@ functionParamCheck ([],r) = Just ((Info "Function Visibility" "No visibility spe
 functionParamCheck ((x:xs), r) = case x of
     (FuncVars (PublicKeyword "public")) -> Nothing
     (FuncVars (PrivateKeyword "private")) -> Nothing
+    (FuncVars (ExternalKeyword "external")) -> Nothing
+    (FuncVars (InternalKeyword "internal")) -> Nothing
     (StateMutability _) -> Just ((Info "Function Visibility" "No visibility specified"), r)
     _ -> Just ((Info "Function Visibility" "No visibility specified"), r)

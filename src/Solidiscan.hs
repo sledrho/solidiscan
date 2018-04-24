@@ -40,7 +40,7 @@ main = do
 
 process :: String -> IO ()
 process input = do
-  let ast = solidiscan (alexScanTokens2 input)
+  let ast = parseAst(input)
   executeAnalysis(input)
 
 -- Execute takes a string (program source) and returns an IO Action
@@ -48,22 +48,23 @@ process input = do
 executeAnalysis :: String -> IO ()
 executeAnalysis source = do
   -- generate the ast from the source
-  let ast = runTest(source)
+  let ast = parseAst(source)
   -- splits the ast into it's contracts
   let contracts = listContracts(ast)
   let contractContents = contractContentsGetter(contracts)
   -- CleanResult is the result of the funcVisCheck used to check functions for 
   -- the lack of public/private
-  let cleanResult = map resultPrinter $ resultCleaner $ funcVisCheck(contractContents)
-  let versionResult = resultPrint $ resultClean $ versionTester $ versionGetter(ast)
+  let funcVisResult = visibilityTest (contractContents)
+  printElements(funcVisResult)
+  let versionResult = versionTest(source)
+  when (versionResult /= []) $ putStrLn versionResult
+  -- let versionResult = resultPrint $ resultClean $ versionTester $ versionGetter(ast)
   -- performing the throw check on the inputted contract
   let throwCheckResult = map resultPrinter $ resultCleaner $ funcThrowCheck(contracts)
-  let reentResult = reentPrint $ reentClean $ reentCheck contracts
-  printElements(cleanResult)
   printElements(throwCheckResult)
+  let reentResult = reentPrint $ reentClean $ reentCheck contracts
   -- to handle the issue of not printing an empty line to ther terminal
   -- check to see if the result is an empty list, if not then print
-  when (versionResult /= []) $ putStrLn versionResult
   putStrLn(reentResult)
   
 

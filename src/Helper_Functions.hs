@@ -1,5 +1,7 @@
 module Helper_Functions where 
 import Solidiscan.AST
+import Solidiscan.Lexer
+import Solidiscan.Parser
 import Analysis.Info_Data
 
   -- grabs the contracts from the supplied source file and produces a list
@@ -49,3 +51,6 @@ resultPrinter x = case x of
 -- example useage is :- printElements $ map resultPrinter $ resultCleaner
 printElements :: [String] -> IO ()
 printElements = mapM_ putStrLn
+
+parseAst :: String -> [ProgSource]
+parseAst = reverse . solidiscan . alexScanTokens2 

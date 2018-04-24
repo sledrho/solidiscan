@@ -4,6 +4,8 @@ import Analysis.Info_Data
 import Helper_Functions
 import qualified GitHub.Endpoints.Repos.Releases as GitHub
 
+versionTest :: String -> String
+versionTest inp = resultPrint $ resultClean $ versionTester $ versionGetter $ parseAst inp
 -- Previous version getter and tester implemented with the maybe data type
 versionGetter :: [ProgSource] -> Maybe Version
 versionGetter [] = Nothing
@@ -15,14 +17,48 @@ versionGetter (x:xs) = case x of
 -- and the version information
 versionTester :: Maybe Version -> Maybe (Info, Version)
 versionTester v 
-    | v == Just (Version "0.4.2") = Nothing
     | v == Just (Version "0.4.20") = Nothing
     | v == Nothing = Just ((Warning "Version Info" "No version information supplied"), (versionPull v))
     | (v `elem` outDatedVersions) == True = Just ((High "Version Info" "Outdated compiler version used"), (versionPull v))
     
 -- List containing outdated solidity versions
 -- ! Refactor into a smarter version
-outDatedVersions = [(Just (Version "0.4.19")),(Just (Version "0.4.18")),(Just (Version "0.4.17")),(Just (Version "0.4.16")),(Just (Version "0.4.15")),(Just (Version "0.4.14")),(Just (Version "0.4.13")),(Just (Version "0.4.12")),(Just (Version "0.4.11")),(Just (Version "0.4.10")),(Just (Version "0.4.9")),(Just (Version "0.4.8")),(Just (Version "0.4.4"))]
+outDatedVersions = [(Just (Version "0.4.19")),
+                    (Just (Version "0.4.18")),
+                    (Just (Version "0.4.17")),
+                    (Just (Version "0.4.16")),
+                    (Just (Version "0.4.15")),
+                    (Just (Version "0.4.14")),
+                    (Just (Version "0.4.13")),
+                    (Just (Version "0.4.12")),
+                    (Just (Version "0.4.11")),
+                    (Just (Version "0.4.10")),
+                    (Just (Version "0.4.9")),
+                    (Just (Version "0.4.8")),
+                    (Just (Version "0.4.7")),
+                    (Just (Version "0.4.6")),
+                    (Just (Version "0.4.5")),
+                    (Just (Version "0.4.4")),
+                    (Just (Version "0.4.3")),
+                    (Just (Version "0.4.2")),
+                    (Just (Version "0.4.1")),
+                    (Just (Version "0.4.0")),
+                    (Just (Version "0.3.6")),
+                    (Just (Version "0.3.5")),
+                    (Just (Version "0.3.4")),
+                    (Just (Version "0.3.3")),
+                    (Just (Version "0.3.2")),
+                    (Just (Version "0.3.1")),
+                    (Just (Version "0.3.0")),
+                    (Just (Version "0.2.2")),
+                    (Just (Version "0.2.1")),
+                    (Just (Version "0.2.0")),
+                    (Just (Version "0.1.7")),
+                    (Just (Version "0.1.6")),
+                    (Just (Version "0.1.5")),
+                    (Just (Version "0.1.4")),
+                    (Just (Version "0.1.3")),
+                    (Just (Version "0.1.2"))]
 
 -- versionPull turns a Maybe version into a version
 versionPull :: Maybe Version -> Version
