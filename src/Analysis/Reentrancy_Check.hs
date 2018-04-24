@@ -5,7 +5,7 @@ import Helper_Functions
 import Analysis.Throw_Check
 -- reentCheck takes a contractDefinition and checks for potential re-entrancy
 -- returning a tuple containing the Info and Identifier
-reentCheck :: [ContractDefinition] -> Maybe (Info, Identifier)
+{- reentCheck :: [ContractDefinition] -> Maybe (Info, Identifier)
 reentCheck inp = do
   -- first get all potential state-variable definitions from the input
   let stateVars = fmap stateVarMapCheck $ map stateVarCheckRe $ contractContentsGetter inp
@@ -24,9 +24,11 @@ reentCheck inp = do
 re_entRace :: Bool -> (Bool, Identifier) -> Maybe (Info, Identifier)
 re_entRace race1 race2
   | race1 == True = re_entRace2 race2
+  | race2 == False = Nothing
 re_entRace2 :: (Bool, b) -> Maybe (Info, b)
 re_entRace2 race2
   | (fst (race2) == True) = reentSuccess race2
+  | otherwise = Nothing
 
 reentSuccess inp = Just ((High "Possible Re-Entrancy" "The function contains a possible re-entrancy vulnerability "), (snd (inp)))
 
@@ -71,6 +73,9 @@ ifStateCheck (x:xs) = case x of
 -- used to test if an if-statement contains a state variable already seen
 msgTest :: Expression -> Ident -> Bool
 msgTest x y = case x of
+  (NotExpression (FunctionCall (MemberAccess (MemberAccess (MemberAccess (IdentExpression "msg") "." (Identifier "sender")) "." (Identifier "call")) "." (Identifier "value")) (ExpLst [[FunctionCall (IndexAccess [IdentExpression ident,MemberAccess (IdentExpression "msg") "." (Identifier "sender")]) (ExpLst [])]])))
+    | ident == y -> True
+    | otherwise -> False
   (NotExpression (FunctionCall (FunctionCall (MemberAccess (MemberAccess (MemberAccess (IdentExpression "msg") "." (Identifier "sender")) "." (Identifier "call")) "." (Identifier "value")) (ExpLst [[IndexAccess [IdentExpression ident,MemberAccess (IdentExpression "msg") "." (Identifier "sender")]]])) (ExpLst [])))
     | ident == y -> True
     | otherwise -> False
@@ -92,7 +97,7 @@ secondStates (x:xs,i)  = case x of
   (IfStatement _ out _) -> secondStates (xs,i)
   (LValEqual _ _) -> (x,i) : secondStates (xs, i)
   _ -> secondStates (xs,i)
-
+ -}
 
 {- -- ifStateCheck pulls the info from the list of expressions and returns the expression if it contains
 -- an if statement, 

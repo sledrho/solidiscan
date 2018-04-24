@@ -200,7 +200,7 @@ data Expression = BoolExpression BooleanLiteral
                 | DivisionExp Expression Expression
                 | MultiExp Expression Expression
                 | ModuloExp Expression Expression
-                | BracketsExp Expression
+                | BracketsExp Expression [Expression]
                 | IncrExp Expression
                 | DecrExp Expression
                 | LShiftExp Expression Expression
@@ -216,9 +216,12 @@ data Expression = BoolExpression BooleanLiteral
                 | NotEqualExp Expression Expression
                 | AndExp Expression Expression
                 | OrExp Expression Expression
-                | NewExpression TypeName
-                | MemberAccess Expression String Identifier
-                | IndexAccess [Expression]
+                | TermExpression Expression [FunctionCallArgs] [Expression]
+                | NewExpression Expression
+                -- | MemberAccess Expression String Identifier
+                -- | IndexAccess [Expression]
+                | OptionalVarDec [StorageLocation] Identifier
+                | OptionalFuncCall FunctionCallArgs [Expression]
                 | FunctionCall Expression FunctionCallArgsLst
                 | LValEqual Expression Expression
                 | LValOr Expression Expression

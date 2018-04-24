@@ -118,8 +118,8 @@ import Solidiscan.AST
 
 
 -- To prevent shift reduce by these keywords
-%left "constant" "internal" 
 %left ")"
+%left "constant" "internal" 
 -- Added to prevent dangling else issue
 %right "else"
 
@@ -267,7 +267,7 @@ StructValue : VariableDeclaration ";"                                           
 
 -- Production rules for modifier definitions + invocations
 ModifierDefinition :: { ModifierDefinition }
-             : "modifier" ident zero(ParameterList) TermBlock                           { ModifierDefinition (Identifier $2) $3 $4 }
+             : "modifier" ident zero(ParameterList) Block                           { ModifierDefinition (Identifier $2) $3 $4 }
 ModifierInvocation 
              : ident zero(ZOModExpList)                                                 { $2 }
 ZOModExpList : "(" zero(ModExpList) ")"                                                 { $2 }
@@ -344,11 +344,11 @@ ExprList     :: { Expression }
 Expression   :: { Expression }
              : Expression "++"                                                         { IncrExp $1 }
              | Expression "--"                                                         { DecrExp $1 }                      
-             | NewExpression                                                           { NewExpression $1 }
-             | IndexAccess                                                             { IndexAccess $1 }
-             | MemberAccess                                                            { $1 }
-             | Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 }
-             | "(" Expression ")"                                                      { BracketsExp $2 }
+             -- | NewExpression                                                           { NewExpression $1 }
+             -- | IndexAccess                                                             { IndexAccess $1 }
+             -- | MemberAccess                                                            { $1 }
+             -- | Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 }
+             | "(" Expression ")" zero(ParenthesisExpressionFollowup)                  { BracketsExp $2 $4 }
              | "!" Expression                                                          { NotExpression $2 }
              | Expression "**" Expression                                              { ExponentExp $1 $3 }
              | Expression "*" Expression                                               { MultiExp $1 $3 }
@@ -380,18 +380,58 @@ Expression   :: { Expression }
              | Expression "*=" Expression                                              { LValMult $1 $3 }
              | Expression "/=" Expression                                              { LValDivis $1 $3 }
              | Expression "%=" Expression                                              { LValMod $1 $3 }
-             | PrimaryExpression                                                       { $1 }
+             -- | PrimaryExpression                                                       { $1 }
+             -- | TupleExpression                                                         { $1 }
+             | TermExpression                                                          { $1 }
+             
+ParenthesisExpressionFollowup
+        : "[" Expression "]"                                                    { $2 }
+        | "." TermExpression                                                    { $2 }
+        | "(" Expression ")"                                                    { $2 }
+             
+Factor  : BooleanLiteral                                                     { BoolExpression $1 }
+        | NumberLiteral                                                      { NumExpression $1 }
+        | stringLiteral                                                      { StringExpression $1 }
+        -- | TupleExpression                                                    { TupleExpression $1 }
+        | ident                                                              { IdentExpression $1 }
+        | ElementaryTypeNameExpression                                       { ElemTypeExpression $1} 
+        | "new" Factor                                                       { NewExpression $2}     
+        --| Mapping                                                            { $1 }
+        --| FunctionTypeName                                                   { $1 }        
 
-NewExpression :: { TypeName }
-             : "new" TypeName                                                          { $2 }
+TermExpression  :: { Expression }
+                :  Factor {-list(OptionalMemberArrayAccess)-} zero(OptionalCallVar) zero(NestedCall)     { TermExpression $1 $2 $3}
 
-IndexAccess  :: { [Expression] }
+OptionalCallVar : OptionalFunctionCall                                                 {$1}
+                -- | OptionalVariableDeclaration                                          {$1}
+
+NestedCall     :: { Expression }
+                : "." TermExpression                                                    { $2 }
+               -- | OptionalFunctionCall zero(TermExpression)                             {OptionalFuncCall $1 $2}
+               -- | "[" Expression "]" zero(TermExpression)                               {$2 $4}
+
+OptionalMemberArrayAccess
+               : "." nestedids                                                          {$2}
+               | "." ident                                                              {$2}
+               | "[" zero(Expression) "]"                                               {$2}
+
+OptionalFunctionCall :: { FunctionCallArgs }
+               : "(" FunctionCallArgs ")"                                              { FunctionCallArgs $2 }
+        
+OptionalVariableDeclaration                             
+               : zero(StorageLocation) ident                                           { OptionalVarDec $1 (Identifier $2)  }
+               
+
+
+{- IndexAccess  :: { [Expression] }
              : Expression "[" zero(Expression) "]"                                     { $1:$3 }
 
 -- To handle member access e.g test.Test
 MemberAccess :: { Expression }
-             : Expression "." ident                                                    { MemberAccess $1 $2 (Identifier $3) }
+             : Expression "." ident                                                    { MemberAccess $1 $2 (Identifier $3) } -}
 
+{- NewExpression :: { TypeName }
+             : "new" TypeName                                                          { $2 } -}
 {- FunctionCall :: { Expression }
              : Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 } -}
 FunctionCallArgs
@@ -421,7 +461,8 @@ Statement    :: { Expression }
              | Break ";"                                                               { $1 }
              | Return ";"                                                              { $1 }
              | Throw ";"                                                               { $1 }
-             | Expression ";"                                                     { $1 }
+             | VariableDefinition                                                      { $1 }
+             | Expression ";"                                                          { $1 }
              
 IfStatement  :: { Expression }
                 : "if" "(" Expression ")" Statement zero(ElseState)                    { IfStatement $3 $5 $6  }
@@ -434,9 +475,9 @@ WhileStatement :: { Expression }
 ForStatement :: { Expression }
              : "for" "(" ForParams ")" Statement                                       { ForStatement $3 $5 }
 ForParams    :: { ForParams }
-             : zero(SimpleStatement) ";" zero(Expression) ";" zero(ExpressionStatement) { ForParams $1 $3 $5 }
+             : zero(SimpleStatement) ";" zero(Expression) ";" zero(ExpressionList)     { ForParams $1 $3 $5 }
 
-Block        :: { Expression }
+Block        :: { [Expression] }
              : "{" list(Statement) "}"                                                 { BlockStatements $2 }
 
 -- The following is for Solidity's inline assembly expressions.
@@ -481,11 +522,12 @@ Throw        :: { Expression }
 
 SimpleStatement  
              : VariableDefinition                                                      { $1 }
-             | ExpressionStatement                                                     { $1 }
+             -- | ExpressionList                                                          { $1 }
+             -- | ExpressionStatement                                                     { $1 }
              
 VariableDefinition 
              : "var" IdentifierList                                                    { $2 }
-             | "var" VariableDeclaration                                               { $2 } 
+             -- | "var" VariableDeclaration                                               { $2 } 
 
 VariableDeclaration :: { Expression }
              : TypeName zero(StorageLocation) ident zero(VarMExp)                      { VariableDeclaration $1 $2 (Identifier $3) (VarDecExp $4) }
@@ -497,20 +539,19 @@ IdentifierList :: { Expression }
              : "(" list(IdentList) zero(IdentVar) ")" zero(VarMExp)                    { IdentifierList $2 $3 (VarDecExp $5) }
 IdentList    : zero(IdentVar) ","                                                      { $1 }
 IdentVar     : ident                                                                   { $1 }
-
+{- 
 ExpressionStatement
-             : Expression                                                              { $1 } 
+             : Expression                                                              { $1 }  -}
 
 -- Production rule for an if-else statement, currently contains a shift reduce conflict
-
 -- Nums/Bools/Strings
-PrimaryExpression :: { Expression }
+{- PrimaryExpression :: { Expression }
                : BooleanLiteral                                                     { BoolExpression $1 }
                | NumberLiteral                                                      { NumExpression $1 }
                | stringLiteral                                                      { StringExpression $1 }
               -- | TupleExpression                                                    { TupleExpression $1 }
                | ident                                                              { IdentExpression $1 }
-               | ElementaryTypeNameExpression                                       { ElemTypeExpression $1}
+               | ElementaryTypeNameExpression                                       { ElemTypeExpression $1} -}
 
 BooleanLiteral :: {BooleanLiteral}
                : "true"                                                                { BooleanLiteral $1 }
@@ -520,13 +561,12 @@ NumberLiteral  :: { NumberLiteral }
                : decimalnum zero(numberunit)                                           { NumberLiteral $1 $2 }
                | "exponent" zero(numberunit)                                           { ExponLiteral $1 $2}
 
-
 {- TupleExpression 
                : "(" zero(TupleEx) ")"                                              { TupleExpression $2 }
-               -- | "[" zero(TupleEx) "]"                                              { TupleExpression $2 }
+               | "[" zero(TupleEx) "]"                                              { TupleExpression $2 } -}
 TupleEx        : zero(Expression) list(MaybeTupleEx)                                { $1 $2 }
 MaybeTupleEx   : "," zero(Expression)                                               { $2 }
--}    
+
 
 ElementaryTypeNameExpression
                : ElementaryTypeName                                                    { $1 }
