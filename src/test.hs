@@ -202,7 +202,6 @@ visibilityAnalysisTest = TestList ["No Visibility Specified 1 Function" ~: ["[!]
 
 reentrancyAnalysisTest = TestList ["Re-Entrancy Check" ~: "[!] High: Possible Re-Entrancy\n Details: The function contains a possible re-entrancy vulnerability in Function: get_func" ~=? (reentPrint $ reentClean $ reentCheck $ listContracts $ parseAst("contract re_entrancy {mapping (address => uint) public balances; function get_func() {if (!msg.sender.call.value(balances[msg.sender])()) {throw;}balances[msg.sender] = 0;}}"))]
 
-reentPrint $ reentClean $ reentCheck contracts
 -- TODO Finish the test cases for function visibility
 {- testFunctionViews = TestList ["Test 1: No Function Visibility Specified" ~: "(Info \"Function Visibility\" \"No function visibility specified.\")" ~=? (show(funcVisCheck $ listConts $ runTest "pragma solidity ^0.1.0; contract test {function test() {}}"))]
 
