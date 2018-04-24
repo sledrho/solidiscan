@@ -5,6 +5,7 @@ import Solidiscan.Lexer
 import Solidiscan.AST
 import Analysis.Visibility_Check
 import Analysis.Version_Check
+import Analysis.Reentrancy_Check
 import Helper_Functions
 
 -- Run parse allows the ability to run the parser from within GHCI, passing in the test case that failed
