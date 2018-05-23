@@ -58,8 +58,8 @@ executeAnalysis source = do
   -- performing the throw check on the inputted contract
   let throwCheckResult = map resultPrinter $ resultCleaner $ funcThrowCheck(contracts)
   printElements(throwCheckResult)
-  let reentResult = reentPrint $ reentClean $ reentCheck contracts
+  -- let reentResult = reentPrint $ reentClean $ reentCheck contracts
   -- to handle the issue of not printing an empty line to ther terminal
   -- check to see if the result is an empty list, if not then print
-  putStrLn(reentResult)
+  -- putStrLn(reentResult)
 

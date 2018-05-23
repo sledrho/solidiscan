@@ -43,7 +43,7 @@ parserTests = TestList [ "Pragma Directive Parsing Version" ~: "[SourceUnit (Pra
                                 functionDefTests,
                                 functionContentsTest]
                                 
-analaysisTests = TestList [vulnerableVersionTests, visibilityAnalysisTest, reentrancyAnalysisTest]
+analaysisTests = TestList [vulnerableVersionTests, visibilityAnalysisTest{-, reentrancyAnalysisTest-}]
 
                         {- "Test 2: Contract Def [Empty Contract]" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\")),ContractDef (Contract (Identifier \"this_is_a_contract1\") [])]" ~=? (show(reverse(solidiscan(alexScanTokens2 test2)))),
                         "Test 3: Multiple Empty Contract Assignments" ~: "[SourceUnit (PragmaDirective (PragmaName \"solidity\")),ContractDef (Contract (Identifier \"contract1\") []),ContractDef (Contract (Identifier \"contract2\") []),ContractDef (Contract (Identifier \"contract3\") []),ContractDef (Contract (Identifier \"contract4\") []),ContractDef (Contract (Identifier \"contract5\") []),ContractDef (Contract (Identifier \"contract6\") [])]" ~=? (show(reverse(solidiscan(alexScanTokens2 test3)))),
@@ -201,8 +201,8 @@ visibilityAnalysisTest = TestList ["No Visibility Specified 1 Function" ~: ["[!]
                                    "No Visibility Specified 1 Function" ~: [] ~=? (visibilityTest . contractContentsGetter . listContracts $ parseAst "contract test { function test() public {} function test2() private {} function test3() public {}} contract testb { function testb1() private {} function testb () public payable {}}"),
                                    "No Visibility Specified 1 Function" ~: ["[!] Info: Function Visibility\n Details: No visibility specified in Function: test","[!] Info: Function Visibility\n Details: No visibility specified in Function: testb1","[!] Info: Function Visibility\n Details: No visibility specified in Function: testc","[!] Info: Function Visibility\n Details: No visibility specified in Function: testd"] ~=? (visibilityTest . contractContentsGetter . listContracts $ parseAst "contract test { function test() {} } contract testb {function testb1() {}} contract testc {function testc() {}} contract testd {function testd() {}}")]
 
-reentrancyAnalysisTest = TestList ["Re-Entrancy Check" ~: "[!] High: Possible Re-Entrancy\n Details: The function contains a possible re-entrancy vulnerability in Function: get_func" ~=? (reentPrint $ reentClean $ reentCheck $ listContracts $ parseAst("contract re_entrancy {mapping (address => uint) public balances; function get_func() {if (!msg.sender.call.value(balances[msg.sender])()) {throw;}balances[msg.sender] = 0;}}"))]
-
+{- reentrancyAnalysisTest = TestList ["Re-Entrancy Check" ~: "[!] High: Possible Re-Entrancy\n Details: The function contains a possible re-entrancy vulnerability in Function: get_func" ~=? (reentPrint $ reentClean $ reentCheck $ listContracts $ parseAst("contract re_entrancy {mapping (address => uint) public balances; function get_func() {if (!msg.sender.call.value(balances[msg.sender])()) {throw;}balances[msg.sender] = 0;}}"))]
+ -}
 -- TODO Finish the test cases for function visibility
 {- testFunctionViews = TestList ["Test 1: No Function Visibility Specified" ~: "(Info \"Function Visibility\" \"No function visibility specified.\")" ~=? (show(funcVisCheck $ listConts $ runTest "pragma solidity ^0.1.0; contract test {function test() {}}"))]
 
