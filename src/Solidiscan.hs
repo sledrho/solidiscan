@@ -15,11 +15,7 @@ import Solidiscan.Parser
 import Solidiscan.AST
 import Control.Monad
 import System.Environment
-import qualified Data.Map as Map
 
-data InfoList = InfoList [Info]
-                deriving (Show)
-type InfoMap = Map.Map InfoList
 
 {- main :: IO ()
 main = do 
@@ -66,28 +62,4 @@ executeAnalysis source = do
   -- to handle the issue of not printing an empty line to ther terminal
   -- check to see if the result is an empty list, if not then print
   putStrLn(reentResult)
-  
-
-
-{-
--- for reentrancy
-execute :: String -> IO ()
-execute x = do
-  let y = runTest x
-  let z = getCont(y)
-  let t = mapGet(z)
-  let f = getIf(y)
-  print(f)
-  print(mapCheck(z))
-  print(ifCheck(f)) haske
--}
-
-
--- for running unit tests
-{- 
-main :: IO ()
-main = do
-  runTestTT test1
-  putStrLn "Finished."
--}
 
