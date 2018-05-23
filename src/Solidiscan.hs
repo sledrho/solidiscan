@@ -1,4 +1,4 @@
-module Main where
+module Solidiscan where
 import Text.Show.Pretty
 import Test
 import Analysis.Function_Check
@@ -37,8 +37,10 @@ main = do
 process :: String -> IO ()
 process input = do
   let ast = parseAst(input)
-  executeAnalysis(input)
-
+  print(ast)
+  --executeAnalysis(input)
+  
+{-
 -- Execute takes a string (program source) and returns an IO Action
 -- ? Just used for testing at the moment
 executeAnalysis :: String -> IO ()
@@ -63,3 +65,4 @@ executeAnalysis source = do
   -- check to see if the result is an empty list, if not then print
   -- putStrLn(reentResult)
 
+-}

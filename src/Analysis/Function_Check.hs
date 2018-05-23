@@ -9,7 +9,7 @@ type Definition = String
 type Location = Int
 data RuleError = RuleError Definition Location
                  deriving(Show, Eq)
-
+{-
 -- getCont uses recursion to pattern match the different data constructors within the program source
 -- If a contract definition is found it is passed to getContractConts
 getCont :: [ProgSource] -> [ContractDefinition]
@@ -148,31 +148,4 @@ mapCheck :: StateVarDeclaration -> Bool
 mapCheck (x) 
     | (StateVariableDeclaration (Mapping _ _ ) _ _ _ ) <- x = True
     | (StateVariableDeclaration _ _ _ _) <- x = False
-    
-
-{- 
--- OlD Functions Need Removed
--- Get functions is a 'Scrap Your Boilerplate' implementation
--- It traverses the data type and returns all instance of 'FunctionDef'
-getFunctions :: Data d => d -> Set FunctionDef
-getFunctions code = 
-    everything
-        union
-        (mkQ empty (\func@(FunctionDef _ _ _ _ _ ) -> singleton func))
-        code
-
--- GetContracts does a similar job to getFunctions
--- returning all instances of a ContractDefinition
-getContracts :: Data d => d -> Set ContractDefinition
-getContracts code = 
-    everything
-        union
-        (mkQ empty (\func@(Contract _ _ _ ) -> singleton func))
-        code
-
-findMsgSend :: Data d => d -> Set StateVarDeclaration
-findMsgSend code = 
-    everything
-        union
-        (mkQ empty (\msg@(StateVariableDeclaration _ _ _ ([MemberAccess _ _ _])) -> singleton msg))
-        code -}
+-}

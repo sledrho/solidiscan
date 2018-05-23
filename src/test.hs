@@ -19,7 +19,7 @@ runTest = reverse . solidiscan . alexScanTokens2
 -- filtEmpty :: [Solidiscan.AST.SourceUnit] -> [Solidiscan.AST.SourceUnit] 
 -- filtEmpty p (SourceUnit lol) = SourceUnit (filter p lol)
 -- ilterEmpt lst n = filter (not . n) lst
-allTests = TestList [parserTests,
+{- allTests = TestList [parserTests,
             analaysisTests]
 -- Creating a list of unit tests for each element.
 -- TODO: Finish test cases for basic solidity parser
@@ -200,7 +200,7 @@ visibilityAnalysisTest = TestList ["No Visibility Specified 1 Function" ~: ["[!]
                                    "No Visibility Specified 1 Function" ~: ["[!] Info: Function Visibility\n Details: No visibility specified in Function: testb1","[!] Info: Function Visibility\n Details: No visibility specified in Function: testb"] ~=? (visibilityTest . contractContentsGetter . listContracts $ parseAst "contract test { function test() public {} function test2() private {} function test3() internal {}} contract testb { function testb1() {} function testb () {}}"),
                                    "No Visibility Specified 1 Function" ~: [] ~=? (visibilityTest . contractContentsGetter . listContracts $ parseAst "contract test { function test() public {} function test2() private {} function test3() public {}} contract testb { function testb1() private {} function testb () public payable {}}"),
                                    "No Visibility Specified 1 Function" ~: ["[!] Info: Function Visibility\n Details: No visibility specified in Function: test","[!] Info: Function Visibility\n Details: No visibility specified in Function: testb1","[!] Info: Function Visibility\n Details: No visibility specified in Function: testc","[!] Info: Function Visibility\n Details: No visibility specified in Function: testd"] ~=? (visibilityTest . contractContentsGetter . listContracts $ parseAst "contract test { function test() {} } contract testb {function testb1() {}} contract testc {function testc() {}} contract testd {function testd() {}}")]
-
+ -}
 {- reentrancyAnalysisTest = TestList ["Re-Entrancy Check" ~: "[!] High: Possible Re-Entrancy\n Details: The function contains a possible re-entrancy vulnerability in Function: get_func" ~=? (reentPrint $ reentClean $ reentCheck $ listContracts $ parseAst("contract re_entrancy {mapping (address => uint) public balances; function get_func() {if (!msg.sender.call.value(balances[msg.sender])()) {throw;}balances[msg.sender] = 0;}}"))]
  -}
 -- TODO Finish the test cases for function visibility
