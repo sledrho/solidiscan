@@ -5,7 +5,7 @@ import Helper_Functions
 import Analysis.Throw_Check
 -- reentCheck takes a contractDefinition and checks for potential re-entrancy
 -- returning a tuple containing the Info and Identifier
-reentCheck :: [ContractDefinition] -> Maybe (Info, Identifier)
+{- reentCheck :: [ContractDefinition] -> Maybe (Info, Identifier)
 reentCheck inp = do
   -- first get all potential state-variable definitions from the input
   let stateVars = fmap stateVarMapCheck $ map stateVarCheckRe $ contractContentsGetter inp
@@ -92,7 +92,7 @@ secondStates (x:xs,i)  = case x of
   (IfStatement _ out _) -> secondStates (xs,i)
   (LValEqual _ _) -> (x,i) : secondStates (xs, i)
   _ -> secondStates (xs,i)
-
+ -}
 
 {- -- ifStateCheck pulls the info from the list of expressions and returns the expression if it contains
 -- an if statement, 
