@@ -1,4 +1,4 @@
-module Solidiscan where
+module Main where
 import Text.Show.Pretty
 import Test
 import Analysis.Function_Check

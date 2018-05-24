@@ -57,8 +57,8 @@ data ContractConts = StateVarDec StateVarDeclaration
                    | EnumDef EnumDefinition
                      deriving (Show, Eq, Data, Typeable, Ord)
 
-data FunctionDef = FunctionDef Identifier [[Parameter]] [FuncMods] [ReturnParam] [Expression]
-                 | FallBackFunc [FuncMods] [ReturnParam] [Expression]
+data FunctionDef = FunctionDef Identifier [[Parameter]] [FuncMods] [ReturnParam] Statement
+                 | FallBackFunc [FuncMods] [ReturnParam] Statement
                         deriving (Show, Eq, Data, Typeable, Ord)
 data FuncIdent = FuncIdent [String]
                  deriving (Show, Eq, Data, Typeable, Ord)
@@ -76,19 +76,9 @@ data StructDefinition = StructDefinition Identifier [[Expression]]
 
 data EventDefinition = EventDefinition Identifier [[[EParameters]]]
                        deriving (Show, Eq, Data, Typeable, Ord)
-{-
-data Statements = Statements [Statement]
-                  deriving (Show, Eq, Data, Typeable, Ord)
-data Statement = IfStatement Expression
-               | SimpleStatement Expression
-                 deriving (Show, Eq, Data, Typeable, Ord)
-data IfState = IfState ElseState
-               deriving (Show, Eq, Data, Typeable, Ord)
-data ElseState = ElseState Statement
-                 deriving (Show, Eq, Data, Typeable, Ord)
--}
 
-data ModifierDefinition = ModifierDefinition Identifier [[[Parameter]]] [Expression]
+
+data ModifierDefinition = ModifierDefinition Identifier [[[Parameter]]] Statement
                           deriving (Show, Eq, Data, Typeable, Ord)
 
 data EnumDefinition = EnumDefinition Identifier [EnumValue]
@@ -171,9 +161,24 @@ data Exp = Exp String
 data TypeIdent = TypeIdent Ident
                  deriving (Show, Eq, Data, Typeable, Ord)
 
-{- data BlockStatements = BlockStatements [Expression]
-                       deriving (Show, Eq, Data, Typeable, Ord)
- -}
+
+data Statement = PlaceholderStatement String
+               | IfStatement Expression Statement [ElseState]
+               | WhileStatement Expression Statement
+               | ForStatement ForParams Statement
+               | DoWhile Statement Expression
+               | ContinueStatement String
+               | BreakStatement String
+               | ReturnStatement [Expression]
+               | ThrowStatement String
+               | BlockStatements [Statement]
+               | SimpleStatement Expression
+               | NullStatement String
+                 deriving (Show, Eq, Data, Typeable, Ord)
+
+data ElseState = ElseState Statement
+                 deriving (Show, Eq, Data, Typeable, Ord)
+
 data Expression = BoolExpression BooleanLiteral
                 | NumExpression NumberLiteral
                 | IdentExpression Ident
@@ -181,18 +186,18 @@ data Expression = BoolExpression BooleanLiteral
                 | ElemTypeExpression ElemType
                 | TupleExpression [Expression]
                 | VariableDeclaration TypeName [StorageLocation] Identifier VarDecExp
-                | IdentifierList [[String]] [String] VarDecExp
-                | IfStatement Expression Expression [ElseState]
-                | WhileStatement Expression Expression
-                | ForStatement ForParams Expression
+                | IdentifierList [String] VarDecExp
+                -- | IfStatement Expression Expression [ElseState]
+                -- | WhileStatement Expression Expression
+                -- | ForStatement ForParams Expression
                 | InlineAssemblyStatement [Ident] AssemblyBlock
-                | DoWhile Expression Expression
-                | PlaceholderStatement String
-                | ContinueStatement String
-                | BreakStatement String
-                | BlockStatements [Expression]
-                | ReturnStatement [Expression]
-                | ThrowStatement String
+                -- | DoWhile Expression Expression
+                -- | PlaceholderStatement String
+                -- | ContinueStatement String
+                -- | BreakStatement String
+                -- | BlockStatements [Expression]
+                -- | ReturnStatement [Expression]
+                -- | ThrowStatement String
                 | NotExpression Expression
                 | AdditionExp Expression Expression
                 | SubtractionExp Expression Expression
@@ -283,9 +288,6 @@ data NameValue = NameValue Identifier Expression
 
 data NewExp = NewExp TypeName
               deriving (Show, Eq, Data, Typeable, Ord)
-
-data ElseState = ElseState Expression
-                 deriving (Show, Eq, Data, Typeable, Ord)
 
 data BooleanLiteral = BooleanLiteral Ident  
                       deriving (Show, Eq, Data, Typeable, Ord)

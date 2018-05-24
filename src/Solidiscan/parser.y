@@ -143,7 +143,7 @@ import Solidiscan.AST
 %left "."
 
 -- Tells happy to expect at least 22 shift reduce conflict (at current this is within the if-else block and function-call methods)
--- %expect 22
+-- %expect 8
 %%
 
 SourceUnit    : {- empty -}                                                            { [] }
@@ -238,8 +238,11 @@ ReturnParam  :: { ReturnParam }
 -- Either terminates the function declaration with ';'
 -- Or a Block
 -- ( ';' | Block )
-TermBlock    : ";"                                                                       { [] }
-             | Block                                                                     { [$1] }
+TermBlock    : ";"                                                                       { (NullStatement "")}
+             | Block                                                                     { $1 }
+
+Block       -- :: { [Statement] }
+             : "{" list(Statement) "}"                                                 { BlockStatements $2 }
 -- ---------------------------------------------------------------
 
 -- Eventdefinition grammar production
@@ -267,7 +270,7 @@ StructValue : VariableDeclaration ";"                                           
 
 -- Production rules for modifier definitions + invocations
 ModifierDefinition :: { ModifierDefinition }
-             : "modifier" ident zero(ParameterList) TermBlock                           { ModifierDefinition (Identifier $2) $3 $4 }
+             : "modifier" ident zero(ParameterList) Block                               { ModifierDefinition (Identifier $2) $3 $4 }
 ModifierInvocation 
              : ident zero(ZOModExpList)                                                 { $2 }
 ZOModExpList : "(" zero(ModExpList) ")"                                                 { $2 }
@@ -330,7 +333,7 @@ AssVar       : "public"                                                         
              | "constant"                                                              { ConstantKeyword $1 }
 
 -- MaybeExp = Possibility of an Expression
-MExpression  :: {Expression}
+MExpression  :: { Expression }
              : "=" Expression                                                          { $2 }
 
 -- Expression list
@@ -340,14 +343,27 @@ ExpressionList :: { [Expression] }
 ExprList     :: { Expression }
              : "," Expression                                                          { $2 }
 
+Statement    :: { Statement }
+             : IfStatement                                                                { $1 }
+             | WhileStatement                                                             { $1 }
+             | ForStatement                                                               { $1 }
+             | DoWhileStatement                                                           { $1 }
+             | PlaceholderStatement ";"                                                   { $1 }
+             | Continue ";"                                                               { $1 }
+             | Break ";"                                                                  { $1 }
+             | Return ";"                                                                 { $1 }
+             | Throw ";"                                                                  { $1 }
+             | SimpleStatement ";"                                                        { SimpleStatement $1 }
+             | Block                                                                      { $1 }
+
 -- The basic Expression type
 Expression   :: { Expression }
              : Expression "++"                                                         { IncrExp $1 }
              | Expression "--"                                                         { DecrExp $1 }                      
-             | NewExpression                                                           { NewExpression $1 }
-             | IndexAccess                                                             { IndexAccess $1 }
-             | MemberAccess                                                            { $1 }
-             | Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 }
+             -- | NewExpression                                                           { NewExpression $1 }
+             -- | IndexAccess                                                             { IndexAccess $1 }
+             -- | MemberAccess                                                            { $1 }
+             -- | Expression "(" FunctionCallArgs ")"                                     { FunctionCall $1 $3 }
              | "(" Expression ")"                                                      { BracketsExp $2 }
              | "!" Expression                                                          { NotExpression $2 }
              | Expression "**" Expression                                              { ExponentExp $1 $3 }
@@ -409,35 +425,24 @@ NameVal      :: { NameValue }
              : ident ":" Expression                                                    { NameValue (Identifier $1) $3}
 
 
-Statement    :: { Expression }
-             : IfStatement                                                             { $1 }
-             | WhileStatement                                                          { $1 }
-             | ForStatement                                                            { $1 }
-             | Block                                                                   { $1 }
-             | InlineAssemblyStatement                                                 { $1 }
-             | DoWhileStatement ";"                                                    { $1 }
-             | PlaceholderStatement ";"                                                { $1 } 
-             | Continue ";"                                                            { $1 }
-             | Break ";"                                                               { $1 }
-             | Return ";"                                                              { $1 }
-             | Throw ";"                                                               { $1 }
-             | Expression ";"                                                     { $1 }
-             
-IfStatement  :: { Expression }
-                : "if" "(" Expression ")" Statement zero(ElseState)                    { IfStatement $3 $5 $6  }
+IfStatement  :: { Statement }
+             : "if" "(" Expression ")" Statement zero(ElseState)                    { IfStatement $3 $5 $6 }
+
 ElseState    :: { ElseState }
-             : "else" Statement                                                        { ElseState $2 }
+          : "else" Statement                                                        { ElseState $2 }
 
-WhileStatement :: { Expression }
-             : "while" "(" Expression ")" Statement                                    { WhileStatement $3 $5 }
+WhileStatement :: { Statement }
+          : "while" "(" Expression ")" Statement                                    { WhileStatement $3 $5 }
 
-ForStatement :: { Expression }
-             : "for" "(" ForParams ")" Statement                                       { ForStatement $3 $5 }
+ForStatement :: { Statement }
+          : "for" "(" ForParams ")" Statement                                       { ForStatement $3 $5 }
 ForParams    :: { ForParams }
-             : zero(SimpleStatement) ";" zero(Expression) ";" zero(ExpressionStatement) { ForParams $1 $3 $5 }
+          : zero(SimpleStatement) ";" zero(Expression) ";" zero(ExpressionStatement) { ForParams $1 $3 $5 }
 
-Block        :: { Expression }
-             : "{" list(Statement) "}"                                                 { BlockStatements $2 }
+DoWhileStatement :: { Statement }
+             : "do" Statement "while" "(" Expression ")"                              { DoWhile $2 $5}
+
+
 
 -- The following is for Solidity's inline assembly expressions.
 InlineAssemblyStatement :: { Expression }
@@ -461,22 +466,20 @@ FunctionalAssemblyExpression :: { AssemblyExpression }
 MAssemblyItem :: { AssemblyItem }
              : "," AssemblyItem                                                       { $2 }
 
-DoWhileStatement :: { Expression }
-             : "do" Statement "while" "(" Expression ")"                              { DoWhile $2 $5}
 
-PlaceholderStatement :: { Expression }                          
+PlaceholderStatement :: { Statement }                          
              : "_"                                                                    { PlaceholderStatement $1 }
 
-Continue     :: { Expression }
+Continue     :: { Statement }
              : "continue"                                                             { ContinueStatement $1 }
 
-Break        :: { Expression }
+Break        :: { Statement }
              : "break"                                                                { BreakStatement $1 }
 
-Return     :: { Expression }
+Return     :: { Statement }
              : "return" zero(Expression)                                              { ReturnStatement $2 }
 
-Throw        :: { Expression }
+Throw        :: { Statement }
              : "throw"                                                                { ThrowStatement $1 }
 
 SimpleStatement  
@@ -493,11 +496,16 @@ VarMExp      : "=" Expression                                                   
 
 -- IdentifierList follows the following grammar rule
 --              "(" ( Identifier? "," )* Identifier? ")"
+-- Nonterminals $2 and $3 are concatenated to make it easier for the AST generation.
 IdentifierList :: { Expression }
-             : "(" list(IdentList) zero(IdentVar) ")" zero(VarMExp)                    { IdentifierList $2 $3 (VarDecExp $5) }
+             : "(" list1(IdentList2) list(IdentVar2) ")" zero(VarMExp)                    { IdentifierList ($2 ++ $3) (VarDecExp $5) }
 IdentList    : zero(IdentVar) ","                                                      { $1 }
 IdentVar     : ident                                                                   { $1 }
 
+-- Updated grammar rule to better reflect solidity compiler
+-- "(" Identifier? (',' Identifier )* ")"
+IdentList2 : ident  {$1}
+IdentVar2 : "," IdentList2 {$2}
 ExpressionStatement
              : Expression                                                              { $1 } 
 
